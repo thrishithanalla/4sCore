@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Management - AP Police</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Icons
+        const Plus = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const UserPlus = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+        );
+
+        const Edit = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        );
+
+        const X = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const Eye = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        );
+
+        // Sample Data
+        const initialPosts = [
+            { id: 1, postCode: 'SHO', postName: 'Station House Officer', rank: 'Circle Inspector', sanctioned: 1, filled: 1, isSHO: true, reportsTo: 'CI @ Palamaner Circle', assignedPersonnel: [{name: 'BANAGANI PARASURAMUDU', badge: '14270756'}] },
+            { id: 2, postCode: 'SI_GEN', postName: 'Sub-Inspector', rank: 'Sub-Inspector', sanctioned: 1, filled: 1, isSHO: false, reportsTo: 'SHO (CI)', assignedPersonnel: [{name: 'BUKKE NAGAPPA NAIK', badge: '14280448'}] },
+            { id: 3, postCode: 'ASI_GEN', postName: 'Assistant Sub-Inspector', rank: 'Assistant Sub-Inspector', sanctioned: 2, filled: 2, isSHO: false, reportsTo: 'SHO (CI)', assignedPersonnel: [{name: 'T THYAGARAJAN', badge: '14290123'}, {name: 'PAKALA MOHAN', badge: '14290124'}] },
+            { id: 4, postCode: 'HC_GEN', postName: 'Head Constable', rank: 'Head Constable', sanctioned: 5, filled: 5, isSHO: false, reportsTo: 'SHO (CI)', assignedPersonnel: [{name: 'DAWOOD BASHA S', badge: '14300001'}, {name: 'OFFICER 2', badge: '14300002'}, {name: 'OFFICER 3', badge: '14300003'}, {name: 'OFFICER 4', badge: '14300004'}, {name: 'OFFICER 5', badge: '14300005'}] },
+            { id: 5, postCode: 'PC_GEN', postName: 'Police Constable', rank: 'Police Constable', sanctioned: 12, filled: 11, isSHO: false, reportsTo: 'SHO (CI)', assignedPersonnel: Array.from({length: 11}, (_, i) => ({name: `PC ${i+1}`, badge: `1431${String(i+1).padStart(4, '0')}`})) }
+        ];
+
+        const availablePersonnel = [
+            { id: 101, name: 'CHELLU RAMANA', badge: '14280364', rank: 'Police Constable', currentUnit: 'Unassigned' },
+            { id: 102, name: 'P REDDY SEKHAR', badge: '14398590', rank: 'Police Constable', currentUnit: 'Depot' },
+            { id: 103, name: 'K SRINIVAS', badge: '14280365', rank: 'Police Constable', currentUnit: 'Unassigned' }
+        ];
+
+        const PostManagement = () => {
+            const [posts, setPosts] = useState(initialPosts);
+            const [showAssignModal, setShowAssignModal] = useState(false);
+            const [selectedPost, setSelectedPost] = useState(null);
+            const [availableOfficers, setAvailableOfficers] = useState(availablePersonnel);
+
+            const stats = {
+                totalSanctioned: posts.reduce((sum, p) => sum + p.sanctioned, 0),
+                totalFilled: posts.reduce((sum, p) => sum + p.filled, 0)
+            };
+            stats.totalVacant = stats.totalSanctioned - stats.totalFilled;
+            stats.occupancy = Math.round((stats.totalFilled / stats.totalSanctioned) * 100);
+
+            const handleAssignPersonnel = (post) => {
+                setSelectedPost(post);
+                setShowAssignModal(true);
+            };
+
+            const handleAssign = (personnel) => {
+                if (selectedPost.filled >= selectedPost.sanctioned) {
+                    alert('Post is at full capacity');
+                    return;
+                }
+
+                setPosts(posts.map(p => {
+                    if (p.id === selectedPost.id) {
+                        return {
+                            ...p,
+                            filled: p.filled + 1,
+                            assignedPersonnel: [...p.assignedPersonnel, personnel]
+                        };
+                    }
+                    return p;
+                }));
+
+                setAvailableOfficers(availableOfficers.filter(o => o.id !== personnel.id));
+                alert(`${personnel.name} assigned successfully!`);
+            };
+
+            const handleUnassign = (personnel) => {
+                if (confirm(`Remove ${personnel.name} from this post?`)) {
+                    setPosts(posts.map(p => {
+                        if (p.id === selectedPost.id) {
+                            return {
+                                ...p,
+                                filled: p.filled - 1,
+                                assignedPersonnel: p.assignedPersonnel.filter(ap => ap.badge !== personnel.badge)
+                            };
+                        }
+                        return p;
+                    }));
+
+                    setAvailableOfficers([...availableOfficers, {
+                        id: Date.now(),
+                        name: personnel.name,
+                        badge: personnel.badge,
+                        rank: selectedPost.rank,
+                        currentUnit: 'Available'
+                    }]);
+
+                    setSelectedPost({
+                        ...selectedPost,
+                        filled: selectedPost.filled - 1,
+                        assignedPersonnel: selectedPost.assignedPersonnel.filter(ap => ap.badge !== personnel.badge)
+                    });
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 shadow-lg">
+                        <div className="max-w-7xl mx-auto">
+                            <h1 className="text-3xl font-bold">📋 Post Management - Baireddypalle Police Station</h1>
+                            <p className="text-purple-100 mt-2">Parent: Palamaner Rural Circle</p>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto p-6">
+                        {/* Breadcrumb */}
+                        <div className="text-sm text-gray-600 mb-6">
+                            Home &gt; Units &gt; Palamaner Circle &gt; Baireddypalle &gt; <span className="text-blue-600 font-semibold">Posts</span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex gap-3">
+                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                <Plus size={16} /> Add Post
+                            </button>
+                            <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                                ↻ Auto-Create
+                            </button>
+                            <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                ↓ Export
+                            </button>
+                        </div>
+
+                        {/* Quick Stats */}
+                        <div className="grid grid-cols-4 gap-4 mb-6">
+                            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                                <div className="text-sm text-gray-600 mb-1">Sanctioned</div>
+                                <div className="text-2xl font-bold text-gray-800">{stats.totalSanctioned}</div>
+                            </div>
+                            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+                                <div className="text-sm text-gray-600 mb-1">Filled</div>
+                                <div className="text-2xl font-bold text-green-600">{stats.totalFilled}</div>
+                            </div>
+                            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                                <div className="text-sm text-gray-600 mb-1">Vacant</div>
+                                <div className="text-2xl font-bold text-red-600">{stats.totalVacant}</div>
+                            </div>
+                            <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+                                <div className="text-sm text-gray-600 mb-1">Occupancy</div>
+                                <div className="text-2xl font-bold text-gray-800">{stats.occupancy}%</div>
+                            </div>
+                        </div>
+
+                        {/* Posts Table */}
+                        <div className="bg-white rounded-lg shadow overflow-hidden">
+                            <table className="min-w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">SHO</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Post Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Rank</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Sanctioned</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Filled</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Vacant</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Reports To</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {posts.map((post) => (
+                                        <tr key={post.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                {post.isSHO && (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                        ✓
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-gray-900">{post.postName}</div>
+                                                <div className="text-sm text-gray-500">{post.postCode}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {post.rank}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                                                {post.sanctioned}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className="text-sm font-medium text-green-600">
+                                                    {post.filled}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`text-sm font-medium ${(post.sanctioned - post.filled) > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                                                    {post.sanctioned - post.filled}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {post.reportsTo}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => handleAssignPersonnel(post)}
+                                                        className="text-purple-600 hover:text-purple-800"
+                                                        title="Manage Personnel"
+                                                    >
+                                                        <UserPlus size={16} />
+                                                    </button>
+                                                    <button className="text-blue-600 hover:text-blue-800" title="View Details">
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    <button className="text-green-600 hover:text-green-800" title="Edit">
+                                                        <Edit size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Assign Personnel Modal */}
+                    {showAssignModal && selectedPost && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                                <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
+                                    <div>
+                                        <h2 className="text-2xl font-bold">Manage Personnel Assignments</h2>
+                                        <p className="text-purple-100 text-sm mt-1">
+                                            {selectedPost.postName} - Baireddypalle PS
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAssignModal(false)}
+                                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="p-6">
+                                    {/* Stats */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                        <div className="grid grid-cols-3 gap-4 text-center">
+                                            <div>
+                                                <div className="text-sm text-gray-600">Sanctioned</div>
+                                                <div className="text-2xl font-bold text-gray-800">{selectedPost.sanctioned}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-gray-600">Filled</div>
+                                                <div className="text-2xl font-bold text-green-600">{selectedPost.filled}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-sm text-gray-600">Vacant</div>
+                                                <div className="text-2xl font-bold text-red-600">{selectedPost.sanctioned - selectedPost.filled}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Currently Assigned */}
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                            Currently Assigned ({selectedPost.assignedPersonnel.length})
+                                        </h3>
+                                        {selectedPost.assignedPersonnel.length > 0 ? (
+                                            <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
+                                                        <tr>
+                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Badge No</th>
+                                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
+                                                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {selectedPost.assignedPersonnel.map((person, idx) => (
+                                                            <tr key={idx}>
+                                                                <td className="px-4 py-3 text-sm text-gray-900">{person.badge}</td>
+                                                                <td className="px-4 py-3 text-sm text-gray-900">{person.name}</td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <button
+                                                                        onClick={() => handleUnassign(person)}
+                                                                        className="text-red-600 hover:text-red-800 text-xs"
+                                                                    >
+                                                                        Remove
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500">
+                                                No personnel currently assigned
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Available Personnel */}
+                                    {(selectedPost.sanctioned - selectedPost.filled) > 0 && (
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                                                Available Personnel (Rank: {selectedPost.rank})
+                                            </h3>
+                                            {availableOfficers.filter(o => o.rank === selectedPost.rank).length > 0 ? (
+                                                <div className="border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-50 sticky top-0">
+                                                            <tr>
+                                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Badge No</th>
+                                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
+                                                                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Current Status</th>
+                                                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700">Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200">
+                                                            {availableOfficers
+                                                                .filter(o => o.rank === selectedPost.rank)
+                                                                .map((person) => (
+                                                                    <tr key={person.id} className="hover:bg-gray-50">
+                                                                        <td className="px-4 py-3 text-sm text-gray-900">{person.badge}</td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-900">{person.name}</td>
+                                                                        <td className="px-4 py-3 text-sm text-gray-600">{person.currentUnit}</td>
+                                                                        <td className="px-4 py-3 text-center">
+                                                                            <button
+                                                                                onClick={() => handleAssign(person)}
+                                                                                className="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700"
+                                                                            >
+                                                                                Assign
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                                                    No available personnel matching this rank
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-6 flex justify-end">
+                                        <button
+                                            onClick={() => setShowAssignModal(false)}
+                                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PostManagement />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+/**
+ * Role View Styles
+ * Following UC3 design standards with CSS Modules for scoped styling
+ * Uses FormCard component from mainFe for container
+ * Supports: Theme compatibility, responsive design, dark mode
+ */
+
+/* =============================================
+   PAGE WRAPPER
+   ============================================= */
+
+.pageWrapper {
+  /* No padding - MainLayout handles horizontal spacing */
+}
+
+/* =============================================
+   LOADING STATE
+   ============================================= */
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loadingText {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* =============================================
+   ROLE HEADER
+   ============================================= */
+
+.roleHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg, 1rem);
+  padding-bottom: var(--space-lg, 1rem);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  margin-bottom: var(--space-lg, 1rem);
+}
+
+[data-theme='dark'] .roleHeader,
+.dark .roleHeader {
+  border-color: var(--border-color, #374151);
+}
+
+.roleIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--border-radius-md, 0.5rem);
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.roleIcon i {
+  font-size: 1.5rem;
+}
+
+[data-theme='dark'] .roleIcon,
+.dark .roleIcon {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.roleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.roleTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.roleName {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+[data-theme='dark'] .roleName,
+.dark .roleName {
+  color: var(--text-primary, #f9fafb);
+}
+
+.roleSubtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+/* =============================================
+   CONTENT GRID
+   ============================================= */
+
+.contentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg, 1rem);
+}
+
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+/* =============================================
+   SECTION CARD
+   ============================================= */
+
+.sectionCard {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-md, 0.5rem);
+  padding: var(--space-lg, 1rem);
+}
+
+[data-theme='dark'] .sectionCard,
+.dark .sectionCard {
+  background: var(--bg-secondary, #1f2937);
+  border-color: var(--border-color, #374151);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  margin-bottom: var(--space-md, 0.75rem);
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+[data-theme='dark'] .sectionTitle,
+.dark .sectionTitle {
+  color: var(--text-primary, #f9fafb);
+}
+
+/* =============================================
+   FIELD GRID
+   ============================================= */
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg, 1rem) var(--space-xl, 1.5rem);
+}
+
+@media (max-width: 640px) {
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fieldGridFull {
+  grid-column: 1 / -1;
+}
+
+.fieldWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fieldLabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.fieldValue {
+  font-size: 0.875rem;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+[data-theme='dark'] .fieldValue,
+.dark .fieldValue {
+  color: var(--text-primary, #f9fafb);
+}
+
+.fieldValueMuted {
+  color: var(--text-tertiary, #9ca3af);
+}
+
+/* =============================================
+   PERMISSIONS SECTION
+   ============================================= */
+
+.permissionsSection {
+  margin-top: var(--space-lg, 1rem);
+}
+
+.permissionsHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--space-md, 0.75rem);
+}
+
+.permissionsTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+[data-theme='dark'] .permissionsTitle,
+.dark .permissionsTitle {
+  color: var(--text-primary, #f9fafb);
+}
+
+.emptyPermissions {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  padding: var(--space-lg, 1rem);
+  text-align: center;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: var(--border-radius-sm, 0.375rem);
+}
+
+[data-theme='dark'] .emptyPermissions,
+.dark .emptyPermissions {
+  background: var(--bg-tertiary, #374151);
+}
+
+/* Job details within accordion */
+.jobDetails {
+  padding-left: var(--space-lg, 1rem);
+}
+
+.jobItem {
+  padding: var(--space-md, 0.75rem) 0;
+}
+
+.jobItem:not(:last-child) {
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+[data-theme='dark'] .jobItem:not(:last-child),
+.dark .jobItem:not(:last-child) {
+  border-color: var(--border-color, #374151);
+}
+
+.jobHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm, 0.5rem);
+}
+
+.jobName {
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+[data-theme='dark'] .jobName,
+.dark .jobName {
+  color: var(--text-primary, #f9fafb);
+}
+
+.jobNameSecondary {
+  font-size: 0.6875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.jobMeta {
+  font-size: 0.6875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.jobRoute {
+  font-size: 0.6875rem;
+  color: var(--primary-color, #3b82f6);
+}
+
+.permissionTags {
+  display: flex;
+  gap: var(--space-xs, 0.25rem);
+  flex-wrap: wrap;
+}
+
+/* Permission badge pills */
+.permissionBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* CRUD color coding */
+.permissionBadge.create {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.permissionBadge.read {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.permissionBadge.update {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.permissionBadge.delete {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.permissionBadge.other {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: #4b5563;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+/* Dark mode support for badges */
+[data-theme='dark'] .permissionBadge.create,
+.dark .permissionBadge.create {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+[data-theme='dark'] .permissionBadge.read,
+.dark .permissionBadge.read {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme='dark'] .permissionBadge.update,
+.dark .permissionBadge.update {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme='dark'] .permissionBadge.delete,
+.dark .permissionBadge.delete {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+[data-theme='dark'] .permissionBadge.other,
+.dark .permissionBadge.other {
+  background-color: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border-color: rgba(156, 163, 175, 0.3);
+}
+
+/* Module name styling - remove underline on hover */
+.moduleName {
+  font-weight: 600;
+  color: var(--primary-color, #3b82f6);
+  text-decoration: none !important;
+}
+
+/* Target PrimeReact accordion to remove underlines */
+:global(.p-accordion .p-accordion-header-link),
+:global(.p-accordion .p-accordion-header-link:hover),
+:global(.p-accordion .p-accordion-header-link:focus) {
+  text-decoration: none !important;
+}
+
+:global(.p-accordion .p-accordion-header-link span) {
+  text-decoration: none !important;
+}
+
+/* =============================================
+   ERROR STATE
+   ============================================= */
+
+.errorContainer {
+  padding: var(--space-xl, 1.5rem);
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  padding: var(--space-md, 0.75rem);
+  margin-bottom: var(--space-md, 0.75rem);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  color: var(--error-color, #ef4444);
+  font-size: 0.875rem;
+}
+
+.errorMessage i {
+  font-size: 1rem;
+}

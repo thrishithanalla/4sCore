@@ -1,0 +1,156 @@
+/**
+ * Assignments List Page Styles - Following Units List Standard
+ */
+
+/* Main Container */
+.container {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Page Header */
+.header {
+  margin-bottom: 0.75rem;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.headerIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  background-color: #06b6d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.headerIcon i {
+  color: white;
+  font-size: 0.875rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  margin-left: 2.5rem;
+}
+
+/* Main Card */
+.card {
+  background: var(--bg-primary, white);
+  border-radius: 0.375rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-light, #e5e7eb);
+  position: relative;
+}
+
+/* Card Content */
+.cardContent {
+  padding: 0;
+}
+
+/* Filter / Control Bar */
+.filterBar {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-light, #e5e7eb);
+  background: var(--bg-primary, white);
+}
+
+.filterBarContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filterActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.recordCount {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #9ca3af);
+  white-space: nowrap;
+}
+
+/* ========================================
+   Dark Mode Support
+   ======================================== */
+
+:global(.dark) .title,
+:global([data-theme='dark']) .title {
+  color: var(--text-primary, #f9fafb);
+}
+
+:global(.dark) .subtitle,
+:global([data-theme='dark']) .subtitle {
+  color: var(--text-secondary, #9ca3af);
+}
+
+:global(.dark) .card,
+:global([data-theme='dark']) .card {
+  background: var(--bg-primary, #1f2937);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  border-color: var(--border-color, #374151);
+}
+
+:global(.dark) .filterBar,
+:global([data-theme='dark']) .filterBar {
+  background: var(--bg-primary, #1f2937);
+  border-bottom-color: var(--border-color, #374151);
+}
+
+:global(.dark) .recordCount,
+:global([data-theme='dark']) .recordCount {
+  color: var(--text-muted, #6b7280);
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .filterBarContent {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .filterGroup {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filterActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

@@ -1,0 +1,621 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Dashboard data retrieved successfully",
+  "data": {
+    "summary": {
+      "totalCalls": 201,
+      "totalTokens": 907041,
+      "totalInputTokens": 690918,
+      "totalOutputTokens": 216123,
+      "totalCost": 468.7748,
+      "avgAccuracy": null,
+      "avgResponseTime": 30.81,
+      "totalUsers": 11
+    },
+    "byModel": [
+      {
+        "model": "gpt-oss-120b",
+        "calls": 74,
+        "tokens": 491403,
+        "inputTokens": 352001,
+        "outputTokens": 139402,
+        "cost": 87.4507,
+        "avgAccuracy": null,
+        "avgResponseTime": 10.01
+      },
+      {
+        "model": "Unknown",
+        "calls": 62,
+        "tokens": 154090,
+        "inputTokens": 129108,
+        "outputTokens": 24982,
+        "cost": 110.4378,
+        "avgAccuracy": null,
+        "avgResponseTime": 3.33
+      },
+      {
+        "model": "gpt-4.1",
+        "calls": 55,
+        "tokens": 228579,
+        "inputTokens": 195123,
+        "outputTokens": 33456,
+        "cost": 269.4387,
+        "avgAccuracy": null,
+        "avgResponseTime": 7.2
+      },
+      {
+        "model": "gpt-4",
+        "calls": 9,
+        "tokens": 30828,
+        "inputTokens": 13408,
+        "outputTokens": 17420,
+        "cost": 1.4474,
+        "avgAccuracy": null,
+        "avgResponseTime": 20.48
+      },
+      {
+        "model": "gpt-oss-120B",
+        "calls": 1,
+        "tokens": 2141,
+        "inputTokens": 1278,
+        "outputTokens": 863,
+        "cost": 0,
+        "avgAccuracy": null,
+        "avgResponseTime": 4664.26
+      }
+    ],
+    "byUseCase": [
+      {
+        "useCase": "Unknown",
+        "calls": 37,
+        "tokens": 131622,
+        "cost": 110.4309,
+        "avgResponseTime": 4.53
+      },
+      {
+        "useCase": "summarization",
+        "calls": 31,
+        "tokens": 125941,
+        "cost": 0.0442,
+        "avgResponseTime": 7.18
+      },
+      {
+        "useCase": "Field Validation",
+        "calls": 29,
+        "tokens": 72054,
+        "cost": 2.5988,
+        "avgResponseTime": 4.7
+      },
+      {
+        "useCase": "generation",
+        "calls": 25,
+        "tokens": 22468,
+        "cost": 0.0069,
+        "avgResponseTime": 1.57
+      },
+      {
+        "useCase": "Text Generator",
+        "calls": 24,
+        "tokens": 248631,
+        "cost": 69.2501,
+        "avgResponseTime": 14.46
+      },
+      {
+        "useCase": "Data Extraction",
+        "calls": 24,
+        "tokens": 80475,
+        "cost": 16.4402,
+        "avgResponseTime": 7.31
+      },
+      {
+        "useCase": "Document Classification",
+        "calls": 9,
+        "tokens": 11633,
+        "cost": 0.3512,
+        "avgResponseTime": 1.79
+      },
+      {
+        "useCase": "Document Processing",
+        "calls": 4,
+        "tokens": 12059,
+        "cost": 0.5594,
+        "avgResponseTime": 13.5
+      },
+      {
+        "useCase": "Boundary Detection",
+        "calls": 4,
+        "tokens": 18101,
+        "cost": 0.5488,
+        "avgResponseTime": 2.44
+      },
+      {
+        "useCase": "Text Evaluation",
+        "calls": 3,
+        "tokens": 96806,
+        "cost": 264.838,
+        "avgResponseTime": 55.49
+      }
+    ],
+    "trends": [
+      {
+        "timestamp": "2026-01-19T15:00:00",
+        "hour": 15,
+        "calls": 21,
+        "tokens": 67760,
+        "inputTokens": 50629,
+        "outputTokens": 17131,
+        "cost": 5.2596
+      },
+      {
+        "timestamp": "2026-01-19T16:00:00",
+        "hour": 16,
+        "calls": 71,
+        "tokens": 340479,
+        "inputTokens": 261382,
+        "outputTokens": 79097,
+        "cost": 155.48
+      },
+      {
+        "timestamp": "2026-01-19T17:00:00",
+        "hour": 17,
+        "calls": 63,
+        "tokens": 211927,
+        "inputTokens": 152712,
+        "outputTokens": 59215,
+        "cost": 95.8491
+      },
+      {
+        "timestamp": "2026-01-19T18:00:00",
+        "hour": 18,
+        "calls": 7,
+        "tokens": 58486,
+        "inputTokens": 48227,
+        "outputTokens": 10259,
+        "cost": 2.9241
+      },
+      {
+        "timestamp": "2026-01-19T19:00:00",
+        "hour": 19,
+        "calls": 11,
+        "tokens": 80656,
+        "inputTokens": 64215,
+        "outputTokens": 16441,
+        "cost": 93.6703
+      },
+      {
+        "timestamp": "2026-01-19T20:00:00",
+        "hour": 20,
+        "calls": 5,
+        "tokens": 64815,
+        "inputTokens": 54848,
+        "outputTokens": 9967,
+        "cost": 97.117
+      },
+      {
+        "timestamp": "2026-01-19T21:00:00",
+        "hour": 21,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-19T22:00:00",
+        "hour": 22,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-19T23:00:00",
+        "hour": 23,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T00:00:00",
+        "hour": 0,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T01:00:00",
+        "hour": 1,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T02:00:00",
+        "hour": 2,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T03:00:00",
+        "hour": 3,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T04:00:00",
+        "hour": 4,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T05:00:00",
+        "hour": 5,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T06:00:00",
+        "hour": 6,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T07:00:00",
+        "hour": 7,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T08:00:00",
+        "hour": 8,
+        "calls": 0,
+        "tokens": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "timestamp": "2026-01-20T09:00:00",
+        "hour": 9,
+        "calls": 1,
+        "tokens": 2539,
+        "inputTokens": 1896,
+        "outputTokens": 643,
+        "cost": 0.6702
+      },
+      {
+        "timestamp": "2026-01-20T10:00:00",
+        "hour": 10,
+        "calls": 2,
+        "tokens": 5765,
+        "inputTokens": 4330,
+        "outputTokens": 1435,
+        "cost": 1.5105
+      },
+      {
+        "timestamp": "2026-01-20T11:00:00",
+        "hour": 11,
+        "calls": 4,
+        "tokens": 9245,
+        "inputTokens": 8164,
+        "outputTokens": 1081,
+        "cost": 1.8732
+      },
+      {
+        "timestamp": "2026-01-20T12:00:00",
+        "hour": 12,
+        "calls": 7,
+        "tokens": 31195,
+        "inputTokens": 17586,
+        "outputTokens": 13609,
+        "cost": 10.8033
+      },
+      {
+        "timestamp": "2026-01-20T13:00:00",
+        "hour": 13,
+        "calls": 5,
+        "tokens": 21413,
+        "inputTokens": 17742,
+        "outputTokens": 3671,
+        "cost": 3.1274
+      },
+      {
+        "timestamp": "2026-01-20T14:00:00",
+        "hour": 14,
+        "calls": 2,
+        "tokens": 7521,
+        "inputTokens": 7148,
+        "outputTokens": 373,
+        "cost": 0.2368
+      },
+      {
+        "timestamp": "2026-01-20T15:00:00",
+        "hour": 15,
+        "calls": 2,
+        "tokens": 5240,
+        "inputTokens": 2039,
+        "outputTokens": 3201,
+        "cost": 0.2532
+      }
+    ],
+    "modelPerformance": [
+      {
+        "model": "gpt-oss-120b",
+        "avgResponseTime": 10.01,
+        "avgTokensPerCall": 6640.58,
+        "costPerToken": 0.000178,
+        "totalCalls": 74
+      },
+      {
+        "model": "Unknown",
+        "avgResponseTime": 3.33,
+        "avgTokensPerCall": 2485.32,
+        "costPerToken": 0.000717,
+        "totalCalls": 62
+      },
+      {
+        "model": "gpt-4.1",
+        "avgResponseTime": 7.2,
+        "avgTokensPerCall": 4155.98,
+        "costPerToken": 0.001179,
+        "totalCalls": 55
+      },
+      {
+        "model": "gpt-4",
+        "avgResponseTime": 20.48,
+        "avgTokensPerCall": 3425.33,
+        "costPerToken": 0.000047,
+        "totalCalls": 9
+      },
+      {
+        "model": "gpt-oss-120B",
+        "avgResponseTime": 4664.26,
+        "avgTokensPerCall": 2141,
+        "costPerToken": 0,
+        "totalCalls": 1
+      }
+    ],
+    "costByModel": [
+      {
+        "model": "gpt-4.1",
+        "cost": 269.4387,
+        "percentage": 57.48
+      },
+      {
+        "model": "Unknown",
+        "cost": 110.4378,
+        "percentage": 23.56
+      },
+      {
+        "model": "gpt-oss-120b",
+        "cost": 87.4507,
+        "percentage": 18.66
+      },
+      {
+        "model": "gpt-4",
+        "cost": 1.4474,
+        "percentage": 0.31
+      },
+      {
+        "model": "gpt-oss-120B",
+        "cost": 0,
+        "percentage": 0
+      }
+    ],
+    "list": [
+      {
+        "id": "696f508622c11869dbe2e0e4",
+        "timestamp": "2026-01-20T15:22:57.897000",
+        "model": "gpt-4",
+        "useCase": "Document Processing",
+        "promptName": "GENERATE_SUMMARY",
+        "tokens": 2643,
+        "inputTokens": 1059,
+        "outputTokens": 1584,
+        "cost": 0.12681,
+        "responseTime": 12.686,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb2",
+        "userName": "UC5USER DEV1",
+        "moduleId": "691f952a5cab830ebba7b100",
+        "moduleName": "Investigation Copilot"
+      },
+      {
+        "id": "696f4f4622c11869dbe2e0db",
+        "timestamp": "2026-01-20T15:17:50.166000",
+        "model": "gpt-4",
+        "useCase": "Document Processing",
+        "promptName": "GENERATE_SUMMARY",
+        "tokens": 2597,
+        "inputTokens": 980,
+        "outputTokens": 1617,
+        "cost": 0.12642,
+        "responseTime": 18.339,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb2",
+        "userName": "UC5USER DEV1",
+        "moduleId": "691f952a5cab830ebba7b100",
+        "moduleName": "Investigation Copilot"
+      },
+      {
+        "id": "696f44a65a69e04242cd1324",
+        "timestamp": "2026-01-20T14:32:30.778000",
+        "model": "gpt-4.1",
+        "useCase": "Data Extraction",
+        "promptName": "Doc2Data Structured Extractor",
+        "tokens": 3968,
+        "inputTokens": 3629,
+        "outputTokens": 339,
+        "cost": 0.12921,
+        "responseTime": 3.754,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f443e5a69e04242cd1306",
+        "timestamp": "2026-01-20T14:30:46.110000",
+        "model": "gpt-4.1",
+        "useCase": "Boundary Detection",
+        "promptName": "Doc2Data Boundary Detector",
+        "tokens": 3553,
+        "inputTokens": 3519,
+        "outputTokens": 34,
+        "cost": 0.10761,
+        "responseTime": 2.487,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f3719e7061c6aea6eb6c5",
+        "timestamp": "2026-01-20T13:34:41.261000",
+        "model": "gpt-4.1",
+        "useCase": "Field Validation",
+        "promptName": "Doc2Data AI Validator",
+        "tokens": 2221,
+        "inputTokens": 2015,
+        "outputTokens": 206,
+        "cost": 0.07281,
+        "responseTime": 4.528,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f36ffe7061c6aea6eb6c3",
+        "timestamp": "2026-01-20T13:34:15.123000",
+        "model": "gpt-4.1",
+        "useCase": "Data Extraction",
+        "promptName": "Doc2Data Structured Extractor",
+        "tokens": 3980,
+        "inputTokens": 3629,
+        "outputTokens": 351,
+        "cost": 0.12993,
+        "responseTime": 3.855,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f36f2e7061c6aea6eb6bd",
+        "timestamp": "2026-01-20T13:34:02.352000",
+        "model": "gpt-4.1",
+        "useCase": "Document Classification",
+        "promptName": "Doc2Data Document Classifier",
+        "tokens": 2617,
+        "inputTokens": 2608,
+        "outputTokens": 9,
+        "cost": 0.07878,
+        "responseTime": 1.698,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f366ae7061c6aea6eb6a1",
+        "timestamp": "2026-01-20T13:31:46.620000",
+        "model": "gpt-4.1",
+        "useCase": "Boundary Detection",
+        "promptName": "Doc2Data Boundary Detector",
+        "tokens": 3553,
+        "inputTokens": 3519,
+        "outputTokens": 34,
+        "cost": 0.10761,
+        "responseTime": 2.588,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69419bf20226ab7a77223bb5",
+        "userName": "UC6USER DEV1",
+        "moduleId": "691f95b45cab830ebba7b101",
+        "moduleName": "Docs2Data"
+      },
+      {
+        "id": "696f33cfe7061c6aea6eb649",
+        "timestamp": "2026-01-20T13:20:39.161000",
+        "model": "gpt-oss-120b",
+        "useCase": "Text Generator",
+        "promptName": "Evidence Checklist Generator",
+        "tokens": 9042,
+        "inputTokens": 5971,
+        "outputTokens": 3071,
+        "cost": 2.73825,
+        "responseTime": 13.893771499977447,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "69579294294aa34ab85ed1aa",
+        "userName": "Anuj",
+        "moduleId": "691e0704ea8033468e05f4f4",
+        "moduleName": "Petition Management"
+      },
+      {
+        "id": "696f2b6ee7061c6aea6eb056",
+        "timestamp": "2026-01-20T12:44:54.945000",
+        "model": "gpt-oss-120b",
+        "useCase": "Data Extraction",
+        "promptName": "Petition Claim Extractor",
+        "tokens": 2802,
+        "inputTokens": 1809,
+        "outputTokens": 993,
+        "cost": 0.86715,
+        "responseTime": 5.810566700005438,
+        "accuracy": null,
+        "status": "SUCCESS",
+        "userId": "6958b834294aa34ab85ee1ac",
+        "userName": "Sanjay",
+        "moduleId": "691e0704ea8033468e05f4f4",
+        "moduleName": "Petition Management"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "pageSize": 10,
+      "totalCount": 201,
+      "totalPages": 21
+    }
+  },
+  "errors": null
+}

@@ -1,0 +1,2461 @@
+/* PrimeReact Theme and Core Styles */
+@import "primereact/resources/themes/lara-light-blue/theme.css";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom PrimeReact theme variables */
+:root {
+  --surface-card: #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-border: #e5e7eb;
+
+  /* Data Grid theme variables */
+  --data-grid-bg: #ffffff;
+  --data-grid-header-bg: #f9fafb;
+  --data-grid-header-text: #374151;
+  --data-grid-border: #e5e7eb;
+  --data-grid-cell-text: #374151;
+  --data-grid-row-bg: #ffffff;
+  --data-grid-row-text: #374151;
+  --data-grid-row-hover-bg: #f3f4f6;
+  --data-grid-footer-bg: #ffffff;
+  --data-grid-footer-text: #374151;
+}
+
+.dark {
+  --surface-card: #1f2937;
+  --surface-overlay: #1f2937;
+  --surface-border: #374151;
+
+  /* Data Grid theme variables - dark mode */
+  --data-grid-bg: #1f2937;
+  --data-grid-header-bg: #111827;
+  --data-grid-header-text: #e5e7eb;
+  --data-grid-border: #374151;
+  --data-grid-cell-text: #e5e7eb;
+  --data-grid-row-bg: #1f2937;
+  --data-grid-row-text: #e5e7eb;
+  --data-grid-row-hover-bg: #374151;
+  --data-grid-footer-bg: #1f2937;
+  --data-grid-footer-text: #e5e7eb;
+}
+
+/* Font is inherited from main_fe */
+html,
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* PrimeReact Card Override for better styling */
+.p-card {
+  box-shadow: none !important;
+  border-radius: 0.5rem !important;
+}
+
+.p-card .p-card-body {
+  padding: 0 !important;
+}
+
+.p-card .p-card-content {
+  padding: 0 !important;
+}
+
+/* PrimeReact Button Override for header */
+.p-button.p-button-text {
+  color: inherit !important;
+}
+
+.p-button.p-button-text:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix dark mode for PrimeReact components */
+.dark .p-card {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .p-menu {
+  background: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .p-menuitem-link:hover {
+  background: #374151 !important;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Smooth transitions for theme switching - scoped to specific elements */
+body,
+.theme-transition {
+  transition: background-color 200ms ease-in-out, color 200ms ease-in-out;
+}
+
+/* ================================================
+   Consistent Form Component Styling
+   ================================================ */
+
+/* Base form component height - compact */
+:root {
+  --form-component-height: 36px;
+  --form-border-color: #d1d5db;
+  --form-border-color-hover: #9ca3af;
+  --form-border-color-focus: #3b82f6;
+  --form-border-radius: 4px;
+  --form-label-color: #6b7280;
+  --form-label-focus-color: #3b82f6;
+  --form-bg-color: #ffffff;
+}
+
+.dark {
+  --form-border-color: #4b5563;
+  --form-border-color-hover: #6b7280;
+  --form-border-color-focus: #3b82f6;
+  --form-label-color: #9ca3af;
+  --form-label-focus-color: #60a5fa;
+  --form-bg-color: #1f2937;
+}
+
+/* ================================================
+   PrimeReact FloatLabel Styling
+   ================================================ */
+
+/* Error message styling */
+.p-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ================================================
+   FloatLabel Component - Proper floating animation
+   NOT in a layer - un-layered CSS overrides @layer primereact
+   ================================================ */
+
+/* Add margin-top to FloatLabel wrapper for row spacing */
+.p-float-label {
+  margin-top: 0.75rem !important;
+  position: relative !important;
+}
+
+/*
+ * FloatLabel label base styling - starts INSIDE the input
+ * PrimeReact default: top: 50%, margin-top: -.5rem
+ * We override to: top: 50%, transform: translateY(-50%), margin-top: 0
+ */
+.p-float-label label {
+  color: var(--form-label-color) !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin-left: 10px !important;
+  font-size: 0.875rem !important;
+  top: 50% !important;
+  left: 0 !important;
+  transform: translateY(-50%) !important;
+  transition: top 0.2s ease, font-size 0.2s ease, background 0.2s ease, padding 0.2s ease, margin-left 0.2s ease, color 0.2s ease !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  margin-top: 0 !important;
+  z-index: 1 !important;
+  line-height: 1 !important;
+}
+
+/*
+ * When input has value or is focused - label floats to border (top: 0)
+ * These selectors match PrimeReact's exactly
+ */
+.p-float-label:has(input:focus) label,
+.p-float-label:has(input.p-filled) label,
+.p-float-label:has(input:-webkit-autofill) label,
+.p-float-label:has(textarea:focus) label,
+.p-float-label:has(textarea.p-filled) label,
+.p-float-label:has(.p-inputwrapper-focus) label,
+.p-float-label:has(.p-inputwrapper-filled) label {
+  top: 0 !important;
+  left: 0 !important;
+  transform: translateY(-50%) !important;
+  font-size: 0.75rem !important;
+  background: var(--form-bg-color) !important;
+  padding: 0 4px !important;
+  margin-left: 6px !important;
+  margin-top: 0 !important;
+}
+
+/* FloatLabel active/focused state - label color */
+.p-float-label:has(input:focus) label,
+.p-float-label:has(textarea:focus) label,
+.p-float-label:has(.p-inputwrapper-focus) label {
+  color: var(--form-border-color-focus) !important;
+}
+
+/* Dark mode FloatLabel */
+.dark .p-float-label label {
+  color: var(--form-label-color) !important;
+}
+
+.dark .p-float-label:has(input:focus) label,
+.dark .p-float-label:has(input.p-filled) label,
+.dark .p-float-label:has(textarea:focus) label,
+.dark .p-float-label:has(textarea.p-filled) label,
+.dark .p-float-label:has(.p-inputwrapper-focus) label,
+.dark .p-float-label:has(.p-inputwrapper-filled) label {
+  background: var(--form-bg-color) !important;
+}
+
+.dark .p-float-label:has(input:focus) label,
+.dark .p-float-label:has(textarea:focus) label,
+.dark .p-float-label:has(.p-inputwrapper-focus) label {
+  color: var(--form-label-focus-color) !important;
+}
+
+/* ================================================
+   Common Form Component Styling (applies to all)
+   ================================================ */
+
+/* Dropdown styling */
+.p-dropdown {
+  height: var(--form-component-height) !important;
+  min-height: var(--form-component-height) !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: var(--form-border-radius) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  background-color: var(--form-bg-color) !important;
+}
+
+/* Remove all inner borders that cause double border effect */
+.p-dropdown .p-inputtext,
+.p-dropdown .p-dropdown-label-container,
+.p-dropdown .p-hidden-accessible,
+.p-dropdown .p-hidden-accessible input,
+.p-dropdown>.p-inputtext,
+.p-dropdown input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* FloatLabel Dropdown - needs more height */
+.p-float-label .p-dropdown {
+  height: 40px !important;
+  min-height: 40px !important;
+}
+
+.p-dropdown:not(.p-disabled):hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-dropdown:not(.p-disabled).p-focus,
+.p-dropdown:not(.p-disabled):focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+.p-dropdown .p-dropdown-label {
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  line-height: 24px !important;
+}
+
+/* When dropdown has clear button, add extra padding for the X icon */
+.p-dropdown.p-dropdown-clearable .p-dropdown-label {
+  padding-right: 2rem !important;
+}
+
+/* FloatLabel Dropdown label padding - centered since label is on border */
+.p-float-label .p-dropdown .p-dropdown-label {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.p-dropdown .p-dropdown-trigger {
+  width: 2rem !important;
+}
+
+/* Dropdown clear button alignment */
+.p-dropdown .p-dropdown-clear-icon {
+  position: absolute !important;
+  right: 2.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+}
+
+.p-dropdown .p-dropdown-clear-icon:hover {
+  color: #374151 !important;
+}
+
+.dark .p-dropdown .p-dropdown-clear-icon {
+  color: #9ca3af !important;
+}
+
+.dark .p-dropdown .p-dropdown-clear-icon:hover {
+  color: #e5e7eb !important;
+}
+
+/* Dropdown Panel - Limit width to prevent overflow */
+.p-dropdown-panel {
+  max-width: min(400px, 90vw) !important;
+  min-width: auto !important;
+}
+
+/* Ensure all dropdown/select panels appear ABOVE dialogs and dialog masks */
+/* PrimeReact dialog mask is typically z-index: 1100, dialog is 1101 */
+/* Module Federation components may use different values */
+.p-dropdown-panel,
+.p-multiselect-panel,
+.p-autocomplete-panel,
+.p-cascadeselect-panel,
+.p-treeselect-panel,
+.p-listbox-list-wrapper,
+[class*="dropdown-panel"],
+[class*="select-panel"],
+[class*="multiselect-panel"] {
+  z-index: 10000 !important;
+}
+
+/* Dropdown items - wrap long text */
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.4 !important;
+  padding: 0.75rem 1rem !important;
+}
+
+/* Dropdown Panel Filter/Search Input Alignment */
+.p-dropdown-panel .p-dropdown-header {
+  padding: 0.75rem !important;
+  background: inherit !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter-container {
+  width: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 40px !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 2.25rem 0 2.25rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: var(--form-border-radius) !important;
+  font-size: 14px !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  line-height: 1.5 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.p-dropdown-panel .p-dropdown-filter:focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+/* Dark mode dropdown filter */
+html.dark .p-dropdown-panel .p-dropdown-header {
+  background: #374151 !important;
+}
+
+html.dark .p-dropdown-panel .p-dropdown-filter {
+  background: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+}
+
+html.dark .p-dropdown-panel .p-dropdown-filter::placeholder {
+  color: #9ca3af !important;
+}
+
+/* MultiSelect Panel Filter/Search Input Alignment */
+.p-multiselect-panel .p-multiselect-header {
+  padding: 0.75rem !important;
+  background: inherit !important;
+}
+
+.p-multiselect-panel .p-multiselect-filter-container {
+  width: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 40px !important;
+}
+
+/* Wrapper for icon-left pattern */
+.p-multiselect-panel .p-multiselect-filter-container .p-input-icon-left {
+  width: 100% !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.p-multiselect-panel .p-multiselect-filter,
+.p-multiselect-panel .p-multiselect-filter.p-inputtext,
+.p-multiselect-panel .p-multiselect-filter-container .p-multiselect-filter,
+.p-multiselect-panel .p-input-icon-left .p-multiselect-filter {
+  width: 100% !important;
+  height: 40px !important;
+  padding: 0 0.75rem 0 2.5rem !important;
+  padding-left: 2.5rem !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: var(--form-border-radius) !important;
+  font-size: 14px !important;
+  background: #ffffff !important;
+  color: #374151 !important;
+  line-height: 40px !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+.p-multiselect-panel .p-multiselect-filter:focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+/* Search icon alignment for multiselect - override main_fe hiding and position properly */
+.p-multiselect-panel .p-multiselect-filter-icon,
+.p-multiselect-panel .p-multiselect-filter-container .p-icon,
+.p-multiselect-panel .p-multiselect-filter-container svg,
+.p-multiselect-panel .p-input-icon-left>.p-icon,
+.p-multiselect-panel .p-input-icon-left>svg,
+.p-multiselect-panel .p-input-icon-left>i {
+  display: block !important;
+  position: absolute !important;
+  left: 0.75rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #6b7280 !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+/* Dark mode MultiSelect filter */
+html.dark .p-multiselect-panel .p-multiselect-header {
+  background: #374151 !important;
+}
+
+html.dark .p-multiselect-panel .p-multiselect-filter,
+html.dark .p-multiselect-panel .p-multiselect-filter.p-inputtext,
+html.dark .p-multiselect-panel .p-multiselect-filter-container .p-multiselect-filter,
+html.dark .p-multiselect-panel .p-input-icon-left .p-multiselect-filter {
+  background: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #e5e7eb !important;
+  padding-left: 2.5rem !important;
+}
+
+html.dark .p-multiselect-panel .p-multiselect-filter::placeholder {
+  color: #9ca3af !important;
+}
+
+html.dark .p-multiselect-panel .p-multiselect-filter-icon,
+html.dark .p-multiselect-panel .p-multiselect-filter-container .p-icon,
+html.dark .p-multiselect-panel .p-multiselect-filter-container svg,
+html.dark .p-multiselect-panel .p-input-icon-left>.p-icon,
+html.dark .p-multiselect-panel .p-input-icon-left>svg,
+html.dark .p-multiselect-panel .p-input-icon-left>i {
+  color: #9ca3af !important;
+}
+
+/* InputText styling */
+.p-inputtext {
+  height: var(--form-component-height) !important;
+  min-height: var(--form-component-height) !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: var(--form-border-radius) !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  background: var(--form-bg-color) !important;
+}
+
+/* FloatLabel InputText - centered padding since label is on border */
+/* Exclude textareas from fixed height */
+.p-float-label .p-inputtext:not(textarea):not(.p-inputtextarea) {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* FloatLabel Textarea - explicit override to allow dynamic height */
+.p-float-label textarea,
+.p-float-label textarea.p-inputtext,
+.p-float-label .p-inputtextarea,
+.p-float-label textarea.p-inputtextarea {
+  height: auto !important;
+  min-height: 100px !important;
+  padding-top: 1rem !important;
+  resize: vertical !important;
+}
+
+.p-inputtext:enabled:hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-inputtext:enabled:focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+/* InputText with left icon - override default padding */
+.p-inputtext.p-inputtext-left-icon {
+  padding-left: 2.5rem !important;
+}
+
+/* InputTextarea styling - override fixed height from p-inputtext */
+.p-inputtextarea {
+  height: auto !important;
+  min-height: auto !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: var(--form-border-radius) !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  background: var(--form-bg-color) !important;
+  resize: vertical !important;
+  overflow: auto !important;
+}
+
+/* FloatLabel InputTextarea */
+.p-float-label .p-inputtextarea {
+  height: auto !important;
+  min-height: 80px !important;
+  padding-top: 1.25rem !important;
+}
+
+/* Ensure textarea inside float-label respects rows attribute */
+.p-float-label textarea.p-inputtextarea {
+  height: auto !important;
+  min-height: unset !important;
+}
+
+/* Fix for textareas that use the generic inputtext class */
+textarea.p-inputtext,
+.p-inputtext[type="textarea"],
+.p-float-label textarea {
+  height: auto !important;
+  min-height: 80px !important;
+}
+
+/* ================================================
+   FloatLabelInput Textarea Fixes (from mainFe)
+   Handles fieldset/legend pattern for multiline inputs
+   ================================================ */
+
+/* General textarea overrides - ensure height is not constrained */
+fieldset textarea,
+.MuiOutlinedInput-root textarea,
+.MuiInputBase-root textarea,
+div[class*="float-label"] textarea,
+div[class*="FloatLabel"] textarea {
+  height: auto !important;
+  min-height: 100px !important;
+  resize: vertical !important;
+  overflow: auto !important;
+  padding: 12px !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+}
+
+/* Ensure fieldset doesn't constrain textarea height */
+fieldset:has(textarea) {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Common Material-UI / PrimeReact wrapped textarea pattern */
+.p-inputwrapper:has(textarea),
+.p-inputwrapper-filled:has(textarea),
+div:has(> textarea.p-inputtext),
+div:has(> textarea.p-inputtextarea) {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Target any input container that contains a textarea */
+[class*="input"]:has(textarea),
+[class*="Input"]:has(textarea) {
+  height: auto !important;
+  min-height: auto !important;
+}
+
+/* Explicit textarea element styling */
+textarea {
+  overflow: auto !important;
+  resize: vertical !important;
+}
+
+.p-inputtextarea:enabled:hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-inputtextarea:enabled:focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+/* MultiSelect styling */
+.p-multiselect {
+  height: auto !important;
+  min-height: var(--form-component-height) !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: var(--form-border-radius) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+  background: var(--form-bg-color) !important;
+}
+
+/* FloatLabel MultiSelect - auto height to allow chip wrapping */
+.p-float-label .p-multiselect {
+  height: auto !important;
+  min-height: 40px !important;
+}
+
+.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-multiselect:not(.p-disabled).p-focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+  outline: none !important;
+}
+
+.p-multiselect .p-multiselect-label {
+  padding: 6px 10px !important;
+  padding-right: 4rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  font-size: 14px !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+  overflow: visible !important;
+  max-width: 100% !important;
+  min-height: 24px !important;
+}
+
+/* Allow chips to use full width */
+.p-multiselect .p-multiselect-label-container {
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+/* FloatLabel MultiSelect label padding - centered since label is on border */
+.p-float-label .p-multiselect .p-multiselect-label {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Remove maxSelectedLabels restriction - show all chips that fit */
+.p-multiselect .p-multiselect-label .p-multiselect-token {
+  flex-shrink: 0 !important;
+  max-width: none !important;
+}
+
+/* MultiSelect trigger (dropdown arrow) */
+.p-multiselect .p-multiselect-trigger {
+  width: 2.5rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* MultiSelect clear button alignment */
+.p-multiselect .p-multiselect-clear-icon {
+  position: absolute !important;
+  right: 2.75rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  margin-top: 0 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+}
+
+.p-multiselect .p-multiselect-clear-icon:hover {
+  color: #374151 !important;
+}
+
+.dark .p-multiselect .p-multiselect-clear-icon {
+  color: #9ca3af !important;
+}
+
+.dark .p-multiselect .p-multiselect-clear-icon:hover {
+  color: #e5e7eb !important;
+}
+
+/* MultiSelect chip/token styling - smaller compact chips */
+.p-multiselect .p-multiselect-token {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-radius: 12px !important;
+  padding: 2px 8px !important;
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 22px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.p-multiselect .p-multiselect-token-icon {
+  font-size: 0.625rem !important;
+  cursor: pointer !important;
+  color: #6366f1 !important;
+  margin-left: 0 !important;
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.p-multiselect .p-multiselect-token-icon:hover {
+  color: #4338ca !important;
+}
+
+/* Style for label with chips - allow wrapping */
+.p-multiselect .p-multiselect-label:not(.p-placeholder) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  overflow: visible !important;
+}
+
+/* Token label inside chip - should inherit chip colors */
+.p-multiselect .p-multiselect-token .p-multiselect-token-label {
+  background: transparent !important;
+  color: inherit !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  font-weight: normal !important;
+}
+
+/* ================================================
+   Custom MultiSelect Chip Wrapper & Count Badge
+   ================================================ */
+
+/* Wrapper for chip + optional count badge */
+.multiselect-chip-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Custom chip styling */
+.multiselect-chip {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.8125rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+}
+
+.multiselect-chip-label {
+  display: inline-block !important;
+}
+
+.multiselect-chip-remove {
+  font-size: 0.75rem !important;
+  cursor: pointer !important;
+  color: #6366f1 !important;
+  margin-left: 0 !important;
+}
+
+.multiselect-chip-remove:hover {
+  color: #4338ca !important;
+}
+
+/* Count badge for hidden items (+X) */
+.multiselect-count-badge {
+  background: #6366f1 !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Dark mode for custom chips */
+.dark .multiselect-chip {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+}
+
+.dark .multiselect-chip-remove {
+  color: #818cf8 !important;
+}
+
+.dark .multiselect-chip-remove:hover {
+  color: #c7d2fe !important;
+}
+
+.dark .multiselect-count-badge {
+  background: #818cf8 !important;
+  color: #1e1b4b !important;
+}
+
+/* Dark mode chip styling */
+.dark .p-multiselect .p-multiselect-token {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: #a5b4fc !important;
+}
+
+.dark .p-multiselect .p-multiselect-token-icon {
+  color: #818cf8 !important;
+}
+
+.dark .p-multiselect .p-multiselect-token-icon:hover {
+  color: #c7d2fe !important;
+}
+
+/* Calendar consistent styling */
+.p-calendar .p-inputtext {
+  height: var(--form-component-height) !important;
+}
+
+.p-calendar .p-button {
+  height: var(--form-component-height) !important;
+  width: var(--form-component-height) !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.p-calendar .p-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3) !important;
+}
+
+.p-calendar .p-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+.p-calendar .p-button .p-button-icon {
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+}
+
+/* FloatLabel Calendar - needs more height */
+.p-float-label .p-calendar .p-inputtext {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  padding-right: 50px !important;
+  /* Space for calendar button */
+}
+
+.p-float-label .p-calendar .p-button {
+  height: 40px !important;
+  width: 40px !important;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: none !important;
+}
+
+.p-float-label .p-calendar .p-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+}
+
+/* Enhanced date picker styling */
+.date-picker-enhanced .p-calendar {
+  position: relative;
+}
+
+.date-picker-enhanced .p-calendar .p-inputtext {
+  border-right: none !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.date-picker-enhanced .p-calendar .p-button {
+  border-left: none !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.date-picker-enhanced .p-calendar:focus-within .p-button {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Calendar Popup/Datepicker Panel Styling */
+.p-datepicker {
+  background: var(--form-bg-color) !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.75rem !important;
+  min-width: 280px !important;
+}
+
+.p-datepicker .p-datepicker-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--form-border-color) !important;
+  padding: 0.5rem 0 0.75rem 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-title {
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  color: #374151 !important;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-prev,
+.p-datepicker .p-datepicker-header .p-datepicker-next {
+  width: 2rem !important;
+  height: 2rem !important;
+  border-radius: 50% !important;
+  color: #6b7280 !important;
+  transition: background-color 0.2s !important;
+}
+
+.p-datepicker .p-datepicker-header .p-datepicker-prev:hover,
+.p-datepicker .p-datepicker-header .p-datepicker-next:hover {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.p-datepicker table {
+  font-size: 0.875rem !important;
+}
+
+.p-datepicker table th {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+  padding: 0.5rem !important;
+}
+
+.p-datepicker table td {
+  padding: 0.25rem !important;
+}
+
+.p-datepicker table td>span {
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  border-radius: 50% !important;
+  transition: background-color 0.2s, color 0.2s !important;
+}
+
+.p-datepicker table td>span:not(.p-highlight):not(.p-disabled):hover {
+  background: #f3f4f6 !important;
+}
+
+.p-datepicker table td.p-datepicker-today>span {
+  background: #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.p-datepicker table td>span.p-highlight {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.p-datepicker .p-datepicker-buttonbar {
+  border-top: 1px solid var(--form-border-color) !important;
+  padding: 0.75rem 0 0 0 !important;
+  margin-top: 0.5rem !important;
+}
+
+.p-datepicker .p-datepicker-buttonbar .p-button {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.p-datepicker .p-datepicker-buttonbar .p-button.p-button-text {
+  color: #6b7280 !important;
+}
+
+.p-datepicker .p-datepicker-buttonbar .p-button.p-button-text:hover {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+/* AutoComplete consistent styling */
+.p-autocomplete .p-autocomplete-input {
+  height: var(--form-component-height) !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: var(--form-border-radius) !important;
+  padding: 6px 10px !important;
+  font-size: 14px !important;
+}
+
+.p-autocomplete .p-autocomplete-input:enabled:hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-autocomplete .p-autocomplete-input:enabled:focus {
+  border-color: var(--form-border-color-focus) !important;
+  box-shadow: 0 0 0 1px var(--form-border-color-focus) !important;
+}
+
+/* Checkbox consistent styling */
+.p-checkbox .p-checkbox-box {
+  width: 18px !important;
+  height: 18px !important;
+  border: 1px solid var(--form-border-color) !important;
+  border-radius: 3px !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+
+.p-checkbox .p-checkbox-box:hover {
+  border-color: var(--form-border-color-hover) !important;
+}
+
+.p-checkbox .p-checkbox-box.p-highlight {
+  background-color: var(--form-border-color-focus) !important;
+  border-color: var(--form-border-color-focus) !important;
+}
+
+/* Checkbox icon (checkmark) styling */
+.p-checkbox .p-checkbox-box .p-checkbox-icon {
+  color: #ffffff !important;
+  font-size: 12px !important;
+}
+
+.p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon,
+.p-checkbox .p-checkbox-box.p-highlight svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* MultiSelect panel checkbox styling */
+.p-multiselect-panel .p-checkbox .p-checkbox-box {
+  width: 18px !important;
+  height: 18px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 3px !important;
+}
+
+.p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon,
+.p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Selected item checkbox - when item has p-highlight class */
+.p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box,
+.p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box,
+.p-multiselect-panel .p-multiselect-item-selected .p-checkbox .p-checkbox-box {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box svg,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box svg,
+.p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box svg,
+.p-multiselect-panel .p-multiselect-item-selected .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-item-selected .p-checkbox .p-checkbox-box svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Ensure the checkmark icon is visible */
+.p-multiselect-panel .p-checkbox-icon {
+  display: none;
+}
+
+.p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox-icon,
+.p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox-icon {
+  display: block !important;
+}
+
+/* Error state for all form components */
+.p-invalid.p-dropdown,
+.p-invalid .p-inputtext,
+.p-invalid.p-inputtext,
+.p-invalid.p-multiselect,
+.p-invalid.p-autocomplete .p-autocomplete-input,
+.p-invalid.p-inputtextarea {
+  border-color: #ef4444 !important;
+}
+
+.p-invalid.p-dropdown:focus,
+.p-invalid .p-inputtext:focus,
+.p-invalid.p-inputtext:focus,
+.p-invalid.p-multiselect.p-focus,
+.p-invalid.p-autocomplete .p-autocomplete-input:focus,
+.p-invalid.p-inputtextarea:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+}
+
+/* Custom MultiSelect with floating label style */
+.p-multiselect-custom {
+  min-height: 40px;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.p-multiselect-custom:not(.p-disabled):hover {
+  border-color: rgba(0, 0, 0, 0.87);
+}
+
+.p-multiselect-custom.p-focus {
+  border-color: #1976d2;
+  border-width: 2px;
+  outline: none;
+}
+
+.p-multiselect-custom .p-multiselect-label {
+  padding: 8px 14px;
+  font-size: 1rem;
+  /* Font is inherited from main_fe */
+  line-height: 1.4375em;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.p-multiselect-custom .p-multiselect-label.p-placeholder {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Smaller chips inside MultiSelect */
+.p-multiselect-custom .p-multiselect-token {
+  padding: 2px 8px;
+  margin: 0;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.p-multiselect-custom .p-multiselect-token-icon {
+  font-size: 0.625rem;
+  margin-left: 0;
+  width: 10px;
+  height: 10px;
+}
+
+.p-multiselect-custom.p-disabled {
+  background-color: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.26);
+}
+
+.p-multiselect-custom .p-multiselect-trigger {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+/* Dark mode support for custom MultiSelect */
+.dark .p-multiselect-custom {
+  border-color: rgba(255, 255, 255, 0.23);
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .p-multiselect-custom:not(.p-disabled):hover {
+  border-color: rgba(255, 255, 255, 0.87);
+}
+
+.dark .p-multiselect-custom.p-focus {
+  border-color: #90caf9;
+}
+
+.dark .p-multiselect-custom .p-multiselect-label.p-placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dark .p-multiselect-custom .p-multiselect-trigger {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dark .p-multiselect-custom .p-multiselect-token {
+  background: rgba(144, 202, 249, 0.16);
+  color: #90caf9;
+}
+
+/* PrimeReact InputSwitch Styling - Override theme */
+.p-inputswitch,
+.p-inputswitch.p-component {
+  width: 2.75rem !important;
+  height: 1.5rem !important;
+}
+
+.p-inputswitch .p-inputswitch-slider,
+.p-inputswitch.p-component .p-inputswitch-slider {
+  background: #d1d5db !important;
+  border-radius: 30px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.p-inputswitch .p-inputswitch-slider:before,
+.p-inputswitch.p-component .p-inputswitch-slider:before {
+  background: #ffffff !important;
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  left: 0.1875rem !important;
+  margin-top: -0.5625rem !important;
+  border-radius: 50% !important;
+  transition: transform 0.2s ease, left 0.2s ease !important;
+}
+
+/* Active/Checked state - Blue color */
+.p-inputswitch.p-highlight .p-inputswitch-slider,
+.p-inputswitch.p-component.p-highlight .p-inputswitch-slider,
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider,
+.p-inputswitch[aria-checked="true"] .p-inputswitch-slider,
+input[type="checkbox"]:checked+.p-inputswitch .p-inputswitch-slider {
+  background: #3b82f6 !important;
+}
+
+.p-inputswitch.p-highlight .p-inputswitch-slider:before,
+.p-inputswitch.p-component.p-highlight .p-inputswitch-slider:before,
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before,
+.p-inputswitch[aria-checked="true"] .p-inputswitch-slider:before,
+input[type="checkbox"]:checked+.p-inputswitch .p-inputswitch-slider:before {
+  transform: translateX(1.25rem) !important;
+  left: 0.1875rem !important;
+}
+
+.p-inputswitch:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.p-component:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #9ca3af !important;
+}
+
+.p-inputswitch.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.p-component.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch[aria-checked="true"]:not(.p-disabled):hover .p-inputswitch-slider,
+input[type="checkbox"]:checked+.p-inputswitch:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #2563eb !important;
+}
+
+.p-inputswitch.p-focus .p-inputswitch-slider,
+.p-inputswitch.p-component.p-focus .p-inputswitch-slider,
+.p-inputswitch:focus .p-inputswitch-slider,
+.p-inputswitch.p-component:focus .p-inputswitch-slider {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Dark mode InputSwitch */
+.dark .p-inputswitch .p-inputswitch-slider,
+.dark .p-inputswitch.p-component .p-inputswitch-slider {
+  background: #4b5563 !important;
+}
+
+.dark .p-inputswitch:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch.p-component:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #6b7280 !important;
+}
+
+.dark .p-inputswitch.p-highlight .p-inputswitch-slider,
+.dark .p-inputswitch.p-component.p-highlight .p-inputswitch-slider,
+.dark .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider,
+.dark .p-inputswitch[aria-checked="true"] .p-inputswitch-slider,
+.dark input[type="checkbox"]:checked+.p-inputswitch .p-inputswitch-slider {
+  background: #3b82f6 !important;
+}
+
+.dark .p-inputswitch.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch.p-component.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch[aria-checked="true"]:not(.p-disabled):hover .p-inputswitch-slider,
+.dark input[type="checkbox"]:checked+.p-inputswitch:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #2563eb !important;
+}
+
+/* Green InputSwitch Variant - Thin style */
+.p-inputswitch.input-switch-green,
+.p-inputswitch.input-switch-green.p-component {
+  width: 2.25rem !important;
+  height: 1.25rem !important;
+}
+
+.p-inputswitch.input-switch-green .p-inputswitch-slider:before,
+.p-inputswitch.input-switch-green.p-component .p-inputswitch-slider:before {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  margin-top: -0.4375rem !important;
+}
+
+.p-inputswitch.input-switch-green.p-highlight .p-inputswitch-slider,
+.p-inputswitch.input-switch-green.p-component.p-highlight .p-inputswitch-slider,
+.p-inputswitch.input-switch-green.p-inputswitch-checked .p-inputswitch-slider,
+.p-inputswitch.input-switch-green[aria-checked="true"] .p-inputswitch-slider {
+  background: #22c55e !important;
+}
+
+.p-inputswitch.input-switch-green.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.input-switch-green.p-component.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.input-switch-green.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.p-inputswitch.input-switch-green[aria-checked="true"]:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #16a34a !important;
+}
+
+.p-inputswitch.input-switch-green.p-focus .p-inputswitch-slider,
+.p-inputswitch.input-switch-green:focus .p-inputswitch-slider {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
+}
+
+.p-inputswitch.input-switch-green.p-highlight .p-inputswitch-slider:before,
+.p-inputswitch.input-switch-green.p-inputswitch-checked .p-inputswitch-slider:before,
+.p-inputswitch.input-switch-green[aria-checked="true"] .p-inputswitch-slider:before {
+  transform: translateX(1rem) !important;
+}
+
+/* Dark mode green switch */
+.dark .p-inputswitch.input-switch-green.p-highlight .p-inputswitch-slider,
+.dark .p-inputswitch.input-switch-green.p-inputswitch-checked .p-inputswitch-slider,
+.dark .p-inputswitch.input-switch-green[aria-checked="true"] .p-inputswitch-slider {
+  background: #22c55e !important;
+}
+
+.dark .p-inputswitch.input-switch-green.p-highlight:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch.input-switch-green.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider,
+.dark .p-inputswitch.input-switch-green[aria-checked="true"]:not(.p-disabled):hover .p-inputswitch-slider {
+  background: #16a34a !important;
+}
+
+/* PrimeReact Button Primary Styling */
+.p-button {
+  background: #3b82f6;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: #ffffff;
+}
+
+/* Export button custom padding override */
+.export-button-custom {
+  padding: 8px 18px !important;
+}
+
+.p-button:not(:disabled):hover {
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+.p-button:not(:disabled):active {
+  background: #1d4ed8;
+}
+
+.p-button.p-button-sm {
+  padding: 0.5rem 0.875rem;
+  font-size: 0.8125rem;
+  height: 38px;
+}
+
+/* Secondary Button */
+.p-button.p-button-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.p-button.p-button-secondary:not(:disabled):hover {
+  background: #e5e7eb;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.p-button.p-button-secondary.p-button-outlined {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.p-button.p-button-secondary.p-button-outlined:not(:disabled):hover {
+  background: #f3f4f6;
+}
+
+/* Danger Button */
+.p-button.p-button-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.p-button.p-button-danger:not(:disabled):hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Success Button */
+.p-button.p-button-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.p-button.p-button-success:not(:disabled):hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* Dark mode buttons */
+.dark .p-button.p-button-secondary {
+  background: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+.dark .p-button.p-button-secondary:not(:disabled):hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .p-button.p-button-secondary.p-button-outlined {
+  background: transparent;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .p-button.p-button-secondary.p-button-outlined:not(:disabled):hover {
+  background: #374151;
+}
+
+/* ================================================
+   Dark Mode Styles for PrimeReact Form Components
+   ================================================ */
+
+/* InputText Dark Mode */
+.dark .p-inputtext {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-inputtext:enabled:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-inputtext:enabled:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .p-inputtext::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark .p-inputtext:disabled {
+  background-color: #1f2937 !important;
+  color: #6b7280 !important;
+  opacity: 0.6 !important;
+}
+
+/* InputTextarea Dark Mode */
+.dark .p-inputtextarea {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+  height: auto !important;
+  min-height: auto !important;
+}
+
+.dark .p-inputtextarea:enabled:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-inputtextarea:enabled:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .p-inputtextarea::placeholder {
+  color: #9ca3af !important;
+}
+
+.dark textarea.p-inputtext,
+.dark .p-float-label textarea {
+  height: auto !important;
+  min-height: 80px !important;
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Dropdown Dark Mode */
+.dark .p-dropdown {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-dropdown:not(.p-disabled):hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-dropdown:not(.p-disabled).p-focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .p-dropdown .p-dropdown-label {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-dropdown .p-dropdown-label.p-placeholder {
+  color: #9ca3af !important;
+}
+
+.dark .p-dropdown .p-dropdown-trigger {
+  color: #9ca3af !important;
+}
+
+.dark .p-dropdown-panel {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-items .p-dropdown-item:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+}
+
+/* AutoComplete Dark Mode */
+.dark .p-autocomplete .p-autocomplete-input {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-autocomplete .p-autocomplete-input:enabled:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-autocomplete .p-autocomplete-input:enabled:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .p-autocomplete-panel {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark .p-autocomplete-panel .p-autocomplete-items .p-autocomplete-item.p-highlight {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+}
+
+/* MultiSelect Dark Mode */
+.dark .p-multiselect {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-multiselect:not(.p-disabled):hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-multiselect:not(.p-disabled).p-focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .p-multiselect .p-multiselect-label {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-multiselect .p-multiselect-label.p-placeholder {
+  color: #9ca3af !important;
+}
+
+.dark .p-multiselect .p-multiselect-trigger {
+  color: #9ca3af !important;
+}
+
+.dark .p-multiselect-panel {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-multiselect-panel .p-multiselect-header {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-multiselect-panel .p-multiselect-items .p-multiselect-item:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+}
+
+/* Calendar / DatePicker Dark Mode */
+.dark .p-calendar .p-inputtext {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-calendar .p-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+}
+
+.dark .p-calendar .p-button:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4) !important;
+}
+
+.dark .p-datepicker {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-datepicker .p-datepicker-header {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-datepicker table td>span {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-datepicker table td>span:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark .p-datepicker table td.p-datepicker-today>span {
+  background-color: #4b5563 !important;
+}
+
+.dark .p-datepicker table td>span.p-highlight {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Checkbox Dark Mode */
+.dark .p-checkbox .p-checkbox-box {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-checkbox .p-checkbox-box:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.dark .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.dark .p-checkbox .p-checkbox-box svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+.dark .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon,
+.dark .p-checkbox .p-checkbox-box.p-highlight svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Dark mode MultiSelect panel checkbox */
+.dark .p-multiselect-panel .p-checkbox .p-checkbox-box {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-multiselect-panel .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Dark mode - Selected item checkbox */
+.dark .p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box,
+.dark .p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box,
+.dark .p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box,
+.dark .p-multiselect-panel .p-multiselect-item-selected .p-checkbox .p-checkbox-box {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.dark .p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.dark .p-multiselect-panel .p-multiselect-item.p-highlight .p-checkbox .p-checkbox-box svg,
+.dark .p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box .p-checkbox-icon,
+.dark .p-multiselect-panel .p-multiselect-item[aria-selected="true"] .p-checkbox .p-checkbox-box svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  display: block !important;
+}
+
+/* RadioButton Dark Mode */
+.dark .p-radiobutton .p-radiobutton-box {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-radiobutton .p-radiobutton-box:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-radiobutton .p-radiobutton-box.p-highlight {
+  background-color: #374151 !important;
+  border-color: #3b82f6 !important;
+}
+
+.dark .p-radiobutton .p-radiobutton-box.p-highlight .p-radiobutton-icon {
+  background-color: #3b82f6 !important;
+}
+
+/* ================================================
+   Dialog z-index Management
+   Ensure dropdowns inside dialogs can appear above the dialog mask
+   ================================================ */
+
+/* Dialog mask should have a reasonable z-index */
+.p-dialog-mask,
+.p-component-overlay,
+[class*="dialog-mask"],
+[class*="modal-backdrop"],
+[class*="overlay-mask"] {
+  z-index: 1100 !important;
+}
+
+/* Dialog itself should be just above the mask */
+.p-dialog,
+[class*="dialog-container"] {
+  z-index: 1101 !important;
+}
+
+/* Nested dialogs (dialogs inside dialogs) should stack properly */
+.p-dialog-mask.p-component-overlay-enter~.p-dialog-mask {
+  z-index: 1102 !important;
+}
+
+/* Dialog Dark Mode */
+.dark .p-dialog {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .p-dialog .p-dialog-header {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-dialog .p-dialog-content {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-dialog .p-dialog-footer {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+/* Message/Alert Dark Mode */
+.dark .p-message {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-message .p-message-text {
+  color: #f3f4f6 !important;
+}
+
+/* Toast Dark Mode */
+.dark .p-toast .p-toast-message {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-toast .p-toast-message .p-toast-message-content {
+  color: #f3f4f6 !important;
+}
+
+/* Tag Dark Mode */
+.dark .p-tag {
+  background-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-tag.p-tag-success {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #34d399 !important;
+}
+
+.dark .p-tag.p-tag-warning {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+}
+
+.dark .p-tag.p-tag-danger {
+  background-color: rgba(239, 68, 68, 0.16) !important;
+  color: #f87171 !important;
+}
+
+.dark .p-tag.p-tag-info {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+}
+
+/* DataTable Dark Mode */
+.dark .p-datatable .p-datatable-header {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-datatable .p-datatable-thead>tr>th {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+.dark .p-datatable .p-datatable-tbody>tr {
+  background-color: #1f2937 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody>tr>td {
+  border-color: #374151 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody>tr:hover {
+  background-color: #374151 !important;
+}
+
+.dark .p-datatable .p-datatable-tbody>tr.p-highlight {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+}
+
+.dark .p-datatable .p-paginator {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-paginator .p-paginator-pages .p-paginator-page {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-paginator .p-paginator-pages .p-paginator-page:hover {
+  background-color: #374151 !important;
+}
+
+.dark .p-paginator .p-paginator-pages .p-paginator-page.p-highlight {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* ================================================
+   Paginator Dropdown Styling - Fix double border
+   ================================================ */
+
+.p-paginator .p-dropdown {
+  border: 1px solid #d1d5db !important;
+  border-radius: 6px !important;
+  background-color: #ffffff !important;
+  height: 2rem !important;
+  min-width: 4rem !important;
+}
+
+.p-paginator .p-dropdown:hover {
+  border-color: #9ca3af !important;
+}
+
+.p-paginator .p-dropdown:focus,
+.p-paginator .p-dropdown.p-focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 1px #667eea !important;
+}
+
+.p-paginator .p-dropdown .p-dropdown-label {
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.p-paginator .p-dropdown .p-dropdown-trigger {
+  width: 1.5rem !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Remove any inner borders that cause double border effect */
+.p-paginator .p-dropdown .p-inputtext,
+.p-paginator .p-dropdown .p-dropdown-label-container,
+.p-paginator .p-dropdown .p-hidden-accessible,
+.p-paginator .p-dropdown .p-hidden-accessible input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Dark mode paginator dropdown */
+.dark .p-paginator .p-dropdown {
+  border-color: #4b5563 !important;
+  background-color: #374151 !important;
+}
+
+.dark .p-paginator .p-dropdown:hover {
+  border-color: #6b7280 !important;
+}
+
+.dark .p-paginator .p-dropdown .p-dropdown-label {
+  color: #f3f4f6 !important;
+}
+
+.dark .p-paginator .p-dropdown .p-dropdown-trigger {
+  color: #9ca3af !important;
+}
+
+/* ================================================
+   Accordion Styling - Light Mode
+   ================================================ */
+
+.p-accordion {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.p-accordion .p-accordion-tab {
+  margin-bottom: 0 !important;
+}
+
+.p-accordion .p-accordion-header {
+  border: none !important;
+}
+
+.p-accordion .p-accordion-header .p-accordion-header-link {
+  background-color: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 0 !important;
+  color: #374151 !important;
+  padding: 1rem 1.25rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+/* First tab - rounded top corners */
+.p-accordion .p-accordion-tab:first-child .p-accordion-header .p-accordion-header-link {
+  border-top-left-radius: 8px !important;
+  border-top-right-radius: 8px !important;
+}
+
+/* Last tab - rounded bottom corners when collapsed */
+.p-accordion .p-accordion-tab:last-child .p-accordion-header:not(.p-highlight) .p-accordion-header-link {
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
+
+/* Remove top border from tabs after first */
+.p-accordion .p-accordion-tab:not(:first-child) .p-accordion-header .p-accordion-header-link {
+  border-top: none !important;
+}
+
+.p-accordion .p-accordion-header:not(.p-disabled) .p-accordion-header-link:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link {
+  background-color: #eff6ff !important;
+  border-color: #e5e7eb !important;
+  color: #1d4ed8 !important;
+}
+
+.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link:hover {
+  background-color: #dbeafe !important;
+}
+
+/* Accordion toggle icon */
+.p-accordion .p-accordion-header .p-accordion-header-link .p-accordion-toggle-icon {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+}
+
+.p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link .p-accordion-toggle-icon {
+  color: #1d4ed8 !important;
+}
+
+/* Accordion content */
+.p-accordion .p-accordion-content {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-top: none !important;
+  padding: 1.25rem !important;
+  color: #374151 !important;
+}
+
+/* Last tab content - rounded bottom corners */
+.p-accordion .p-accordion-tab:last-child .p-accordion-content {
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
+
+/* ================================================
+   Accordion Styling - Dark Mode
+   ================================================ */
+
+.dark .p-accordion .p-accordion-header .p-accordion-header-link {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-accordion .p-accordion-header:not(.p-disabled) .p-accordion-header-link:hover {
+  background-color: #4b5563 !important;
+  color: #ffffff !important;
+}
+
+.dark .p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  border-color: #4b5563 !important;
+  color: #93c5fd !important;
+}
+
+.dark .p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link:hover {
+  background-color: rgba(59, 130, 246, 0.24) !important;
+}
+
+.dark .p-accordion .p-accordion-header .p-accordion-header-link .p-accordion-toggle-icon {
+  color: #9ca3af !important;
+}
+
+.dark .p-accordion .p-accordion-header:not(.p-disabled).p-highlight .p-accordion-header-link .p-accordion-toggle-icon {
+  color: #93c5fd !important;
+}
+
+.dark .p-accordion .p-accordion-content {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* OverlayPanel Dark Mode */
+.dark .p-overlaypanel {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+.dark .p-overlaypanel .p-overlaypanel-content {
+  color: #f3f4f6 !important;
+}
+
+/* Divider Dark Mode */
+.dark .p-divider.p-divider-horizontal:before {
+  border-color: #374151 !important;
+}
+
+.dark .p-divider.p-divider-vertical:before {
+  border-color: #374151 !important;
+}
+
+/* Skeleton Dark Mode */
+.dark .p-skeleton {
+  background-color: #374151 !important;
+}
+
+.dark .p-skeleton:after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0)) !important;
+}
+
+/* FileUpload Dark Mode */
+.dark .p-fileupload .p-fileupload-buttonbar {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .p-fileupload .p-fileupload-content {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* ProgressSpinner Dark Mode - adjust track color */
+.dark .p-progress-spinner-circle {
+  stroke: #4b5563 !important;
+}
+
+/* Discard Changes Dialog - Using Tailwind @apply */
+.discard-changes-dialog .p-dialog-header {
+  @apply p-4 px-6;
+}
+
+.discard-changes-dialog .p-dialog-header .p-dialog-title {
+  @apply text-lg font-semibold;
+}
+
+.discard-changes-dialog .p-dialog-content {
+  @apply px-6 py-4;
+}
+
+.discard-changes-dialog .p-dialog-footer {
+  @apply p-4 px-6;
+}
+
+/* Delete Confirm Dialog - Using Tailwind @apply */
+.delete-confirm-dialog .p-dialog-header {
+  @apply p-4 px-6;
+}
+
+.delete-confirm-dialog .p-dialog-header .p-dialog-title {
+  @apply text-lg font-semibold;
+}
+
+.delete-confirm-dialog .p-dialog-content {
+  @apply px-6 py-4;
+}
+
+.delete-confirm-dialog .p-dialog-footer {
+  @apply p-4 px-6;
+}
+
+/* Restore Confirm Dialog - Using Tailwind @apply */
+.restore-confirm-dialog .p-dialog-header {
+  @apply p-4 px-6;
+}
+
+.restore-confirm-dialog .p-dialog-header .p-dialog-title {
+  @apply text-lg font-semibold;
+}
+
+.restore-confirm-dialog .p-dialog-content {
+  @apply px-6 py-4;
+}
+
+.restore-confirm-dialog .p-dialog-footer {
+  @apply p-4 px-6;
+}
+
+/* ================================================
+   Tooltip Styling - Curved corners and modern look
+   ================================================ */
+
+.p-tooltip {
+  z-index: 9999 !important;
+}
+
+.p-tooltip .p-tooltip-text {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  max-width: 250px !important;
+  white-space: nowrap !important;
+}
+
+.p-tooltip.p-tooltip-top .p-tooltip-arrow {
+  border-top-color: #1f2937 !important;
+}
+
+.p-tooltip.p-tooltip-bottom .p-tooltip-arrow {
+  border-bottom-color: #1f2937 !important;
+}
+
+.p-tooltip.p-tooltip-left .p-tooltip-arrow {
+  border-left-color: #1f2937 !important;
+}
+
+.p-tooltip.p-tooltip-right .p-tooltip-arrow {
+  border-right-color: #1f2937 !important;
+}
+
+/* ================================================
+   Actions Column Header - Center Alignment
+   ================================================ */
+
+/* Center align the Actions column header (last column in tables) */
+.p-datatable .p-datatable-thead>tr>th:last-child {
+  text-align: center !important;
+}
+
+.p-datatable .p-datatable-thead>tr>th:last-child .p-column-header-content {
+  justify-content: center !important;
+}
+
+.p-datatable .p-datatable-thead>tr>th:last-child .p-column-title {
+  text-align: center !important;
+}
+
+/* ================================================
+   Actions Menu Styling
+   ================================================ */
+
+/* Menu popup container */
+.p-menu.p-menu-overlay {
+  min-width: 160px !important;
+  padding: 0.5rem 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+/* Menu items */
+.p-menu .p-menuitem {
+  margin: 0 !important;
+}
+
+.p-menu .p-menuitem-link {
+  padding: 0.625rem 1rem !important;
+  border-radius: 0 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.p-menu .p-menuitem-link:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.p-menu .p-menuitem-icon {
+  margin-right: 0.75rem !important;
+  font-size: 1rem !important;
+}
+
+.p-menu .p-menuitem-text {
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+}
+
+/* View action - green */
+.p-menu .p-menuitem.action-menu-view .p-menuitem-icon,
+.p-menu .action-menu-view .p-menuitem-icon {
+  color: #16a34a !important;
+}
+
+.p-menu .p-menuitem.action-menu-view:hover .p-menuitem-link,
+.p-menu .action-menu-view:hover .p-menuitem-link {
+  background-color: #f0fdf4 !important;
+}
+
+/* Edit action - blue */
+.p-menu .p-menuitem.action-menu-edit .p-menuitem-icon,
+.p-menu .action-menu-edit .p-menuitem-icon {
+  color: #2563eb !important;
+}
+
+.p-menu .p-menuitem.action-menu-edit:hover .p-menuitem-link,
+.p-menu .action-menu-edit:hover .p-menuitem-link {
+  background-color: #eff6ff !important;
+}
+
+/* Delete action - red */
+.p-menu .p-menuitem.action-menu-delete .p-menuitem-icon,
+.p-menu .action-menu-delete .p-menuitem-icon {
+  color: #dc2626 !important;
+}
+
+.p-menu .p-menuitem.action-menu-delete:hover .p-menuitem-link,
+.p-menu .action-menu-delete:hover .p-menuitem-link {
+  background-color: #fef2f2 !important;
+}
+
+/* Add Child Unit action - purple */
+.p-menu .p-menuitem.action-menu-add .p-menuitem-icon,
+.p-menu .action-menu-add .p-menuitem-icon {
+  color: #9333ea !important;
+}
+
+.p-menu .p-menuitem.action-menu-add:hover .p-menuitem-link,
+.p-menu .action-menu-add:hover .p-menuitem-link {
+  background-color: #faf5ff !important;
+}
+
+/* Dark mode support */
+.dark .p-menu.p-menu-overlay,
+[data-theme='dark'] .p-menu.p-menu-overlay {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .p-menu .p-menuitem-link:hover,
+[data-theme='dark'] .p-menu .p-menuitem-link:hover {
+  background-color: #374151 !important;
+}
+
+.dark .p-menu .p-menuitem-text,
+[data-theme='dark'] .p-menu .p-menuitem-text {
+  color: #e5e7eb !important;
+}
+
+.dark .p-menu .action-menu-view:hover .p-menuitem-link,
+[data-theme='dark'] .p-menu .action-menu-view:hover .p-menuitem-link {
+  background-color: rgba(22, 163, 74, 0.15) !important;
+}
+
+.dark .p-menu .action-menu-edit:hover .p-menuitem-link,
+[data-theme='dark'] .p-menu .action-menu-edit:hover .p-menuitem-link {
+  background-color: rgba(37, 99, 235, 0.15) !important;
+}
+
+.dark .p-menu .action-menu-delete:hover .p-menuitem-link,
+[data-theme='dark'] .p-menu .action-menu-delete:hover .p-menuitem-link {
+  background-color: rgba(220, 38, 38, 0.15) !important;
+}
+
+.dark .p-menu .action-menu-add:hover .p-menuitem-link,
+[data-theme='dark'] .p-menu .action-menu-add:hover .p-menuitem-link {
+  background-color: rgba(147, 51, 234, 0.15) !important;
+}
+
+
+
+/* ============================================
+   Sticky DataTable Headers - Global Fix
+   Makes table column headers freeze/stick at the
+   top of the scrollable content area (below breadcrumb)
+   when scrolling list/master pages.
+   ============================================ */
+
+/* ============================================
+   TABLE STICKY HEADERS & HORIZONTAL SCROLL
+   Due to CSS coercing overflow-y to auto when overflow-x: auto is used,
+   putting horizontal scroll on the table wrapper traps vertical sticky headers.
+   The solution: allow the page container to handle horizontal scroll, but pin
+   non-table rows to the left so they don't scroll visually.
+   ============================================ */
+
+/* Make direct children of the scrollableContent wrapper take exactly 100% width
+   so they don't compute to the scrollWidth created by the wide datatable. */
+[class*="scrollableContent"]>div {
+  width: 100% !important;
+}
+
+/* Everything inside the page wrapper that IS NOT the datatable stays pinned left.
+   This counteracts the horizontal scroll algorithm so filters/stats look fixed!
+   left: 0.75rem accounts for the px-3 padding typically present on the layout wrapper. */
+[class*="scrollableContent"]>div>*:not(:has(.p-datatable)) {
+  position: sticky;
+  left: 0.75rem;
+  z-index: 5;
+}
+
+/* Make thead sticky within the scrollableContent scroll container */
+[class*="scrollableContent"] .p-datatable-thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+[class*="scrollableContent"] .p-datatable-thead>tr>th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+/* Hide scrollbar completely while maintaining scroll functionality */
+.hide-scrollbar {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}

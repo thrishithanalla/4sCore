@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - dev
+      - qa
+      - training
+
+resources:
+  repositories:
+  - repository: shared
+    type: git
+    name: AI4AndhraPolice_Pilot/azure_pipelines
+    ref: refs/heads/cicd_pipelines
+
+extends:
+  template: cicd/cicd_base.yaml@shared
+  parameters:
+    # ---------- ACR Repo and dockerfile path and name ----------
+    imageName:  'uc2-core-fe'
+    dockerContext: '.'
+    dockerfile: 'dockerfile'
+
+    # where manifests live
+    manifestsRoot: 'k8s_manifests'
+    sharedRepoAlias: 'shared'
+
+    # ACR
+    acrName: 'ai4andhrapoliceinternal'
+    acrLoginServiceConnection: 'ACR-ai4andhrapoliceinternal'
+    baseAcrLoginServiceConnection: 'ACR-baseimages'
+
+    # ---------- Environment-specific parameters ----------
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      environmentName: 'qa'
+      k8sNamespace: 'qa'
+      kubernetesServiceConnection: 'AKS-ai4ap-qa'
+      tagPrefix: 'qa'
+      k8sDeploymentName: 'qa-core-fe'
+      dockerBuildArgs: |
+        BUILD_ENV=qa
+
+    ${{ elseif eq(variables['Build.SourceBranch'], 'refs/heads/training') }}:
+      environmentName: 'training'
+      k8sNamespace: 'training'
+      kubernetesServiceConnection: 'AKS-ai4ap-training'
+      tagPrefix: 'training'
+      k8sDeploymentName: 'training-core-fe'
+      dockerBuildArgs: |
+        BUILD_ENV=training
+
+    ${{ else }}:
+      # Default: dev branch
+      environmentName: 'dev'
+      k8sNamespace: 'dev'
+      kubernetesServiceConnection: 'AKS-ai4ap-dev'
+      tagPrefix: 'dev'
+      k8sDeploymentName: 'dev-core-fe'
+      dockerBuildArgs: |
+        BUILD_ENV=dev
+
+    # Common manifest settings (same for all environments)
+    manifestDir: 'frontend_manifests'
+    manifestFile: 'core_manifest.yaml'

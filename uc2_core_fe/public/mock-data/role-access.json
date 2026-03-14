@@ -1,0 +1,174 @@
+{
+  "roleAccessOptions": [
+    {
+      "id": "direct-tax",
+      "label": "Direct Tax",
+      "value": "DirectTax",
+      "modules": [
+        {
+          "id": "admin",
+          "name": "Admin",
+          "label": "Admin - All permissions of client admin",
+          "permissionCount": 8,
+          "permissions": [
+            { "id": "admin-dashboards", "name": "Dashboards", "resource": "admin.dashboards" },
+            { "id": "admin-litigation", "name": "Litigation", "resource": "admin.litigation" },
+            { "id": "admin-payments", "name": "Payments", "resource": "admin.payments" },
+            { "id": "admin-reports", "name": "Reports", "resource": "admin.reports" },
+            { "id": "admin-ppr", "name": "PPR Analysis", "resource": "admin.ppr" },
+            { "id": "admin-docs", "name": "Document Repository", "resource": "admin.documents" },
+            { "id": "admin-tax-updates", "name": "Tax & Regulatory Updates", "resource": "admin.tax_updates" },
+            { "id": "admin-ai", "name": "AI LicAssist", "resource": "admin.ai_assist" }
+          ]
+        },
+        {
+          "id": "home",
+          "name": "Home",
+          "label": "Home - Combined Dashboard",
+          "permissionCount": 1,
+          "permissions": [
+            { "id": "home-dashboard", "name": "Combined Dashboard", "resource": "home.dashboard" }
+          ]
+        },
+        {
+          "id": "direct-tax",
+          "name": "Direct Tax",
+          "label": "Direct Tax",
+          "permissionCount": 8,
+          "permissions": [
+            { "id": "dt-dashboards", "name": "Dashboards", "resource": "direct_tax.dashboards" },
+            { "id": "dt-litigation", "name": "Litigation", "resource": "direct_tax.litigation" },
+            { "id": "dt-payments", "name": "Payments", "resource": "direct_tax.payments" },
+            { "id": "dt-reports", "name": "Reports", "resource": "direct_tax.reports" },
+            { "id": "dt-ppr", "name": "PPR Analysis", "resource": "direct_tax.ppr" },
+            { "id": "dt-docs", "name": "Document Repository", "resource": "direct_tax.documents" },
+            { "id": "dt-tax-updates", "name": "Tax & Regulatory Updates", "resource": "direct_tax.tax_updates" },
+            { "id": "dt-ai", "name": "AI LicAssist", "resource": "direct_tax.ai_assist" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "indirect-tax",
+      "label": "Indirect Tax",
+      "value": "IndirectTax",
+      "modules": [
+        {
+          "id": "admin",
+          "name": "Admin",
+          "label": "Admin - All permissions of client admin",
+          "permissionCount": 8,
+          "permissions": [
+            { "id": "admin-dashboards", "name": "Dashboards", "resource": "admin.dashboards" },
+            { "id": "admin-litigation", "name": "Litigation", "resource": "admin.litigation" },
+            { "id": "admin-payments", "name": "Payments", "resource": "admin.payments" },
+            { "id": "admin-reports", "name": "Reports", "resource": "admin.reports" },
+            { "id": "admin-ppr", "name": "PPR Analysis", "resource": "admin.ppr" },
+            { "id": "admin-docs", "name": "Document Repository", "resource": "admin.documents" },
+            { "id": "admin-tax-updates", "name": "Tax & Regulatory Updates", "resource": "admin.tax_updates" },
+            { "id": "admin-ai", "name": "AI LicAssist", "resource": "admin.ai_assist" }
+          ]
+        },
+        {
+          "id": "home",
+          "name": "Home",
+          "label": "Home - Combined Dashboard",
+          "permissionCount": 1,
+          "permissions": [
+            { "id": "home-dashboard", "name": "Combined Dashboard", "resource": "home.dashboard" }
+          ]
+        },
+        {
+          "id": "indirect-tax",
+          "name": "Indirect Tax",
+          "label": "Indirect Tax",
+          "permissionCount": 13,
+          "permissions": [
+            { "id": "it-dashboards", "name": "Dashboards", "resource": "indirect_tax.dashboards" },
+            { "id": "it-litigation", "name": "Litigation", "resource": "indirect_tax.litigation" },
+            { "id": "it-payments", "name": "Payments", "resource": "indirect_tax.payments" },
+            { "id": "it-reports", "name": "Reports", "resource": "indirect_tax.reports" },
+            { "id": "it-ppr", "name": "PPR Analysis", "resource": "indirect_tax.ppr" },
+            { "id": "it-docs", "name": "Document Repository", "resource": "indirect_tax.documents" },
+            { "id": "it-tax-updates", "name": "Tax & Regulatory Updates", "resource": "indirect_tax.tax_updates" },
+            { "id": "it-ai", "name": "AI LicAssist", "resource": "indirect_tax.ai_assist" },
+            { "id": "it-gst-returns", "name": "GST Returns", "resource": "indirect_tax.gst_returns" },
+            { "id": "it-input-credit", "name": "Input Tax Credit", "resource": "indirect_tax.input_credit" },
+            { "id": "it-notices", "name": "Notices & Orders", "resource": "indirect_tax.notices" },
+            { "id": "it-reconciliation", "name": "Reconciliation", "resource": "indirect_tax.reconciliation" },
+            { "id": "it-compliance", "name": "Compliance Calendar", "resource": "indirect_tax.compliance" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "both",
+      "label": "Both (Direct Tax & Indirect Tax)",
+      "value": "Both",
+      "modules": [
+        {
+          "id": "admin",
+          "name": "Admin",
+          "label": "Admin - All permissions of client admin",
+          "permissionCount": 8,
+          "permissions": [
+            { "id": "admin-dashboards", "name": "Dashboards", "resource": "admin.dashboards" },
+            { "id": "admin-litigation", "name": "Litigation", "resource": "admin.litigation" },
+            { "id": "admin-payments", "name": "Payments", "resource": "admin.payments" },
+            { "id": "admin-reports", "name": "Reports", "resource": "admin.reports" },
+            { "id": "admin-ppr", "name": "PPR Analysis", "resource": "admin.ppr" },
+            { "id": "admin-docs", "name": "Document Repository", "resource": "admin.documents" },
+            { "id": "admin-tax-updates", "name": "Tax & Regulatory Updates", "resource": "admin.tax_updates" },
+            { "id": "admin-ai", "name": "AI LicAssist", "resource": "admin.ai_assist" }
+          ]
+        },
+        {
+          "id": "home",
+          "name": "Home",
+          "label": "Home - Combined Dashboard",
+          "permissionCount": 1,
+          "permissions": [
+            { "id": "home-dashboard", "name": "Combined Dashboard", "resource": "home.dashboard" }
+          ]
+        },
+        {
+          "id": "direct-tax",
+          "name": "Direct Tax",
+          "label": "Direct Tax",
+          "permissionCount": 8,
+          "permissions": [
+            { "id": "dt-dashboards", "name": "Dashboards", "resource": "direct_tax.dashboards" },
+            { "id": "dt-litigation", "name": "Litigation", "resource": "direct_tax.litigation" },
+            { "id": "dt-payments", "name": "Payments", "resource": "direct_tax.payments" },
+            { "id": "dt-reports", "name": "Reports", "resource": "direct_tax.reports" },
+            { "id": "dt-ppr", "name": "PPR Analysis", "resource": "direct_tax.ppr" },
+            { "id": "dt-docs", "name": "Document Repository", "resource": "direct_tax.documents" },
+            { "id": "dt-tax-updates", "name": "Tax & Regulatory Updates", "resource": "direct_tax.tax_updates" },
+            { "id": "dt-ai", "name": "AI LicAssist", "resource": "direct_tax.ai_assist" }
+          ]
+        },
+        {
+          "id": "indirect-tax",
+          "name": "Indirect Tax",
+          "label": "Indirect Tax",
+          "permissionCount": 13,
+          "permissions": [
+            { "id": "it-dashboards", "name": "Dashboards", "resource": "indirect_tax.dashboards" },
+            { "id": "it-litigation", "name": "Litigation", "resource": "indirect_tax.litigation" },
+            { "id": "it-payments", "name": "Payments", "resource": "indirect_tax.payments" },
+            { "id": "it-reports", "name": "Reports", "resource": "indirect_tax.reports" },
+            { "id": "it-ppr", "name": "PPR Analysis", "resource": "indirect_tax.ppr" },
+            { "id": "it-docs", "name": "Document Repository", "resource": "indirect_tax.documents" },
+            { "id": "it-tax-updates", "name": "Tax & Regulatory Updates", "resource": "indirect_tax.tax_updates" },
+            { "id": "it-ai", "name": "AI LicAssist", "resource": "indirect_tax.ai_assist" },
+            { "id": "it-gst-returns", "name": "GST Returns", "resource": "indirect_tax.gst_returns" },
+            { "id": "it-input-credit", "name": "Input Tax Credit", "resource": "indirect_tax.input_credit" },
+            { "id": "it-notices", "name": "Notices & Orders", "resource": "indirect_tax.notices" },
+            { "id": "it-reconciliation", "name": "Reconciliation", "resource": "indirect_tax.reconciliation" },
+            { "id": "it-compliance", "name": "Compliance Calendar", "resource": "indirect_tax.compliance" }
+          ]
+        }
+      ]
+    }
+  ]
+}

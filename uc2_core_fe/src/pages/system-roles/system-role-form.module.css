@@ -1,0 +1,491 @@
+/**
+ * System Role Form Styles
+ * Following UC3 design standards with CSS Modules for scoped styling
+ * Uses FormCard component from mainFe for container
+ * Supports: Theme compatibility, responsive design, dark mode
+ */
+
+/* =============================================
+   PAGE WRAPPER
+   ============================================= */
+
+.pageWrapper {
+  /* No padding - FormCard component handles internal padding */
+}
+
+/* =============================================
+   LOADING STATE
+   ============================================= */
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1rem;
+}
+
+.loadingText {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* =============================================
+   FORM SECTIONS
+   ============================================= */
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.formSection:first-child {
+  margin-top: 0;
+}
+
+[data-theme='dark'] .formSection,
+.dark .formSection {
+  /* Section styling for dark mode if needed */
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.sectionHeader i {
+  color: var(--text-secondary, #6b7280);
+}
+
+[data-theme='dark'] .sectionHeader,
+.dark .sectionHeader {
+  color: var(--text-secondary, #9ca3af);
+  border-bottom-color: var(--border-color, #374151);
+}
+
+.sectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.sectionTitle {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  margin: 0;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.sectionDescription {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0.25rem 0 0 0;
+  margin-left: calc(1.75rem + 0.5rem); /* Align with title */
+}
+
+/* =============================================
+   FORM GRID
+   ============================================= */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+@media (max-width: 1024px) {
+  .formGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+/* =============================================
+   FORM FIELDS
+   ============================================= */
+
+.fieldWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fieldLabel {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+[data-theme='dark'] .fieldLabel,
+.dark .fieldLabel {
+  color: var(--text-primary, #d1d5db);
+}
+
+.requiredMark {
+  color: var(--error-color, #ef4444);
+}
+
+.fieldError {
+  font-size: 0.6875rem;
+  color: var(--error-color, #ef4444);
+  margin-top: 0.25rem;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin-top: 0.25rem;
+}
+
+/* =============================================
+   MODULE SELECTOR
+   ============================================= */
+
+.moduleSelector {
+  margin-top: var(--space-md, 0.75rem);
+  width: 500px;
+}
+
+/* Fix MultiSelect width and enable chip wrapping */
+.moduleSelector :global(.p-multiselect) {
+  width: 500px !important;
+}
+
+@media (max-width: 768px) {
+  .moduleSelector {
+    width: 100%;
+  }
+
+  .moduleSelector :global(.p-multiselect) {
+    width: 100% !important;
+  }
+}
+
+.moduleSelector :global(.p-multiselect-label) {
+  white-space: normal;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-height: 2.5rem;
+  height: auto;
+  align-items: center;
+}
+
+.moduleSelector :global(.p-multiselect-token) {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.moduleSelector :global(.p-multiselect-trigger) {
+  flex-shrink: 0;
+}
+
+/* =============================================
+   ROLE BINDING TABLE
+   ============================================= */
+
+.roleBindingTable {
+  margin-top: var(--space-lg, 1rem);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-md, 0.5rem);
+  overflow: visible;
+}
+
+[data-theme='dark'] .roleBindingTable,
+.dark .roleBindingTable {
+  border-color: var(--border-color, #4b5563);
+}
+
+.roleBindingTableHeader {
+  display: grid;
+  grid-template-columns: 150px 1fr 50px;
+  gap: var(--space-md, 0.75rem);
+  padding: var(--space-sm, 0.5rem) var(--space-md, 0.75rem);
+  background: var(--bg-secondary, #f3f4f6);
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+[data-theme='dark'] .roleBindingTableHeader,
+.dark .roleBindingTableHeader {
+  background: var(--bg-tertiary, #374151);
+  border-color: var(--border-color, #4b5563);
+  color: var(--text-secondary, #9ca3af);
+}
+
+.roleBindingTableHeaderCell {
+  display: flex;
+  align-items: center;
+}
+
+.roleBindingTableRow {
+  display: grid;
+  grid-template-columns: 150px 1fr 50px;
+  gap: var(--space-md, 0.75rem);
+  padding: var(--space-sm, 0.5rem) var(--space-md, 0.75rem);
+  align-items: center;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  transition: background 0.15s ease;
+}
+
+.roleBindingTableRow:last-child {
+  border-bottom: none;
+}
+
+.roleBindingTableRow:hover {
+  background: var(--bg-secondary, #f9fafb);
+}
+
+[data-theme='dark'] .roleBindingTableRow,
+.dark .roleBindingTableRow {
+  border-color: var(--border-color, #4b5563);
+}
+
+[data-theme='dark'] .roleBindingTableRow:hover,
+.dark .roleBindingTableRow:hover {
+  background: var(--bg-tertiary, #374151);
+}
+
+.roleBindingTableCell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.roleBindingTableCell:last-child {
+  justify-content: center;
+}
+
+/* Role Dropdown Styles - Fixed width with text truncation */
+.roleDropdown {
+  min-width: 0;
+  width: 100%;
+  overflow: visible;
+  position: relative;
+}
+
+.roleDropdown > div {
+  width: 100%;
+}
+
+.roleDropdown :global(.p-dropdown) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.roleDropdown :global(.p-dropdown-label) {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+
+.roleDropdown :global(.p-dropdown-panel) {
+  width: fit-content !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Remove Button Styles */
+.removeBtn {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  min-width: 1.5rem !important;
+  padding: 0 !important;
+  border: 1px solid var(--error-color, #ef4444) !important;
+  color: var(--error-color, #ef4444) !important;
+  background: transparent !important;
+  transition: all 0.2s ease !important;
+}
+
+.removeBtn:hover {
+  border-color: var(--error-color, #ef4444) !important;
+  background: var(--error-color, #ef4444) !important;
+  background-color: var(--error-color, #ef4444) !important;
+  color: white !important;
+}
+
+.removeBtn :global(.p-button-icon) {
+  font-size: 0.625rem !important;
+}
+
+[data-theme='dark'] .removeBtn {
+  border-color: #f87171 !important;
+  color: #f87171 !important;
+}
+
+[data-theme='dark'] .removeBtn:hover,
+[data-theme='dark'] .removeBtn:global(.p-button):hover,
+.dark .removeBtn:hover,
+.dark .removeBtn:global(.p-button):hover {
+  background: #ef4444 !important;
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+
+/* =============================================
+   EMPTY STATE
+   ============================================= */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl, 2rem) var(--space-xl, 1.5rem);
+  margin-top: var(--space-lg, 1rem);
+  background: var(--bg-secondary, #f9fafb);
+  border: 2px dashed var(--border-color, #d1d5db);
+  border-radius: var(--border-radius-md, 0.5rem);
+  text-align: center;
+}
+
+[data-theme='dark'] .emptyState,
+.dark .emptyState {
+  background: var(--bg-tertiary, #374151);
+  border-color: var(--border-color, #4b5563);
+}
+
+.emptyStateIcon {
+  font-size: 2.5rem;
+  color: var(--text-tertiary, #9ca3af);
+  margin-bottom: var(--space-md, 0.75rem);
+}
+
+.emptyStateTitle {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
+  margin: 0 0 0.25rem 0;
+}
+
+[data-theme='dark'] .emptyStateTitle,
+.dark .emptyStateTitle {
+  color: var(--text-primary, #d1d5db);
+}
+
+.emptyStateDescription {
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0;
+}
+
+/* =============================================
+   ERROR MESSAGE
+   ============================================= */
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  padding: var(--space-sm, 0.5rem) var(--space-md, 0.75rem);
+  margin-bottom: var(--space-md, 0.75rem);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-sm, 0.375rem);
+  color: var(--error-color, #ef4444);
+  font-size: 0.8125rem;
+}
+
+.errorMessage i {
+  font-size: 1rem;
+}
+
+/* =============================================
+   EMBEDDED MODE
+   ============================================= */
+
+.embeddedContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg, 1rem);
+}
+
+.embeddedSection {
+  padding: var(--space-lg, 1rem);
+  background: var(--bg-secondary, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--border-radius-md, 0.5rem);
+}
+
+[data-theme='dark'] .embeddedSection,
+.dark .embeddedSection {
+  background: var(--bg-tertiary, #374151);
+  border-color: var(--border-color, #4b5563);
+}
+
+/* =============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================= */
+
+/* Tablet and below - Make role column flexible */
+@media (max-width: 1024px) {
+  .roleBindingTable {
+    overflow-x: auto;
+  }
+}
+
+/* Mobile - Stack items vertically */
+@media (max-width: 768px) {
+  .formSection {
+    padding: var(--space-md, 0.75rem) 0;
+  }
+
+  .roleBindingTableHeader {
+    display: none;
+  }
+
+  .roleBindingTableRow {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm, 0.5rem);
+    padding: var(--space-md, 0.75rem);
+  }
+
+  .roleBindingTableCell:last-child {
+    justify-content: flex-end;
+  }
+
+  .roleDropdown {
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .roleDropdown :global(.p-dropdown) {
+    max-width: 100% !important;
+  }
+}

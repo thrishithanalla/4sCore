@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"config|\\\\.js$|\\\\.ts$|babel|craco\")",
+      "Bash(grep -rho \"from ''''mainFe/[^'''']*''''\" src/)",
+      "Bash(npx webpack:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(xargs sed:*)",
+      "Bash(xargs -I {} grep -l . {})",
+      "Bash(sed -i 's/process\\\\.env\\\\.NOTIFICATIONS_API_BASE_URL/import.meta.env.VITE_NOTIFICATIONS_API_BASE_URL/g' src/services/notifications-master.service.ts src/services/notification-value-sets.service.ts)",
+      "Bash(sed -i 's/process\\\\.env\\\\.AUDITLOG_API_BASE_URL/import.meta.env.VITE_AUDITLOG_API_BASE_URL/g' src/services/log-transaction.service.ts src/services/auditlog-api.ts)",
+      "Bash(sed -i 's/process\\\\.env\\\\.FILE_UPLOAD_API/import.meta.env.VITE_FILE_UPLOAD_API/g' src/services/file-upload.service.ts src/pages/units/unit-view.tsx)",
+      "Bash(npx vite:*)",
+      "Bash(find c:/Users/trish/OneDrive/Documents/4sight/core_fe/uc2_core_fe -name .env* -o -name vite.config*)",
+      "Bash(curl -s \"http://localhost:8000/core/api/v1/error-master/list\")",
+      "Bash(curl -s \"http://localhost:8000/core/\")",
+      "Bash(curl -s \"http://localhost:8000/error-service/\")",
+      "Bash(find /c/Users/trish -type f -name *main.py)"
+    ]
+  }
+}

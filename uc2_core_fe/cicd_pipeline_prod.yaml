@@ -1,0 +1,34 @@
+# Prod deployment pipeline for core-fe
+trigger:
+  branches:
+    include:
+      - main
+
+resources:
+  repositories:
+  - repository: shared
+    type: git
+    name: AI4AndhraPolice_Pilot/azure_pipelines
+    ref: refs/heads/cicd_pipelines
+
+extends:
+  template: cicd/cicd_base.yaml@shared
+  parameters:
+    imageName: 'uc2-core-fe'
+    dockerContext: '.'
+    dockerfile: 'dockerfile'
+    manifestsRoot: 'k8s_manifests'
+    sharedRepoAlias: 'shared'
+    acrName: 'AI4AndhraPoliceProd'
+    acrLoginServiceConnection: 'ACR-AI4AndhraPoliceProd'
+    baseAcrLoginServiceConnection: 'ACR-baseimages'
+    manifestDir: 'frontend_manifests'
+    manifestFile: 'core_manifest.yaml'
+    environmentName: 'prod'
+    k8sNamespace: 'prod'
+    kubernetesServiceConnection: 'AKS-ai4ap-prod'
+    tagPrefix: 'prod'
+    k8sDeploymentName: 'prod-core-fe'
+    azureEnvironment: 'Production'
+    dockerBuildArgs: |
+      BUILD_ENV=production

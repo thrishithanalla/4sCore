@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Management - AP Police</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        const Plus = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const ChevronDown = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        );
+
+        const ChevronRight = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+
+        const Edit = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        );
+
+        const Eye = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        );
+
+        const X = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const Users = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+        );
+
+        const initialUnits = {
+            id: 1,
+            name: 'DGP Office',
+            icon: '🏛️',
+            level: 'DGP Office',
+            officer: 'DGP',
+            personnel: 50,
+            posts: 8,
+            children: [
+                {
+                    id: 2,
+                    name: 'Guntur Region',
+                    icon: '🌐',
+                    level: 'Region',
+                    officer: 'IGP',
+                    personnel: 1243,
+                    posts: 45,
+                    children: [
+                        {
+                            id: 3,
+                            name: 'Guntur Range',
+                            icon: '📍',
+                            level: 'Range',
+                            officer: 'DIG',
+                            personnel: 823,
+                            posts: 32,
+                            children: [
+                                {
+                                    id: 4,
+                                    name: 'Guntur DPO',
+                                    icon: '🏢',
+                                    level: 'District',
+                                    officer: 'SP TUSHAR DUDI',
+                                    personnel: 456,
+                                    posts: 28,
+                                    children: [
+                                        {
+                                            id: 5,
+                                            name: 'Guntur I Town',
+                                            icon: '🏪',
+                                            level: 'Sub-Division',
+                                            officer: 'DSP',
+                                            personnel: 234,
+                                            posts: 15,
+                                            children: [
+                                                {
+                                                    id: 6,
+                                                    name: 'Guntur I Circle',
+                                                    icon: '⭕',
+                                                    level: 'Circle',
+                                                    officer: 'CI',
+                                                    personnel: 156,
+                                                    posts: 12,
+                                                    children: [
+                                                        { id: 7, name: 'Arundelpet PS', icon: '🚔', level: 'Police Station', officer: 'SI', personnel: 56, posts: 4, children: [] },
+                                                        { id: 8, name: 'Koritepadu PS', icon: '🚔', level: 'Police Station', officer: 'SI', personnel: 48, posts: 4, children: [] }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const UnitNode = ({ unit, level, onExpand, expanded, onView }) => {
+            const hasChildren = unit.children && unit.children.length > 0;
+            const isExpanded = expanded.includes(unit.id);
+
+            return (
+                <div className="ml-4">
+                    <div className="flex items-center gap-2 py-2 hover:bg-gray-50 rounded px-2">
+                        {hasChildren && (
+                            <button 
+                                onClick={() => onExpand(unit.id)}
+                                className="text-gray-600 hover:text-gray-800"
+                            >
+                                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            </button>
+                        )}
+                        {!hasChildren && <div className="w-4"></div>}
+                        
+                        <span className="text-xl">{unit.icon}</span>
+                        <span className="font-medium text-gray-800">{unit.name}</span>
+                        <span className="text-xs text-gray-500">({unit.level})</span>
+                        
+                        <div className="ml-auto flex items-center gap-2">
+                            <span className="text-xs text-gray-600">👤 {unit.officer}</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                {unit.personnel} personnel
+                            </span>
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                {unit.posts} posts
+                            </span>
+                            <button 
+                                onClick={() => onView(unit)}
+                                className="text-blue-600 hover:text-blue-800"
+                            >
+                                <Eye size={16} />
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {isExpanded && hasChildren && (
+                        <div className="border-l-2 border-gray-200 ml-2">
+                            {unit.children.map(child => (
+                                <UnitNode 
+                                    key={child.id} 
+                                    unit={child} 
+                                    level={level + 1}
+                                    onExpand={onExpand}
+                                    expanded={expanded}
+                                    onView={onView}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const UnitManagement = () => {
+            const [units, setUnits] = useState(initialUnits);
+            const [expandedUnits, setExpandedUnits] = useState([1, 2, 3]);
+            const [selectedUnit, setSelectedUnit] = useState(null);
+            const [showDetailPanel, setShowDetailPanel] = useState(false);
+
+            const toggleExpand = (unitId) => {
+                if (expandedUnits.includes(unitId)) {
+                    setExpandedUnits(expandedUnits.filter(id => id !== unitId));
+                } else {
+                    setExpandedUnits([...expandedUnits, unitId]);
+                }
+            };
+
+            const handleViewUnit = (unit) => {
+                setSelectedUnit(unit);
+                setShowDetailPanel(true);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 flex">
+                    <div className="flex-1">
+                        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6 shadow-lg">
+                            <div className="max-w-7xl mx-auto">
+                                <h1 className="text-3xl font-bold">🏢 Unit Management</h1>
+                                <p className="text-blue-100 mt-2">Andhra Pradesh Police Organizational Structure</p>
+                            </div>
+                        </div>
+
+                        <div className="max-w-7xl mx-auto p-6">
+                            <div className="text-sm text-gray-600 mb-6">
+                                Home &gt; Admin &gt; <span className="text-blue-600 font-semibold">Units</span>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex gap-3">
+                                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                                    <Plus size={16} /> Add Unit
+                                </button>
+                                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                    🌳 Tree View
+                                </button>
+                                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                    ↓ Export
+                                </button>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h2 className="text-xl font-semibold text-gray-800 mb-4">Hierarchy Tree</h2>
+                                <UnitNode 
+                                    unit={units} 
+                                    level={0}
+                                    onExpand={toggleExpand}
+                                    expanded={expandedUnits}
+                                    onView={handleViewUnit}
+                                />
+                            </div>
+
+                            <div className="mt-4 text-sm text-gray-600">
+                                📊 Total: 193 units | 2,841 personnel
+                            </div>
+                        </div>
+                    </div>
+
+                    {showDetailPanel && selectedUnit && (
+                        <div className="w-96 bg-white shadow-2xl border-l border-gray-200 overflow-y-auto">
+                            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-3xl">{selectedUnit.icon}</span>
+                                            <h2 className="text-xl font-bold">{selectedUnit.name}</h2>
+                                        </div>
+                                        <p className="text-blue-100 text-sm">{selectedUnit.level}</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setShowDetailPanel(false)}
+                                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-6 space-y-6">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Officer-in-Charge</h3>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="text-sm font-medium text-gray-900">{selectedUnit.officer}</div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-2">Quick Stats</h3>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-blue-50 rounded-lg p-3">
+                                            <div className="text-xs text-gray-600">Total Personnel</div>
+                                            <div className="text-2xl font-bold text-blue-600">{selectedUnit.personnel}</div>
+                                        </div>
+                                        <div className="bg-green-50 rounded-lg p-3">
+                                            <div className="text-xs text-gray-600">Total Posts</div>
+                                            <div className="text-2xl font-bold text-green-600">{selectedUnit.posts}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {selectedUnit.children && selectedUnit.children.length > 0 && (
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                                            Child Units ({selectedUnit.children.length})
+                                        </h3>
+                                        <div className="space-y-2">
+                                            {selectedUnit.children.map(child => (
+                                                <div key={child.id} className="bg-gray-50 rounded-lg p-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{child.icon}</span>
+                                                        <span className="text-sm font-medium">{child.name}</span>
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 mt-1">
+                                                        {child.personnel} personnel
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="border-t border-gray-200 pt-4">
+                                    <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                                        <Users size={16} />
+                                        Manage Posts
+                                    </button>
+                                    <button className="w-full mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center justify-center gap-2">
+                                        <Edit size={16} />
+                                        Edit Unit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<UnitManagement />);
+    </script>
+</body>
+</html>

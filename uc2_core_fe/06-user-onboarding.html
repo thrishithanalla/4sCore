@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Onboarding - AP Police</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+
+        const ChevronRight = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+
+        const Check = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        const sampleUnits = [
+            { id: 1, name: 'Arundelpet PS', parent: 'Guntur I Circle', level: 'Police Station' },
+            { id: 2, name: 'Koritepadu PS', parent: 'Guntur I Circle', level: 'Police Station' },
+            { id: 3, name: 'Tadepalli PS', parent: 'Guntur II Circle', level: 'Police Station' }
+        ];
+
+        const samplePosts = [
+            { id: 1, unitId: 1, code: 'SHO', name: 'Station House Officer', rank: 'Circle Inspector', sanctioned: 1, filled: 0, isSHO: true },
+            { id: 2, unitId: 1, code: 'SI', name: 'Sub-Inspector', rank: 'Sub-Inspector', sanctioned: 1, filled: 1, isSHO: false },
+            { id: 3, unitId: 1, code: 'PC', name: 'Police Constable', rank: 'Police Constable', sanctioned: 12, filled: 11, isSHO: false }
+        ];
+
+        const sampleRoles = [
+            { id: 1, name: 'Super Admin', permissions: 52, description: 'Full system access' },
+            { id: 2, name: 'Admin', permissions: 45, description: 'Administrative access' },
+            { id: 3, name: 'District Admin', permissions: 28, description: 'District-level management' },
+            { id: 4, name: 'SHO', permissions: 22, description: 'Station House Officer access' },
+            { id: 5, name: 'Personnel Officer', permissions: 8, description: 'Basic personnel access' }
+        ];
+
+        const UserOnboarding = () => {
+            const [currentStep, setCurrentStep] = useState(1);
+            const [formData, setFormData] = useState({
+                // Step 1: Basic Info
+                firstName: '',
+                lastName: '',
+                badgeNo: '',
+                userId: '',
+                dateOfBirth: '',
+                gender: 'Male',
+                mobile: '',
+                email: '',
+                rankId: '',
+                rankName: '',
+                dateOfEnlistment: '',
+                department: 'Andhra Pradesh Police',
+
+                // Step 2: Post Assignment
+                unitId: '',
+                unitName: '',
+                postId: '',
+                postName: '',
+                designation: '',
+                assignmentDate: new Date().toISOString().split('T')[0],
+                orderNumber: '',
+                assignmentType: 'Regular',
+
+                // Step 3: Role & Access
+                roleId: '',
+                roleName: '',
+                accessScope: 'Police Station',
+                sendCredentials: true,
+                forcePasswordChange: true
+            });
+
+            const [errors, setErrors] = useState({});
+            const [showSuccess, setShowSuccess] = useState(false);
+
+            const ranks = [
+                'Director General of Police (DGP)',
+                'Superintendent of Police (SP)',
+                'Deputy Superintendent (DSP)',
+                'Circle Inspector (CI)',
+                'Sub-Inspector (SI)',
+                'Assistant Sub-Inspector (ASI)',
+                'Head Constable (HC)',
+                'Police Constable (PC)'
+            ];
+
+            const validateStep = (step) => {
+                const newErrors = {};
+
+                if (step === 1) {
+                    if (!formData.firstName) newErrors.firstName = 'Required';
+                    if (!formData.lastName) newErrors.lastName = 'Required';
+                    if (!formData.badgeNo) newErrors.badgeNo = 'Required';
+                    if (!formData.mobile) newErrors.mobile = 'Required';
+                    if (!formData.rankName) newErrors.rankName = 'Required';
+                }
+
+                if (step === 2) {
+                    if (!formData.unitId) newErrors.unitId = 'Required';
+                    if (!formData.postId) newErrors.postId = 'Required';
+                    if (!formData.orderNumber) newErrors.orderNumber = 'Required';
+                }
+
+                if (step === 3) {
+                    if (!formData.roleId) newErrors.roleId = 'Required';
+                }
+
+                setErrors(newErrors);
+                return Object.keys(newErrors).length === 0;
+            };
+
+            const handleNext = () => {
+                if (validateStep(currentStep)) {
+                    if (currentStep < 4) {
+                        setCurrentStep(currentStep + 1);
+                    }
+                }
+            };
+
+            const handleBack = () => {
+                if (currentStep > 1) {
+                    setCurrentStep(currentStep - 1);
+                }
+            };
+
+            const handleSubmit = () => {
+                if (validateStep(3)) {
+                    setShowSuccess(true);
+                    // Here you would normally call API to create user
+                    console.log('Creating user:', formData);
+                }
+            };
+
+            const getRecommendedRole = () => {
+                if (formData.postName === 'Station House Officer') return 'SHO';
+                if (formData.rankName.includes('DSP')) return 'SDPO Admin';
+                if (formData.rankName.includes('CI')) return 'Circle Inspector Officer';
+                return 'Personnel Officer';
+            };
+
+            const steps = [
+                { num: 1, name: 'Basic Info', desc: 'Personnel details' },
+                { num: 2, name: 'Post Assignment', desc: 'Unit and post' },
+                { num: 3, name: 'Role & Access', desc: 'Permissions' },
+                { num: 4, name: 'Review', desc: 'Confirm & create' }
+            ];
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <div className="bg-gradient-to-r from-green-600 to-teal-600 text-white p-6 shadow-lg">
+                        <div className="max-w-5xl mx-auto">
+                            <h1 className="text-3xl font-bold">👤 User Onboarding</h1>
+                            <p className="text-green-100 mt-2">Create New User Account</p>
+                        </div>
+                    </div>
+
+                    {!showSuccess ? (
+                        <div className="max-w-5xl mx-auto p-6">
+                            {/* Progress Steps */}
+                            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                                <div className="flex items-center justify-between">
+                                    {steps.map((step, idx) => (
+                                        <React.Fragment key={step.num}>
+                                            <div className="flex flex-col items-center">
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold ${currentStep > step.num ? 'bg-green-600 text-white' :
+                                                        currentStep === step.num ? 'bg-blue-600 text-white' :
+                                                            'bg-gray-200 text-gray-600'
+                                                    }`}>
+                                                    {currentStep > step.num ? <Check size={24} /> : step.num}
+                                                </div>
+                                                <div className="mt-2 text-center">
+                                                    <div className="text-sm font-semibold text-gray-800">{step.name}</div>
+                                                    <div className="text-xs text-gray-500">{step.desc}</div>
+                                                </div>
+                                            </div>
+                                            {idx < steps.length - 1 && (
+                                                <div className={`flex-1 h-1 mx-4 ${currentStep > step.num ? 'bg-green-600' : 'bg-gray-200'}`}></div>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Step Content */}
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                {/* Step 1: Basic Info */}
+                                {currentStep === 1 && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Step 1: Basic Information</h2>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">First Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.firstName}
+                                                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
+                                                    placeholder="e.g., Mopuri"
+                                                />
+                                                {errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.lastName}
+                                                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
+                                                    placeholder="e.g., Maheswara"
+                                                />
+                                                {errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Badge Number *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.badgeNo}
+                                                    onChange={(e) => setFormData({ ...formData, badgeNo: e.target.value })}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.badgeNo ? 'border-red-500' : 'border-gray-300'}`}
+                                                    placeholder="e.g., 14270756"
+                                                />
+                                                {errors.badgeNo && <span className="text-xs text-red-500">{errors.badgeNo}</span>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Birth</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.dateOfBirth}
+                                                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Mobile *</label>
+                                                <input
+                                                    type="tel"
+                                                    value={formData.mobile}
+                                                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.mobile ? 'border-red-500' : 'border-gray-300'}`}
+                                                    placeholder="+91-9876543210"
+                                                />
+                                                {errors.mobile && <span className="text-xs text-red-500">{errors.mobile}</span>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                                                <input
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
+                                                    placeholder="officer@appolice.gov.in"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Rank *</label>
+                                            <select
+                                                value={formData.rankName}
+                                                onChange={(e) => setFormData({ ...formData, rankName: e.target.value })}
+                                                className={`w-full px-4 py-2 border-2 rounded-lg ${errors.rankName ? 'border-red-500' : 'border-gray-300'}`}
+                                            >
+                                                <option value="">Select Rank</option>
+                                                {ranks.map((rank, idx) => (
+                                                    <option key={idx} value={rank}>{rank}</option>
+                                                ))}
+                                            </select>
+                                            {errors.rankName && <span className="text-xs text-red-500">{errors.rankName}</span>}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Date of Enlistment</label>
+                                            <input
+                                                type="date"
+                                                value={formData.dateOfEnlistment}
+                                                onChange={(e) => setFormData({ ...formData, dateOfEnlistment: e.target.value })}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 2: Post Assignment */}
+                                {currentStep === 2 && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Step 2: Post Assignment</h2>
+
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                            <div className="font-semibold text-blue-900">Officer: {formData.firstName} {formData.lastName}</div>
+                                            <div className="text-sm text-blue-700">Rank: {formData.rankName}</div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Select Unit *</label>
+                                            <select
+                                                value={formData.unitId}
+                                                onChange={(e) => {
+                                                    const unit = sampleUnits.find(u => u.id === parseInt(e.target.value));
+                                                    setFormData({ ...formData, unitId: e.target.value, unitName: unit ? unit.name : '' });
+                                                }}
+                                                className={`w-full px-4 py-2 border-2 rounded-lg ${errors.unitId ? 'border-red-500' : 'border-gray-300'}`}
+                                            >
+                                                <option value="">Select Unit</option>
+                                                {sampleUnits.map(unit => (
+                                                    <option key={unit.id} value={unit.id}>{unit.name} ({unit.parent})</option>
+                                                ))}
+                                            </select>
+                                            {errors.unitId && <span className="text-xs text-red-500">{errors.unitId}</span>}
+                                        </div>
+
+                                        {formData.unitId && (
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Select Post *</label>
+                                                <select
+                                                    value={formData.postId}
+                                                    onChange={(e) => {
+                                                        const post = samplePosts.find(p => p.id === parseInt(e.target.value));
+                                                        setFormData({ ...formData, postId: e.target.value, postName: post ? post.name : '' });
+                                                    }}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.postId ? 'border-red-500' : 'border-gray-300'}`}
+                                                >
+                                                    <option value="">Select Post</option>
+                                                    {samplePosts
+                                                        .filter(p => p.unitId === parseInt(formData.unitId))
+                                                        .map(post => (
+                                                            <option key={post.id} value={post.id}>
+                                                                {post.name} ({post.rank}) - Vacant: {post.sanctioned - post.filled}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                                {errors.postId && <span className="text-xs text-red-500">{errors.postId}</span>}
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Assignment Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.assignmentDate}
+                                                    onChange={(e) => setFormData({ ...formData, assignmentDate: e.target.value })}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">Order Number *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.orderNumber}
+                                                    onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
+                                                    className={`w-full px-4 py-2 border-2 rounded-lg ${errors.orderNumber ? 'border-red-500' : 'border-gray-300'}`}
+                                                    placeholder="GO.Ms.No.123/2024"
+                                                />
+                                                {errors.orderNumber && <span className="text-xs text-red-500">{errors.orderNumber}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 3: Role & Access */}
+                                {currentStep === 3 && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Step 3: Role & Access Control</h2>
+
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                            <div className="font-semibold text-blue-900">Recommended Role: {getRecommendedRole()}</div>
+                                            <div className="text-sm text-blue-700">Based on post: {formData.postName}</div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Assign Role *</label>
+                                            <select
+                                                value={formData.roleId}
+                                                onChange={(e) => {
+                                                    const role = sampleRoles.find(r => r.id === parseInt(e.target.value));
+                                                    setFormData({ ...formData, roleId: e.target.value, roleName: role ? role.name : '' });
+                                                }}
+                                                className={`w-full px-4 py-2 border-2 rounded-lg ${errors.roleId ? 'border-red-500' : 'border-gray-300'}`}
+                                            >
+                                                <option value="">Select Role</option>
+                                                {sampleRoles.map(role => (
+                                                    <option key={role.id} value={role.id}>
+                                                        {role.name} ({role.permissions} permissions)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {errors.roleId && <span className="text-xs text-red-500">{errors.roleId}</span>}
+                                        </div>
+
+                                        {formData.roleId && (
+                                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                                <div className="font-semibold text-gray-700 mb-2">Role Description</div>
+                                                <div className="text-sm text-gray-600">
+                                                    {sampleRoles.find(r => r.id === parseInt(formData.roleId))?.description}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Access Scope</label>
+                                            <select
+                                                value={formData.accessScope}
+                                                onChange={(e) => setFormData({ ...formData, accessScope: e.target.value })}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg"
+                                            >
+                                                <option value="Police Station">Police Station</option>
+                                                <option value="Circle">Circle</option>
+                                                <option value="District">District</option>
+                                                <option value="Range">Range</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.sendCredentials}
+                                                    onChange={(e) => setFormData({ ...formData, sendCredentials: e.target.checked })}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm text-gray-700">Send login credentials via SMS and Email</span>
+                                            </label>
+
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.forcePasswordChange}
+                                                    onChange={(e) => setFormData({ ...formData, forcePasswordChange: e.target.checked })}
+                                                    className="w-4 h-4"
+                                                />
+                                                <span className="text-sm text-gray-700">Force password change on first login</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 4: Review */}
+                                {currentStep === 4 && (
+                                    <div className="space-y-6">
+                                        <h2 className="text-xl font-semibold text-gray-800 mb-4">Step 4: Review & Create</h2>
+
+                                        <div className="space-y-4">
+                                            <div className="border border-gray-200 rounded-lg p-4">
+                                                <h3 className="font-semibold text-gray-800 mb-3">👤 Personal Information</h3>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <div className="text-gray-600">Name:</div>
+                                                    <div className="font-medium">{formData.firstName} {formData.lastName}</div>
+                                                    <div className="text-gray-600">Badge Number:</div>
+                                                    <div className="font-medium">{formData.badgeNo}</div>
+                                                    <div className="text-gray-600">Rank:</div>
+                                                    <div className="font-medium">{formData.rankName}</div>
+                                                    <div className="text-gray-600">Mobile:</div>
+                                                    <div className="font-medium">{formData.mobile}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="border border-gray-200 rounded-lg p-4">
+                                                <h3 className="font-semibold text-gray-800 mb-3">📋 Post Assignment</h3>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <div className="text-gray-600">Unit:</div>
+                                                    <div className="font-medium">{formData.unitName}</div>
+                                                    <div className="text-gray-600">Post:</div>
+                                                    <div className="font-medium">{formData.postName}</div>
+                                                    <div className="text-gray-600">Assignment Date:</div>
+                                                    <div className="font-medium">{formData.assignmentDate}</div>
+                                                    <div className="text-gray-600">Order Number:</div>
+                                                    <div className="font-medium">{formData.orderNumber}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="border border-gray-200 rounded-lg p-4">
+                                                <h3 className="font-semibold text-gray-800 mb-3">👥 Role & Access</h3>
+                                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                                    <div className="text-gray-600">Assigned Role:</div>
+                                                    <div className="font-medium">{formData.roleName}</div>
+                                                    <div className="text-gray-600">Access Scope:</div>
+                                                    <div className="font-medium">{formData.accessScope}</div>
+                                                    <div className="text-gray-600">Send Credentials:</div>
+                                                    <div className="font-medium">{formData.sendCredentials ? 'Yes' : 'No'}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                                            <p className="text-sm text-yellow-800">
+                                                <strong>Note:</strong> This action will create a new user account with immediate access.
+                                                All changes will be logged in the audit trail.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Navigation Buttons */}
+                                <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+                                    {currentStep > 1 && (
+                                        <button
+                                            onClick={handleBack}
+                                            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                                        >
+                                            ← Back
+                                        </button>
+                                    )}
+
+                                    <div className="flex-1"></div>
+
+                                    {currentStep < 4 ? (
+                                        <button
+                                            onClick={handleNext}
+                                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold flex items-center gap-2"
+                                        >
+                                            Next <ChevronRight size={16} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleSubmit}
+                                            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
+                                        >
+                                            ✨ Create User Account
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="max-w-2xl mx-auto p-6">
+                            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+                                <div className="text-6xl mb-4">🎉</div>
+                                <h2 className="text-2xl font-bold text-green-600 mb-4">User Created Successfully!</h2>
+                                <p className="text-gray-600 mb-6">
+                                    {formData.firstName} {formData.lastName} has been successfully onboarded to the system.
+                                </p>
+
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
+                                    <div className="font-semibold text-green-900 mb-2">✓ Actions Completed:</div>
+                                    <ul className="text-sm text-green-700 space-y-1">
+                                        <li>• Personnel record created</li>
+                                        <li>• Post assigned: {formData.postName} at {formData.unitName}</li>
+                                        <li>• Role assigned: {formData.roleName}</li>
+                                        <li>• User account created</li>
+                                        <li>• Login credentials sent via {formData.sendCredentials ? 'SMS and Email' : 'Email'}</li>
+                                    </ul>
+                                </div>
+
+                                <div className="flex gap-3 justify-center">
+                                    <button
+                                        onClick={() => {
+                                            setShowSuccess(false);
+                                            setCurrentStep(1);
+                                            setFormData({
+                                                firstName: '', lastName: '', badgeNo: '', userId: '',
+                                                dateOfBirth: '', gender: 'Male', mobile: '', email: '',
+                                                rankId: '', rankName: '', dateOfEnlistment: '',
+                                                department: 'Andhra Pradesh Police',
+                                                unitId: '', unitName: '', postId: '', postName: '',
+                                                designation: '', assignmentDate: new Date().toISOString().split('T')[0],
+                                                orderNumber: '', assignmentType: 'Regular',
+                                                roleId: '', roleName: '', accessScope: 'Police Station',
+                                                sendCredentials: true, forcePasswordChange: true
+                                            });
+                                        }}
+                                        className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
+                                    >
+                                        + Onboard Another User
+                                    </button>
+                                    <button className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold">
+                                        ← Back to Users
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<UserOnboarding />);
+    </script>
+</body>
+
+</html>

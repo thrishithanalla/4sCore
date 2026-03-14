@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Management - AP Police</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        }
+        .animate-slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Icons
+        const Plus = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const Edit = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        );
+
+        const Trash = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
+        const X = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const ChevronDown = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        );
+
+        const ChevronRight = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        );
+
+        // Sample Data
+        const initialLevels = [
+            { id: 1, levelNumber: 0, name: 'DGP Office', code: 'DGP', unitCount: 1, canHaveChildren: true, isActive: true, icon: '🏛️' },
+            { id: 2, levelNumber: 1, name: 'Region', code: 'REGION', unitCount: 3, canHaveChildren: true, isActive: true, icon: '🌐' },
+            { id: 3, levelNumber: 2, name: 'Range', code: 'RANGE', unitCount: 7, canHaveChildren: true, isActive: true, icon: '📍' },
+            { id: 4, levelNumber: 3, name: 'District Unit', code: 'DISTRICT', unitCount: 26, canHaveChildren: true, isActive: true, icon: '🏢' },
+            { id: 5, levelNumber: 4, name: 'Sub-Division', code: 'SDPO', unitCount: 45, canHaveChildren: true, isActive: true, icon: '🏪' },
+            { id: 6, levelNumber: 5, name: 'Circle', code: 'CIRCLE', unitCount: 57, canHaveChildren: true, isActive: true, icon: '⭕' },
+            { id: 7, levelNumber: 6, name: 'Police Station', code: 'PS', unitCount: 103, canHaveChildren: false, isActive: true, icon: '🚔' }
+        ];
+
+        const LevelManagement = () => {
+            const [levels, setLevels] = useState(initialLevels);
+            const [expandedLevel, setExpandedLevel] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+            const [editingLevel, setEditingLevel] = useState(null);
+            const [formData, setFormData] = useState({
+                levelNumber: '',
+                name: '',
+                code: '',
+                description: '',
+                canHaveChildren: true,
+                icon: '📋'
+            });
+
+            const handleAdd = () => {
+                setEditingLevel(null);
+                setFormData({
+                    levelNumber: levels.length,
+                    name: '',
+                    code: '',
+                    description: '',
+                    canHaveChildren: true,
+                    icon: '📋'
+                });
+                setShowModal(true);
+            };
+
+            const handleEdit = (level) => {
+                setEditingLevel(level);
+                setFormData({
+                    levelNumber: level.levelNumber,
+                    name: level.name,
+                    code: level.code,
+                    description: level.description || '',
+                    canHaveChildren: level.canHaveChildren,
+                    icon: level.icon
+                });
+                setShowModal(true);
+            };
+
+            const handleSubmit = () => {
+                if (editingLevel) {
+                    setLevels(levels.map(l => 
+                        l.id === editingLevel.id 
+                            ? { ...l, ...formData }
+                            : l
+                    ));
+                } else {
+                    setLevels([...levels, {
+                        id: Date.now(),
+                        ...formData,
+                        unitCount: 0,
+                        isActive: true
+                    }]);
+                }
+                setShowModal(false);
+            };
+
+            const handleDelete = (id) => {
+                if (confirm('Are you sure you want to delete this level?')) {
+                    setLevels(levels.filter(l => l.id !== id));
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 shadow-lg">
+                        <div className="max-w-7xl mx-auto">
+                            <h1 className="text-3xl font-bold">📊 Hierarchy Level Management</h1>
+                            <p className="text-blue-100 mt-2">Andhra Pradesh Police</p>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto p-6">
+                        {/* Breadcrumb */}
+                        <div className="text-sm text-gray-600 mb-6">
+                            Home &gt; Admin &gt; <span className="text-blue-600 font-semibold">Levels</span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex gap-3">
+                            <button
+                                onClick={handleAdd}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            >
+                                <Plus size={16} /> Add Level
+                            </button>
+                            <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                ↑ Import
+                            </button>
+                            <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                                ↓ Export
+                            </button>
+                        </div>
+
+                        {/* Levels Table */}
+                        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                            <table className="min-w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Level</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Code</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Units</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Children</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Status</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {levels.map((level) => (
+                                        <React.Fragment key={level.id}>
+                                            <tr 
+                                                className="hover:bg-gray-50 cursor-pointer"
+                                                onClick={() => setExpandedLevel(expandedLevel === level.id ? null : level.id)}
+                                            >
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                    {level.levelNumber}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-2xl">{level.icon}</span>
+                                                        <span className="text-sm font-medium text-gray-900">{level.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                                    {level.code}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
+                                                    {level.unitCount}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    {level.canHaveChildren ? (
+                                                        <span className="text-green-600 font-bold">✓</span>
+                                                    ) : (
+                                                        <span className="text-gray-400">✗</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        🟢 Active
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEdit(level);
+                                                            }}
+                                                            className="text-blue-600 hover:text-blue-800"
+                                                            title="Edit"
+                                                        >
+                                                            <Edit size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDelete(level.id);
+                                                            }}
+                                                            className="text-red-600 hover:text-red-800"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash size={16} />
+                                                        </button>
+                                                        <button className="text-gray-600">
+                                                            {expandedLevel === level.id ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {expandedLevel === level.id && (
+                                                <tr>
+                                                    <td colSpan="7" className="px-6 py-4 bg-gray-50">
+                                                        <div className="animate-slide-in">
+                                                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                                                <div>
+                                                                    <div className="text-xs text-gray-600 mb-1">Level Code</div>
+                                                                    <div className="text-sm font-medium">{level.code}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-xs text-gray-600 mb-1">Level Order</div>
+                                                                    <div className="text-sm font-medium">{level.levelNumber}</div>
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-xs text-gray-600 mb-1">Status</div>
+                                                                    <div className="text-sm font-medium text-green-600">Active</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="border-t border-gray-200 pt-4">
+                                                                <div className="text-sm font-semibold text-gray-700 mb-2">Description</div>
+                                                                <div className="text-sm text-gray-600">
+                                                                    {level.description || 'No description provided'}
+                                                                </div>
+                                                            </div>
+                                                            <div className="border-t border-gray-200 mt-4 pt-4">
+                                                                <div className="text-sm font-semibold text-gray-700 mb-2">Statistics</div>
+                                                                <div className="grid grid-cols-4 gap-4">
+                                                                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                                                        <div className="text-xs text-gray-600">Total Units</div>
+                                                                        <div className="text-2xl font-bold text-blue-600">{level.unitCount}</div>
+                                                                    </div>
+                                                                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                                                        <div className="text-xs text-gray-600">Total Personnel</div>
+                                                                        <div className="text-2xl font-bold text-green-600">
+                                                                            {Math.floor(Math.random() * 500) + 100}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                                                        <div className="text-xs text-gray-600">Child Units</div>
+                                                                        <div className="text-2xl font-bold text-purple-600">
+                                                                            {level.canHaveChildren ? Math.floor(Math.random() * 50) : 0}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                                                        <div className="text-xs text-gray-600">Vacant Positions</div>
+                                                                        <div className="text-2xl font-bold text-red-600">
+                                                                            {Math.floor(Math.random() * 20)}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Summary */}
+                        <div className="mt-4 text-sm text-gray-600">
+                            📊 Showing {levels.length} of {levels.length} levels
+                        </div>
+                    </div>
+
+                    {/* Add/Edit Modal */}
+                    {showModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slide-in">
+                                {/* Modal Header */}
+                                <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-6 rounded-t-2xl flex justify-between items-center">
+                                    <h2 className="text-2xl font-bold">
+                                        {editingLevel ? '✏️ Edit Level' : '✨ Add New Level'}
+                                    </h2>
+                                    <button
+                                        onClick={() => setShowModal(false)}
+                                        className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                {/* Modal Body */}
+                                <div className="p-6">
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Level Order *
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={formData.levelNumber}
+                                                    onChange={(e) => setFormData({...formData, levelNumber: parseInt(e.target.value)})}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                    Icon
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.icon}
+                                                    onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                    placeholder="🏢"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Level Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="District Unit"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Level Code * (Unique)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.code}
+                                                onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="DISTRICT"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                Description
+                                            </label>
+                                            <textarea
+                                                value={formData.description}
+                                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                rows="3"
+                                                placeholder="Brief description of this level"
+                                            ></textarea>
+                                        </div>
+
+                                        <div>
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.canHaveChildren}
+                                                    onChange={(e) => setFormData({...formData, canHaveChildren: e.target.checked})}
+                                                    className="w-4 h-4 text-blue-600"
+                                                />
+                                                <span className="text-sm font-semibold text-gray-700">
+                                                    Can have child units
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex gap-3 mt-6">
+                                        <button
+                                            onClick={() => setShowModal(false)}
+                                            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSubmit}
+                                            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-lg"
+                                        >
+                                            💾 {editingLevel ? 'Save Changes' : 'Create Level'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LevelManagement />);
+    </script>
+</body>
+</html>
