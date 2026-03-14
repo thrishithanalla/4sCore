@@ -1,0 +1,330 @@
+Error Code,Module,Severity,Type,Message Template (EN),Business Area,Technical Area
+ERR.CORE.UNIT.CREATE.FAILED,UNIT,HIGH,System,Failed to create unit: {errorMessage},Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.DUPLICATE_REFERENCE,UNIT,MEDIUM,Business,Unit with policeReferenceId {policeReferenceId} already exists,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_PARENT,UNIT,MEDIUM,Business,Parent unit with ID {parentUnitId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_DEPARTMENT,UNIT,MEDIUM,Business,Department with ID {departmentId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_UNIT_TYPE,UNIT,MEDIUM,Business,Unit type with ID {unitTypeId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_DISTRICT,UNIT,MEDIUM,Business,District with ID {districtId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_RESPONSIBLE_USER,UNIT,MEDIUM,Business,Responsible user with ID {responsibleUserId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.CREATE.INVALID_PROXY_USER,UNIT,MEDIUM,Business,Proxy user with ID {proxyUserId} does not exist,Organization Management,Unit Service
+ERR.CORE.UNIT.UPDATE.NOT_FOUND,UNIT,MEDIUM,Business,Unit with ID {unitId} not found,Organization Management,Unit Service
+ERR.CORE.UNIT.UPDATE.FAILED,UNIT,HIGH,System,Failed to update unit {unitId}: {errorMessage},Organization Management,Unit Service
+ERR.CORE.UNIT.UPDATE.CIRCULAR_HIERARCHY,UNIT,HIGH,Business,Circular hierarchy detected: Unit {unitId} cannot be its own ancestor,Organization Management,Unit Service
+ERR.CORE.UNIT.UPDATE.DUPLICATE_REFERENCE,UNIT,MEDIUM,Business,Another unit with policeReferenceId {policeReferenceId} already exists,Organization Management,Unit Service
+ERR.CORE.UNIT.DELETE.NOT_FOUND,UNIT,MEDIUM,Business,Unit with ID {unitId} not found,Organization Management,Unit Service
+ERR.CORE.UNIT.DELETE.HAS_CHILDREN,UNIT,HIGH,Business,Cannot delete unit {unitId} as it has {childCount} child units,Organization Management,Unit Service
+ERR.CORE.UNIT.DELETE.HAS_CHILDREN_PATH,UNIT,HIGH,Business,Cannot delete unit. This unit appears in hierarchy path of other units,,
+ERR.CORE.UNIT.DELETE.HAS_PERSONNEL,UNIT,HIGH,Business,Cannot delete unit {unitId} as it has assigned personnel,Organization Management,Unit Service
+ERR.CORE.UNIT.DELETE.FAILED,UNIT,HIGH,System,Failed to delete unit {unitId}: {errorMessage},Organization Management,Unit Service
+ERR.CORE.UNIT.GET.NOT_FOUND,UNIT,LOW,Business,Unit with ID {unitId} not found,Organization Management,Unit Service
+ERR.CORE.UNIT.PARENT_NOT_FOUND,UNIT,HIGH,Business,Parent unit not found,Organization Management,Unit Service
+ERR.CORE.UNIT.LIST.FAILED,UNIT,MEDIUM,System,Failed to retrieve units list: {errorMessage},Organization Management,Unit Service
+ERR.CORE.UNIT.RESTORE.NOT_FOUND,UNIT,MEDIUM,Business,Deleted unit with ID {unitId} not found,Organization Management,Unit Service
+ERR.CORE.UNIT.RESTORE.FAILED,UNIT,HIGH,System,Failed to restore unit {unitId}: {errorMessage},Organization Management,Unit Service
+ERR.CORE.UNIT.PATH.CALCULATION_FAILED,UNIT,HIGH,System,Failed to calculate parent unit path for unit {unitId},Organization Management,Unit Service
+ERR.CORE.UNIT_TYPE.CREATE.FAILED,UNIT_TYPE,HIGH,System,Failed to create unit type: {errorMessage},Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.CREATE.DUPLICATE_NAME,UNIT_TYPE,MEDIUM,Business,Unit type with name {name} already exists,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.CREATE.INVALID_DEPARTMENT,UNIT_TYPE,MEDIUM,Business,Department with ID {departmentId} does not exist,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.UPDATE.NOT_FOUND,UNIT_TYPE,MEDIUM,Business,Unit type with ID {unitTypeId} not found,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.UPDATE.FAILED,UNIT_TYPE,HIGH,System,Failed to update unit type {unitTypeId}: {errorMessage},Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.UPDATE.DUPLICATE_NAME,UNIT_TYPE,MEDIUM,Business,Another unit type with name {name} already exists,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.DELETE.NOT_FOUND,UNIT_TYPE,MEDIUM,Business,Unit type with ID {unitTypeId} not found,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.DELETE.IN_USE,UNIT_TYPE,HIGH,Business,Cannot delete unit type {unitTypeId} as it is used by {unitCount} units,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.DELETE.FAILED,UNIT_TYPE,HIGH,System,Failed to delete unit type {unitTypeId}: {errorMessage},Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.GET.NOT_FOUND,UNIT_TYPE,LOW,Business,Unit type with ID {unitTypeId} not found,Organization Management,Unit Type Service
+ERR.CORE.UNIT_TYPE.LIST.FAILED,UNIT_TYPE,MEDIUM,System,Failed to retrieve unit types list: {errorMessage},Organization Management,Unit Type Service
+ERR.CORE.UNIT_VILLAGE.CREATE.FAILED,UNIT_VILLAGE,HIGH,System,Failed to assign village to unit: {errorMessage},Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.CREATE.INVALID_UNIT,UNIT_VILLAGE,MEDIUM,Business,Unit with ID {unitId} does not exist,Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.CREATE.INVALID_VILLAGE,UNIT_VILLAGE,MEDIUM,Business,Village with ID {villageId} does not exist,Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.CREATE.DUPLICATE,UNIT_VILLAGE,MEDIUM,Business,Village {villageId} is already assigned to unit {unitId},Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.UPDATE.NOT_FOUND,UNIT_VILLAGE,MEDIUM,Business,Unit-village mapping with ID {mappingId} not found,Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.UPDATE.FAILED,UNIT_VILLAGE,HIGH,System,Failed to update unit-village mapping: {errorMessage},Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.DELETE.NOT_FOUND,UNIT_VILLAGE,MEDIUM,Business,Unit-village mapping with ID {mappingId} not found,Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.DELETE.FAILED,UNIT_VILLAGE,HIGH,System,Failed to remove village from unit: {errorMessage},Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.GET.NOT_FOUND,UNIT_VILLAGE,LOW,Business,Unit-village mapping with ID {mappingId} not found,Organization Management,Unit Village Service
+ERR.CORE.UNIT_VILLAGE.LIST.FAILED,UNIT_VILLAGE,MEDIUM,System,Failed to retrieve unit villages list: {errorMessage},Organization Management,Unit Village Service
+ERR.CORE.PERSONNEL.CREATE.FAILED,PERSONNEL,HIGH,System,Failed to create personnel: {errorMessage},Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.CREATE.DUPLICATE_EMAIL,PERSONNEL,MEDIUM,Business,Personnel with email {email} already exists,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.CREATE.INVALID_UNIT,PERSONNEL,MEDIUM,Business,Unit with ID {unitId} does not exist,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.CREATE.INVALID_DEPARTMENT,PERSONNEL,MEDIUM,Business,Department with ID {departmentId} does not exist,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.CREATE.INVALID_RANK,PERSONNEL,MEDIUM,Business,Rank with ID {rankId} does not exist,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.CREATE.INVALID_DISTRICT,PERSONNEL,MEDIUM,Business,District with ID {districtId} does not exist,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.UPDATE.NOT_FOUND,PERSONNEL,MEDIUM,Business,Personnel with ID {personnelId} not found,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.UPDATE.FAILED,PERSONNEL,HIGH,System,Failed to update personnel {personnelId}: {errorMessage},Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.UPDATE.DUPLICATE_EMAIL,PERSONNEL,MEDIUM,Business,Another personnel with email {email} already exists,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.DELETE.NOT_FOUND,PERSONNEL,MEDIUM,Business,Personnel with ID {personnelId} not found,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.DELETE.IS_RESPONSIBLE_USER,PERSONNEL,HIGH,Business,Cannot delete personnel {personnelId} as they are responsible user for {unitCount} units,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.DELETE.IS_PROXY_USER,PERSONNEL,HIGH,Business,Cannot delete personnel {personnelId} as they are proxy user for {unitCount} units,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.DELETE.FAILED,PERSONNEL,HIGH,System,Failed to delete personnel {personnelId}: {errorMessage},Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.GET.NOT_FOUND,PERSONNEL,LOW,Business,Personnel with ID {personnelId} not found,Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.LIST.FAILED,PERSONNEL,MEDIUM,System,Failed to retrieve personnel list: {errorMessage},Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.PASSWORD.HASH_FAILED,PERSONNEL,CRITICAL,System,Failed to hash password for personnel {personnelId},Human Resources,Personnel Service
+ERR.CORE.PERSONNEL.AUTH.INVALID_CREDENTIALS,PERSONNEL,MEDIUM,Business,Invalid credentials for user {email},Authentication,Personnel Service
+ERR.CORE.PERSONNEL.AUTH.ACCOUNT_LOCKED,PERSONNEL,MEDIUM,Business,Account locked for user {email} after {attemptCount} failed attempts,Authentication,Personnel Service
+ERR.CORE.PERSONNEL.USERID_EXISTS,PERSONNEL,HIGH,Business,User ID already exists,,Personnel Service
+ERR.CORE.DEPARTMENT.CREATE.FAILED,DEPARTMENT,HIGH,System,Failed to create department: {errorMessage},Organization Management,Department Service
+ERR.CORE.DEPARTMENT.CREATE.DUPLICATE_NAME,DEPARTMENT,MEDIUM,Business,Department with name {name} already exists,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.CREATE.DUPLICATE_CCTNS_CODE,DEPARTMENT,MEDIUM,Business,Department with CCTNS code {cctnsDepartmentCd} already exists,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.UPDATE.NOT_FOUND,DEPARTMENT,MEDIUM,Business,Department with ID {departmentId} not found,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.UPDATE.FAILED,DEPARTMENT,HIGH,System,Failed to update department {departmentId}: {errorMessage},Organization Management,Department Service
+ERR.CORE.DEPARTMENT.UPDATE.DUPLICATE_NAME,DEPARTMENT,MEDIUM,Business,Another department with name {name} already exists,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.UPDATE.DUPLICATE_CCTNS_CODE,DEPARTMENT,MEDIUM,Business,Another department with CCTNS code {cctnsDepartmentCd} already exists,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.DELETE.NOT_FOUND,DEPARTMENT,MEDIUM,Business,Department with ID {departmentId} not found,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.DELETE.IN_USE,DEPARTMENT,HIGH,Business,Cannot delete department {departmentId} as it has {unitCount} assigned units,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.DELETE.HAS_PERSONNEL,DEPARTMENT,HIGH,Business,Cannot delete department {departmentId} as it has {personnelCount} assigned personnel,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.DELETE.FAILED,DEPARTMENT,HIGH,System,Failed to delete department {departmentId}: {errorMessage},Organization Management,Department Service
+ERR.CORE.DEPARTMENT.GET.NOT_FOUND,DEPARTMENT,LOW,Business,Department with ID {departmentId} not found,Organization Management,Department Service
+ERR.CORE.DEPARTMENT.LIST.FAILED,DEPARTMENT,MEDIUM,System,Failed to retrieve departments list: {errorMessage},Organization Management,Department Service
+ERR.CORE.DISTRICT.CREATE.FAILED,DISTRICT,HIGH,System,Failed to create district: {errorMessage},Geography,District Service
+ERR.CORE.DISTRICT.CREATE.DUPLICATE_CCTNS_CODE,DISTRICT,MEDIUM,Business,District with CCTNS code {cctnsDistrictCd} already exists,Geography,District Service
+ERR.CORE.DISTRICT.CREATE.DUPLICATE_NAME,DISTRICT,MEDIUM,Business,District with name {name} already exists,Geography,District Service
+ERR.CORE.DISTRICT.UPDATE.NOT_FOUND,DISTRICT,MEDIUM,Business,District with ID {districtId} not found,Geography,District Service
+ERR.CORE.DISTRICT.UPDATE.FAILED,DISTRICT,HIGH,System,Failed to update district {districtId}: {errorMessage},Geography,District Service
+ERR.CORE.DISTRICT.UPDATE.DUPLICATE_CCTNS_CODE,DISTRICT,MEDIUM,Business,Another district with CCTNS code {cctnsDistrictCd} already exists,Geography,District Service
+ERR.CORE.DISTRICT.DELETE.NOT_FOUND,DISTRICT,MEDIUM,Business,District with ID {districtId} not found,Geography,District Service
+ERR.CORE.DISTRICT.DELETE.IN_USE,DISTRICT,HIGH,Business,Cannot delete district {districtId} as it has {unitCount} assigned units,Geography,District Service
+ERR.CORE.DISTRICT.DELETE.FAILED,DISTRICT,HIGH,System,Failed to delete district {districtId}: {errorMessage},Geography,District Service
+ERR.CORE.DISTRICT.GET.NOT_FOUND,DISTRICT,LOW,Business,District with ID {districtId} not found,Geography,District Service
+ERR.CORE.DISTRICT.LIST.FAILED,DISTRICT,MEDIUM,System,Failed to retrieve districts list: {errorMessage},Geography,District Service
+ERR.CORE.RANK.CREATE.FAILED,RANK,HIGH,System,Failed to create rank: {errorMessage},Human Resources,Rank Service
+ERR.CORE.RANK.CREATE.DUPLICATE_NAME,RANK,MEDIUM,Business,Rank with name {name} already exists,Human Resources,Rank Service
+ERR.CORE.RANK.CREATE.DUPLICATE_SEQUENCE,RANK,MEDIUM,Business,Rank with sequence {sequence} already exists,Human Resources,Rank Service
+ERR.CORE.RANK.UPDATE.NOT_FOUND,RANK,MEDIUM,Business,Rank with ID {rankId} not found,Human Resources,Rank Service
+ERR.CORE.RANK.UPDATE.FAILED,RANK,HIGH,System,Failed to update rank {rankId}: {errorMessage},Human Resources,Rank Service
+ERR.CORE.RANK.UPDATE.DUPLICATE_NAME,RANK,MEDIUM,Business,Another rank with name {name} already exists,Human Resources,Rank Service
+ERR.CORE.RANK.UPDATE.DUPLICATE_SEQUENCE,RANK,MEDIUM,Business,Another rank with sequence {sequence} already exists,Human Resources,Rank Service
+ERR.CORE.RANK.DELETE.NOT_FOUND,RANK,MEDIUM,Business,Rank with ID {rankId} not found,Human Resources,Rank Service
+ERR.CORE.RANK.DELETE.IN_USE,RANK,HIGH,Business,Cannot delete rank {rankId} as it is assigned to {personnelCount} personnel,Human Resources,Rank Service
+ERR.CORE.RANK.DELETE.FAILED,RANK,HIGH,System,Failed to delete rank {rankId}: {errorMessage},Human Resources,Rank Service
+ERR.CORE.RANK.GET.NOT_FOUND,RANK,LOW,Business,Rank with ID {rankId} not found,Human Resources,Rank Service
+ERR.CORE.RANK.LIST.FAILED,RANK,MEDIUM,System,Failed to retrieve ranks list: {errorMessage},Human Resources,Rank Service
+ERR.CORE.MANDAL.CREATE.FAILED,MANDAL,HIGH,System,Failed to create mandal: {errorMessage},Geography,Mandal Service
+ERR.CORE.MANDAL.CREATE.DUPLICATE_NAME,MANDAL,MEDIUM,Business,Mandal with name {name} already exists in district {districtId},Geography,Mandal Service
+ERR.CORE.MANDAL.CREATE.INVALID_DISTRICT,MANDAL,MEDIUM,Business,District with ID {districtId} does not exist,Geography,Mandal Service
+ERR.CORE.MANDAL.UPDATE.NOT_FOUND,MANDAL,MEDIUM,Business,Mandal with ID {mandalId} not found,Geography,Mandal Service
+ERR.CORE.MANDAL.UPDATE.FAILED,MANDAL,HIGH,System,Failed to update mandal {mandalId}: {errorMessage},Geography,Mandal Service
+ERR.CORE.MANDAL.UPDATE.DUPLICATE_NAME,MANDAL,MEDIUM,Business,Another mandal with name {name} already exists in this district,Geography,Mandal Service
+ERR.CORE.MANDAL.DELETE.NOT_FOUND,MANDAL,MEDIUM,Business,Mandal with ID {mandalId} not found,Geography,Mandal Service
+ERR.CORE.MANDAL.DELETE.IN_USE,MANDAL,HIGH,Business,Cannot delete mandal {mandalId} as it has {villageCount} assigned villages,Geography,Mandal Service
+ERR.CORE.MANDAL.DELETE.FAILED,MANDAL,HIGH,System,Failed to delete mandal {mandalId}: {errorMessage},Geography,Mandal Service
+ERR.CORE.MANDAL.GET.NOT_FOUND,MANDAL,LOW,Business,Mandal with ID {mandalId} not found,Geography,Mandal Service
+ERR.CORE.MANDAL.LIST.FAILED,MANDAL,MEDIUM,System,Failed to retrieve mandals list: {errorMessage},Geography,Mandal Service
+ERR.CORE.VALUESET.CREATE.FAILED,VALUESET,HIGH,System,Failed to create value set: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.VALUESET.CREATE.DUPLICATE_KEY,VALUESET,MEDIUM,Business,Value set with key {key} already exists,Configuration,ValueSet Service
+ERR.CORE.VALUESET.CREATE.DUPLICATE_ITEM_CODE,VALUESET,MEDIUM,Business,Item code {itemCode} already exists in value set {key},Configuration,ValueSet Service
+ERR.CORE.VALUESET.CREATE.DUPLICATE_LABEL,VALUESET,MEDIUM,Business,Label {label} for language {language} already exists in value set {key},Configuration,ValueSet Service
+ERR.CORE.VALUESET.UPDATE.NOT_FOUND,VALUESET,MEDIUM,Business,Value set with ID {valueSetId} not found,Configuration,ValueSet Service
+ERR.CORE.VALUESET.UPDATE.FAILED,VALUESET,HIGH,System,Failed to update value set {valueSetId}: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.VALUESET.UPDATE.DUPLICATE_ITEM_CODE,VALUESET,MEDIUM,Business,Item code {itemCode} already exists in this value set,Configuration,ValueSet Service
+ERR.CORE.VALUESET.ARCHIVE.NOT_FOUND,VALUESET,MEDIUM,Business,Value set with ID {valueSetId} not found,Configuration,ValueSet Service
+ERR.CORE.VALUESET.ARCHIVE.FAILED,VALUESET,HIGH,System,Failed to archive value set {valueSetId}: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.VALUESET.GET.NOT_FOUND,VALUESET,LOW,Business,Value set with key {key} not found,Configuration,ValueSet Service
+ERR.CORE.VALUESET.LIST.FAILED,VALUESET,MEDIUM,System,Failed to retrieve value sets list: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.VALUESET.VALIDATE.NOT_FOUND,VALUESET,MEDIUM,Business,Value {value} not found in value set {key},Configuration,ValueSet Service
+ERR.CORE.VALUESET.VALIDATE.ARCHIVED,VALUESET,MEDIUM,Business,Value set {key} is archived and cannot be used,Configuration,ValueSet Service
+ERR.CORE.VALUESET.CACHE.REFRESH_FAILED,VALUESET,HIGH,System,Failed to refresh value set cache: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.VALUESET.BOOTSTRAP.FAILED,VALUESET,CRITICAL,System,Failed to bootstrap value sets: {errorMessage},Configuration,ValueSet Service
+ERR.CORE.NOTIF_MASTER.CREATE.FAILED,NOTIFICATION_MASTER,HIGH,System,Failed to create notification master: {errorMessage},Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.CREATE.DUPLICATE_TYPE,NOTIFICATION_MASTER,MEDIUM,Business,Notification type {notificationType} already exists,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.UPDATE.NOT_FOUND,NOTIFICATION_MASTER,MEDIUM,Business,Notification master with ID {masterId} not found,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.UPDATE.FAILED,NOTIFICATION_MASTER,HIGH,System,Failed to update notification master {masterId}: {errorMessage},Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.UPDATE.DUPLICATE_TYPE,NOTIFICATION_MASTER,MEDIUM,Business,Another notification with type {notificationType} already exists,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.DELETE.NOT_FOUND,NOTIFICATION_MASTER,MEDIUM,Business,Notification master with ID {masterId} not found,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.DELETE.IN_USE,NOTIFICATION_MASTER,HIGH,Business,Cannot delete notification master {masterId} as it has {notificationCount} associated notifications,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.DELETE.FAILED,NOTIFICATION_MASTER,HIGH,System,Failed to delete notification master {masterId}: {errorMessage},Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.GET.NOT_FOUND,NOTIFICATION_MASTER,LOW,Business,Notification master with ID {masterId} not found,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.GET.TYPE_NOT_FOUND,NOTIFICATION_MASTER,LOW,Business,Notification master with type {notificationType} not found,Notifications,Notification Master Service
+ERR.CORE.NOTIF_MASTER.LIST.FAILED,NOTIFICATION_MASTER,MEDIUM,System,Failed to retrieve notification masters list: {errorMessage},Notifications,Notification Master Service
+ERR.CORE.NOTIFICATION.CREATE.FAILED,NOTIFICATION,HIGH,System,Failed to create notification: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CREATE.INVALID_CONTACT,NOTIFICATION,MEDIUM,Business,Contact with ID {contactId} does not exist,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CREATE.INVALID_TYPE,NOTIFICATION,MEDIUM,Business,Notification type {notificationType} does not exist in master,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CREATE.NO_CHANNEL,NOTIFICATION,MEDIUM,Business,No delivery channel configured for notification type {notificationType},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.EMIT.FAILED,NOTIFICATION,HIGH,System,Failed to emit notification to {recipientCount} recipients: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.MARK_READ.NOT_FOUND,NOTIFICATION,MEDIUM,Business,Notification with ID {notificationId} not found,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.MARK_READ.FAILED,NOTIFICATION,MEDIUM,System,Failed to mark notification {notificationId} as read: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.RESEND.NOT_FOUND,NOTIFICATION,MEDIUM,Business,Notification with ID {notificationId} not found,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.RESEND.INVALID_STATUS,NOTIFICATION,MEDIUM,Business,Cannot resend notification {notificationId} with status {status},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.RESEND.FAILED,NOTIFICATION,HIGH,System,Failed to resend notification {notificationId}: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CANCEL.NOT_FOUND,NOTIFICATION,MEDIUM,Business,Notification with ID {notificationId} not found,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CANCEL.INVALID_STATUS,NOTIFICATION,MEDIUM,Business,Cannot cancel notification {notificationId} with status {status},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.CANCEL.FAILED,NOTIFICATION,MEDIUM,System,Failed to cancel notification {notificationId}: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.GET.NOT_FOUND,NOTIFICATION,LOW,Business,Notification with ID {notificationId} not found,Notifications,Notification Service
+ERR.CORE.NOTIFICATION.LIST.FAILED,NOTIFICATION,MEDIUM,System,Failed to retrieve notifications list: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.DELIVERY.EMAIL_FAILED,NOTIFICATION,HIGH,Integration,Failed to deliver email notification to {email}: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.DELIVERY.SMS_FAILED,NOTIFICATION,HIGH,Integration,Failed to deliver SMS notification to {phone}: {errorMessage},Notifications,Notification Service
+ERR.CORE.NOTIFICATION.DELIVERY.PUSH_FAILED,NOTIFICATION,HIGH,Integration,Failed to deliver push notification to device {deviceId}: {errorMessage},Notifications,Notification Service
+ERR.CORE.ERROR_MASTER.CREATE.FAILED,ERROR_MASTER,HIGH,System,Failed to create error master: {errorMessage},Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.CREATE.DUPLICATE_CODE,ERROR_MASTER,MEDIUM,Business,Error code {errorCode} already exists,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.CREATE.INVALID_FORMAT,ERROR_MASTER,MEDIUM,Business,Error code {errorCode} does not match required format,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.CREATE.INVALID_MODULE,ERROR_MASTER,MEDIUM,Business,Module with ID {moduleId} does not exist,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.CREATE.INVALID_CREATOR,ERROR_MASTER,MEDIUM,Business,Creator with ID {createdBy} does not exist,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.UPDATE.NOT_FOUND,ERROR_MASTER,MEDIUM,Business,Error master with ID {errorMasterId} not found,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.UPDATE.FAILED,ERROR_MASTER,HIGH,System,Failed to update error master {errorMasterId}: {errorMessage},Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.UPDATE.CODE_IMMUTABLE,ERROR_MASTER,MEDIUM,Business,Error code cannot be changed after creation,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.DELETE.NOT_FOUND,ERROR_MASTER,MEDIUM,Business,Error master with ID {errorMasterId} not found,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.DELETE.IN_USE,ERROR_MASTER,HIGH,Business,Cannot delete error master {errorCode} as it has {logCount} associated error logs,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.DELETE.FAILED,ERROR_MASTER,HIGH,System,Failed to delete error master {errorMasterId}: {errorMessage},Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.GET.NOT_FOUND,ERROR_MASTER,LOW,Business,Error master with ID {errorMasterId} not found,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.GET.CODE_NOT_FOUND,ERROR_MASTER,LOW,Business,Error master with code {errorCode} not found,Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.LIST.FAILED,ERROR_MASTER,MEDIUM,System,Failed to retrieve error masters list: {errorMessage},Error Management,Error Master Service
+ERR.CORE.ERROR_MASTER.BULK_CREATE.PARTIAL_FAILURE,ERROR_MASTER,MEDIUM,Business,Bulk create completed with {failureCount} failures out of {totalCount},Error Management,Error Master Service
+ERR.CORE.ERROR_LOG.CREATE.FAILED,ERROR_LOG,HIGH,System,Failed to log error: {errorMessage},Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.CREATE.INVALID_CODE,ERROR_LOG,MEDIUM,Business,Error code {errorCode} does not exist in error master,Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.CREATE.INVALID_SOURCE_TYPE,ERROR_LOG,MEDIUM,Business,Source type {sourceType} is not a valid value,Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.CREATE.INVALID_ENVIRONMENT,ERROR_LOG,MEDIUM,Business,Environment {environment} is not a valid value,Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.CREATE.EMPTY_MESSAGE,ERROR_LOG,MEDIUM,Business,Resolved message is empty for error code {errorCode} with logging enabled,Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.SEARCH.FAILED,ERROR_LOG,MEDIUM,System,Failed to search error logs: {errorMessage},Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.EXPORT.FAILED,ERROR_LOG,HIGH,System,Failed to export error logs to CSV: {errorMessage},Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.ARCHIVE.FAILED,ERROR_LOG,HIGH,System,Failed to archive error logs: {errorMessage},Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.ARCHIVE.MOVE_FAILED,ERROR_LOG,HIGH,System,Failed to move {logCount} logs to archive: {errorMessage},Error Management,Error Log Service
+ERR.CORE.ERROR_LOG.GET.NOT_FOUND,ERROR_LOG,LOW,Business,Error log with ID {errorLogId} not found,Error Management,Error Log Service
+ERR.CORE.LOG_MASTER.CREATE.FAILED,LOG_MASTER,HIGH,System,Failed to create log master: {errorMessage},Logging,Log Master Service
+ERR.CORE.LOG_MASTER.CREATE.DUPLICATE_CODE,LOG_MASTER,MEDIUM,Business,Log code {logCode} already exists,Logging,Log Master Service
+ERR.CORE.LOG_MASTER.UPDATE.NOT_FOUND,LOG_MASTER,MEDIUM,Business,Log master with ID {logMasterId} not found,Logging,Log Master Service
+ERR.CORE.LOG_MASTER.UPDATE.FAILED,LOG_MASTER,HIGH,System,Failed to update log master {logMasterId}: {errorMessage},Logging,Log Master Service
+ERR.CORE.LOG_MASTER.DELETE.NOT_FOUND,LOG_MASTER,MEDIUM,Business,Log master with ID {logMasterId} not found,Logging,Log Master Service
+ERR.CORE.LOG_MASTER.DELETE.IN_USE,LOG_MASTER,HIGH,Business,Cannot delete log master {logCode} as it has {transactionCount} associated transactions,Logging,Log Master Service
+ERR.CORE.LOG_MASTER.DELETE.FAILED,LOG_MASTER,HIGH,System,Failed to delete log master {logMasterId}: {errorMessage},Logging,Log Master Service
+ERR.CORE.LOG_MASTER.GET.NOT_FOUND,LOG_MASTER,LOW,Business,Log master with ID {logMasterId} not found,Logging,Log Master Service
+ERR.CORE.LOG_MASTER.LIST.FAILED,LOG_MASTER,MEDIUM,System,Failed to retrieve log masters list: {errorMessage},Logging,Log Master Service
+ERR.CORE.LOG_TRANSACTION.CREATE.FAILED,LOG_TRANSACTION,HIGH,System,Failed to create log transaction: {errorMessage},Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.CREATE.INVALID_LOG_CODE,LOG_TRANSACTION,MEDIUM,Business,Log code {logCode} does not exist in log master,Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.CREATE.INVALID_ACTOR,LOG_TRANSACTION,MEDIUM,Business,Actor user with ID {actorUserId} does not exist,Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.UPDATE.NOT_FOUND,LOG_TRANSACTION,MEDIUM,Business,Log transaction with ID {transactionId} not found,Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.UPDATE.FAILED,LOG_TRANSACTION,MEDIUM,System,Failed to update log transaction {transactionId}: {errorMessage},Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.DELETE.NOT_FOUND,LOG_TRANSACTION,MEDIUM,Business,Log transaction with ID {transactionId} not found,Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.DELETE.FAILED,LOG_TRANSACTION,MEDIUM,System,Failed to delete log transaction {transactionId}: {errorMessage},Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.GET.NOT_FOUND,LOG_TRANSACTION,LOW,Business,Log transaction with ID {transactionId} not found,Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.SEARCH.FAILED,LOG_TRANSACTION,MEDIUM,System,Failed to search log transactions: {errorMessage},Logging,Log Transaction Service
+ERR.CORE.LOG_TRANSACTION.EXPORT.FAILED,LOG_TRANSACTION,HIGH,System,Failed to export log transactions: {errorMessage},Logging,Log Transaction Service
+ERR.CORE.PROMPT.CREATE.FAILED,PROMPT,HIGH,System,Failed to create prompt: {errorMessage},AI/ML,Prompt Service
+ERR.CORE.PROMPT.CREATE.DUPLICATE,PROMPT,MEDIUM,Business,Prompt with name {name} and type {type} already exists,AI/ML,Prompt Service
+ERR.CORE.PROMPT.CREATE.INVALID_CREATOR,PROMPT,MEDIUM,Business,Creator with ID {createdBy} does not exist,AI/ML,Prompt Service
+ERR.CORE.PROMPT.UPDATE.NOT_FOUND,PROMPT,MEDIUM,Business,Prompt with ID {promptId} not found,AI/ML,Prompt Service
+ERR.CORE.PROMPT.UPDATE.FAILED,PROMPT,HIGH,System,Failed to update prompt {promptId}: {errorMessage},AI/ML,Prompt Service
+ERR.CORE.PROMPT.UPDATE.DUPLICATE,PROMPT,MEDIUM,Business,Another prompt with name {name} and type {type} already exists,AI/ML,Prompt Service
+ERR.CORE.PROMPT.DELETE.NOT_FOUND,PROMPT,MEDIUM,Business,Prompt with ID {promptId} not found,AI/ML,Prompt Service
+ERR.CORE.PROMPT.DELETE.IN_USE,PROMPT,HIGH,Business,Cannot delete prompt {promptId} as it has {executionCount} associated executions,AI/ML,Prompt Service
+ERR.CORE.PROMPT.DELETE.FAILED,PROMPT,HIGH,System,Failed to delete prompt {promptId}: {errorMessage},AI/ML,Prompt Service
+ERR.CORE.PROMPT.GET.NOT_FOUND,PROMPT,LOW,Business,Prompt with ID {promptId} not found,AI/ML,Prompt Service
+ERR.CORE.PROMPT.LIST.FAILED,PROMPT,MEDIUM,System,Failed to retrieve prompts list: {errorMessage},AI/ML,Prompt Service
+ERR.CORE.PROMPT.RESTORE.NOT_FOUND,PROMPT,MEDIUM,Business,Deleted prompt with ID {promptId} not found,AI/ML,Prompt Service
+ERR.CORE.PROMPT.RESTORE.FAILED,PROMPT,HIGH,System,Failed to restore prompt {promptId}: {errorMessage},AI/ML,Prompt Service
+ERR.CORE.PROMPT_EXEC.CREATE.FAILED,PROMPT_EXECUTION,HIGH,System,Failed to create prompt execution: {errorMessage},AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.CREATE.INVALID_PROMPT,PROMPT_EXECUTION,MEDIUM,Business,Prompt with ID {promptId} does not exist,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.CREATE.INVALID_USER,PROMPT_EXECUTION,MEDIUM,Business,User with ID {userId} does not exist,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.UPDATE.NOT_FOUND,PROMPT_EXECUTION,MEDIUM,Business,Prompt execution with ID {executionId} not found,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.UPDATE.FAILED,PROMPT_EXECUTION,HIGH,System,Failed to update prompt execution {executionId}: {errorMessage},AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.DELETE.NOT_FOUND,PROMPT_EXECUTION,MEDIUM,Business,Prompt execution with ID {executionId} not found,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.DELETE.FAILED,PROMPT_EXECUTION,HIGH,System,Failed to delete prompt execution {executionId}: {errorMessage},AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.GET.NOT_FOUND,PROMPT_EXECUTION,LOW,Business,Prompt execution with ID {executionId} not found,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.LIST.FAILED,PROMPT_EXECUTION,MEDIUM,System,Failed to retrieve prompt executions list: {errorMessage},AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.EXECUTE.FAILED,PROMPT_EXECUTION,HIGH,System,Failed to execute prompt {promptId}: {errorMessage},AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.EXECUTE.TIMEOUT,PROMPT_EXECUTION,HIGH,System,Prompt execution {executionId} timed out after {timeoutSeconds} seconds,AI/ML,Prompt Execution Service
+ERR.CORE.PROMPT_EXEC.EXECUTE.TOKEN_LIMIT,PROMPT_EXECUTION,MEDIUM,Business,Prompt execution exceeded token limit: {tokenCount} tokens used,AI/ML,Prompt Execution Service
+ERR.CORE.MODULE.CREATE.FAILED,MODULE,HIGH,System,Failed to create module: {errorMessage},Access Control,Module Service
+ERR.CORE.MODULE.CREATE.DUPLICATE_NAME,MODULE,MEDIUM,Business,Module with name {name} already exists,Access Control,Module Service
+ERR.CORE.MODULE.CREATE.DUPLICATE_SHORT_CODE,MODULE,MEDIUM,Business,Module with short code {shortCode} already exists,Access Control,Module Service
+ERR.CORE.MODULE.UPDATE.NOT_FOUND,MODULE,MEDIUM,Business,Module with ID {moduleId} not found,Access Control,Module Service
+ERR.CORE.MODULE.UPDATE.FAILED,MODULE,HIGH,System,Failed to update module {moduleId}: {errorMessage},Access Control,Module Service
+ERR.CORE.MODULE.UPDATE.DUPLICATE_NAME,MODULE,MEDIUM,Business,Another module with name {name} already exists,Access Control,Module Service
+ERR.CORE.MODULE.UPDATE.DUPLICATE_SHORT_CODE,MODULE,MEDIUM,Business,Another module with short code {shortCode} already exists,Access Control,Module Service
+ERR.CORE.MODULE.DELETE.NOT_FOUND,MODULE,MEDIUM,Business,Module with ID {moduleId} not found,Access Control,Module Service
+ERR.CORE.MODULE.DELETE.IN_USE,MODULE,HIGH,Business,Cannot delete module {moduleId} as it has {mappingCount} permission mappings,Access Control,Module Service
+ERR.CORE.MODULE.DELETE.HAS_HIERARCHY,MODULE,HIGH,Business,Cannot delete module {moduleId} as it has child modules in hierarchy,Access Control,Module Service
+ERR.CORE.MODULE.DELETE.FAILED,MODULE,HIGH,System,Failed to delete module {moduleId}: {errorMessage},Access Control,Module Service
+ERR.CORE.MODULE.GET.NOT_FOUND,MODULE,LOW,Business,Module with ID {moduleId} not found,Access Control,Module Service
+ERR.CORE.MODULE.LIST.FAILED,MODULE,MEDIUM,System,Failed to retrieve modules list: {errorMessage},Access Control,Module Service
+ERR.CORE.MODULE.BULK_CREATE.PARTIAL_FAILURE,MODULE,MEDIUM,Business,Bulk create completed with {failureCount} failures out of {totalCount},Access Control,Module Service
+ERR.CORE.JOB.CREATE.FAILED,JOB,HIGH,System,Failed to create job: {errorMessage},Access Control,Job Service
+ERR.CORE.JOB.CREATE.DUPLICATE_NAME,JOB,MEDIUM,Business,Job with name {name} already exists,Access Control,Job Service
+ERR.CORE.JOB.CREATE.DUPLICATE_SHORT_CODE,JOB,MEDIUM,Business,Job with short code {shortCode} already exists,Access Control,Job Service
+ERR.CORE.JOB.UPDATE.NOT_FOUND,JOB,MEDIUM,Business,Job with ID {jobId} not found,Access Control,Job Service
+ERR.CORE.JOB.UPDATE.FAILED,JOB,HIGH,System,Failed to update job {jobId}: {errorMessage},Access Control,Job Service
+ERR.CORE.JOB.UPDATE.DUPLICATE_NAME,JOB,MEDIUM,Business,Another job with name {name} already exists,Access Control,Job Service
+ERR.CORE.JOB.UPDATE.DUPLICATE_SHORT_CODE,JOB,MEDIUM,Business,Another job with short code {shortCode} already exists,Access Control,Job Service
+ERR.CORE.JOB.DELETE.NOT_FOUND,JOB,MEDIUM,Business,Job with ID {jobId} not found,Access Control,Job Service
+ERR.CORE.JOB.DELETE.IN_USE,JOB,HIGH,Business,Cannot delete job {jobId} as it has {mappingCount} permission mappings,Access Control,Job Service
+ERR.CORE.JOB.DELETE.FAILED,JOB,HIGH,System,Failed to delete job {jobId}: {errorMessage},Access Control,Job Service
+ERR.CORE.JOB.GET.NOT_FOUND,JOB,LOW,Business,Job with ID {jobId} not found,Access Control,Job Service
+ERR.CORE.JOB.LIST.FAILED,JOB,MEDIUM,System,Failed to retrieve jobs list: {errorMessage},Access Control,Job Service
+ERR.CORE.JOB.BULK_CREATE.PARTIAL_FAILURE,JOB,MEDIUM,Business,Bulk create completed with {failureCount} failures out of {totalCount},Access Control,Job Service
+ERR.CORE.ROLE.CREATE.FAILED,ROLE,HIGH,System,Failed to create role: {errorMessage},Access Control,Role Service
+ERR.CORE.ROLE.CREATE.DUPLICATE_NAME,ROLE,MEDIUM,Business,Role with name {name} already exists,Access Control,Role Service
+ERR.CORE.ROLE.CREATE.DUPLICATE_SHORT_CODE,ROLE,MEDIUM,Business,Role with short code {shortCode} already exists,Access Control,Role Service
+ERR.CORE.ROLE.CREATE.INVALID_MODULE,ROLE,MEDIUM,Business,Module with ID {moduleId} in permissions does not exist,Access Control,Role Service
+ERR.CORE.ROLE.CREATE.INVALID_JOB,ROLE,MEDIUM,Business,Job with name {jobName} in permissions does not exist,Access Control,Role Service
+ERR.CORE.ROLE.CREATE.INVALID_PERMISSION,ROLE,MEDIUM,Business,Permission with name {permissionName} does not exist,Access Control,Role Service
+ERR.CORE.ROLE.UPDATE.NOT_FOUND,ROLE,MEDIUM,Business,Role with ID {roleId} not found,Access Control,Role Service
+ERR.CORE.ROLE.UPDATE.FAILED,ROLE,HIGH,System,Failed to update role {roleId}: {errorMessage},Access Control,Role Service
+ERR.CORE.ROLE.UPDATE.DUPLICATE_NAME,ROLE,MEDIUM,Business,Another role with name {name} already exists,Access Control,Role Service
+ERR.CORE.ROLE.UPDATE.DUPLICATE_SHORT_CODE,ROLE,MEDIUM,Business,Another role with short code {shortCode} already exists,Access Control,Role Service
+ERR.CORE.ROLE.DELETE.NOT_FOUND,ROLE,MEDIUM,Business,Role with ID {roleId} not found,Access Control,Role Service
+ERR.CORE.ROLE.DELETE.IN_USE,ROLE,HIGH,Business,Cannot delete role {roleId} as it is assigned to {userCount} users,Access Control,Role Service
+ERR.CORE.ROLE.DELETE.FAILED,ROLE,HIGH,System,Failed to delete role {roleId}: {errorMessage},Access Control,Role Service
+ERR.CORE.ROLE.GET.NOT_FOUND,ROLE,LOW,Business,Role with ID {roleId} not found,Access Control,Role Service
+ERR.CORE.ROLE.LIST.FAILED,ROLE,MEDIUM,System,Failed to retrieve roles list: {errorMessage},Access Control,Role Service
+ERR.CORE.PERMISSION.CREATE.FAILED,PERMISSION,HIGH,System,Failed to create permission: {errorMessage},Access Control,Permission Service
+ERR.CORE.PERMISSION.CREATE.DUPLICATE_NAME,PERMISSION,MEDIUM,Business,Permission with name {name} already exists,Access Control,Permission Service
+ERR.CORE.PERMISSION.CREATE.DUPLICATE_SHORT_CODE,PERMISSION,MEDIUM,Business,Permission with short code {shortCode} already exists,Access Control,Permission Service
+ERR.CORE.PERMISSION.UPDATE.NOT_FOUND,PERMISSION,MEDIUM,Business,Permission with ID {permissionId} not found,Access Control,Permission Service
+ERR.CORE.PERMISSION.UPDATE.FAILED,PERMISSION,HIGH,System,Failed to update permission {permissionId}: {errorMessage},Access Control,Permission Service
+ERR.CORE.PERMISSION.UPDATE.DUPLICATE_NAME,PERMISSION,MEDIUM,Business,Another permission with name {name} already exists,Access Control,Permission Service
+ERR.CORE.PERMISSION.UPDATE.DUPLICATE_SHORT_CODE,PERMISSION,MEDIUM,Business,Another permission with short code {shortCode} already exists,Access Control,Permission Service
+ERR.CORE.PERMISSION.DELETE.NOT_FOUND,PERMISSION,MEDIUM,Business,Permission with ID {permissionId} not found,Access Control,Permission Service
+ERR.CORE.PERMISSION.DELETE.IN_USE,PERMISSION,HIGH,Business,Cannot delete permission {permissionId} as it has {mappingCount} permission mappings,Access Control,Permission Service
+ERR.CORE.PERMISSION.DELETE.FAILED,PERMISSION,HIGH,System,Failed to delete permission {permissionId}: {errorMessage},Access Control,Permission Service
+ERR.CORE.PERMISSION.GET.NOT_FOUND,PERMISSION,LOW,Business,Permission with ID {permissionId} not found,Access Control,Permission Service
+ERR.CORE.PERMISSION.LIST.FAILED,PERMISSION,MEDIUM,System,Failed to retrieve permissions list: {errorMessage},Access Control,Permission Service
+ERR.CORE.PERMISSION.BULK_CREATE.PARTIAL_FAILURE,PERMISSION,MEDIUM,Business,Bulk create completed with {failureCount} failures out of {totalCount},Access Control,Permission Service
+ERR.CORE.PERM_MAPPING.CREATE.FAILED,PERMISSION_MAPPING,HIGH,System,Failed to create permission mapping: {errorMessage},Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.CREATE.DUPLICATE,PERMISSION_MAPPING,MEDIUM,Business,Permission mapping for module {moduleId} job {jobId} permission {permissionId} already exists,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.CREATE.INVALID_MODULE,PERMISSION_MAPPING,MEDIUM,Business,Module with ID {moduleId} does not exist,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.CREATE.INVALID_JOB,PERMISSION_MAPPING,MEDIUM,Business,Job with ID {jobId} does not exist,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.CREATE.INVALID_PERMISSION,PERMISSION_MAPPING,MEDIUM,Business,Permission with ID {permissionId} does not exist,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.UPDATE.NOT_FOUND,PERMISSION_MAPPING,MEDIUM,Business,Permission mapping with ID {mappingId} not found,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.UPDATE.FAILED,PERMISSION_MAPPING,HIGH,System,Failed to update permission mapping {mappingId}: {errorMessage},Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.UPDATE.DUPLICATE,PERMISSION_MAPPING,MEDIUM,Business,Another permission mapping for this module job permission combination already exists,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.DELETE.NOT_FOUND,PERMISSION_MAPPING,MEDIUM,Business,Permission mapping with ID {mappingId} not found,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.DELETE.IN_USE,PERMISSION_MAPPING,HIGH,Business,Cannot delete permission mapping {mappingId} as it is used in {roleCount} roles,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.DELETE.FAILED,PERMISSION_MAPPING,HIGH,System,Failed to delete permission mapping {mappingId}: {errorMessage},Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.GET.NOT_FOUND,PERMISSION_MAPPING,LOW,Business,Permission mapping with ID {mappingId} not found,Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.LIST.FAILED,PERMISSION_MAPPING,MEDIUM,System,Failed to retrieve permission mappings list: {errorMessage},Access Control,Permission Mapping Service
+ERR.CORE.PERM_MAPPING.BULK_CREATE.PARTIAL_FAILURE,PERMISSION_MAPPING,MEDIUM,Business,Bulk create completed with {failureCount} failures out of {totalCount},Access Control,Permission Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.FAILED,USER_ROLE_PERMISSION,HIGH,System,Failed to create user role mapping: {errorMessage},Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.DUPLICATE,USER_ROLE_PERMISSION,MEDIUM,Business,User mapping for role {roleId} user {userId} unit {unitId} already exists,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_ROLE,USER_ROLE_PERMISSION,MEDIUM,Business,Role with ID {roleId} does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_USER,USER_ROLE_PERMISSION,MEDIUM,Business,User with ID {userId} does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_UNIT,USER_ROLE_PERMISSION,MEDIUM,Business,Unit with ID {unitId} does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.USER_NO_UNIT,USER_ROLE_PERMISSION,MEDIUM,Business,User {userId} does not have an assigned unit,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.USER_NO_RANK,USER_ROLE_PERMISSION,MEDIUM,Business,User {userId} does not have an assigned rank,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_ADD_MODULE,USER_ROLE_PERMISSION,MEDIUM,Business,Module {moduleId} in additional permissions does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_ADD_JOB,USER_ROLE_PERMISSION,MEDIUM,Business,Job {jobName} in additional permissions does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_ADD_PERMISSION,USER_ROLE_PERMISSION,MEDIUM,Business,Permission {permissionName} in additional permissions does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CREATE.INVALID_EXCL_PERMISSION,USER_ROLE_PERMISSION,MEDIUM,Business,Permission {permissionName} in exclusion permissions does not exist,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.UPDATE.NOT_FOUND,USER_ROLE_PERMISSION,MEDIUM,Business,User mapping with ID {mappingId} not found,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.UPDATE.FAILED,USER_ROLE_PERMISSION,HIGH,System,Failed to update user mapping {mappingId}: {errorMessage},Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.UPDATE.DUPLICATE,USER_ROLE_PERMISSION,MEDIUM,Business,Another user mapping for this role user unit combination already exists,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.DELETE.NOT_FOUND,USER_ROLE_PERMISSION,MEDIUM,Business,User mapping with ID {mappingId} not found,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.DELETE.FAILED,USER_ROLE_PERMISSION,HIGH,System,Failed to delete user mapping {mappingId}: {errorMessage},Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.GET.NOT_FOUND,USER_ROLE_PERMISSION,LOW,Business,User mapping with ID {mappingId} not found,Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.LIST.FAILED,USER_ROLE_PERMISSION,MEDIUM,System,Failed to retrieve user mappings list: {errorMessage},Access Control,User Mapping Service
+ERR.CORE.USER_MAPPING.CONSOLIDATE.FAILED,USER_ROLE_PERMISSION,HIGH,System,Failed to consolidate permissions for user {userId}: {errorMessage},Access Control,User Mapping Service
+ERR.CORE.MOD_HIERARCHY.CREATE.FAILED,MODULE_HIERARCHY,HIGH,System,Failed to create module hierarchy: {errorMessage},Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.CREATE.INVALID_PARENT,MODULE_HIERARCHY,MEDIUM,Business,Parent module with ID {parentModuleId} does not exist,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.CREATE.INVALID_CHILD,MODULE_HIERARCHY,MEDIUM,Business,Child module with ID {childModuleId} does not exist,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.CREATE.DUPLICATE,MODULE_HIERARCHY,MEDIUM,Business,Hierarchy relationship between parent {parentModuleId} and child {childModuleId} already exists,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.CREATE.CIRCULAR,MODULE_HIERARCHY,HIGH,Business,Circular hierarchy detected: Module {moduleId} cannot be its own ancestor,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.CREATE.SELF_REFERENCE,MODULE_HIERARCHY,MEDIUM,Business,Module {moduleId} cannot be its own parent,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.UPDATE.NOT_FOUND,MODULE_HIERARCHY,MEDIUM,Business,Module hierarchy with ID {hierarchyId} not found,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.UPDATE.FAILED,MODULE_HIERARCHY,HIGH,System,Failed to update module hierarchy {hierarchyId}: {errorMessage},Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.UPDATE.CIRCULAR,MODULE_HIERARCHY,HIGH,Business,Update would create circular hierarchy for module {moduleId},Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.DELETE.NOT_FOUND,MODULE_HIERARCHY,MEDIUM,Business,Module hierarchy with ID {hierarchyId} not found,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.DELETE.FAILED,MODULE_HIERARCHY,HIGH,System,Failed to delete module hierarchy {hierarchyId}: {errorMessage},Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.GET.NOT_FOUND,MODULE_HIERARCHY,LOW,Business,Module hierarchy with ID {hierarchyId} not found,Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.LIST.FAILED,MODULE_HIERARCHY,MEDIUM,System,Failed to retrieve module hierarchy list: {errorMessage},Access Control,Module Hierarchy Service
+ERR.CORE.MOD_HIERARCHY.TREE.BUILD_FAILED,MODULE_HIERARCHY,HIGH,System,Failed to build module hierarchy tree: {errorMessage},Access Control,Module Hierarchy Service
+ERR.CORE.APPROVAL_FLOW.NOT_FOUND,Approval Flow,high,business,Approval flow master not found,,
+ERR.CORE.APPROVAL_FLOW.ALREADY_ACTIVE,Approval Flow,medium,business,Approval flow master is already active,,
+ERR.CORE.APPROVAL_CHAIN.NOT_FOUND,Approval Chain,high,business,Approval chain not found,,
+ERR.CORE.APPROVAL_CHAIN.ALREADY_ACTIVE,Approval Chain,medium,business,Approval chain is already active,,

@@ -1,0 +1,107 @@
+fields: 
+
+name: _id 
+ label: Document Id 
+ purpose: Primary key 
+ details: type=ObjectId, required=true, nullable=false, pk=true, fk=none, autoInc=false, encrypt(atRest=false, mask=false) 
+
+name: key 
+ label: Value Set Key 
+ purpose: Globally unique identifier for the set (e.g., errorSeverity) 
+ details: type=String, length=120, required=true, nullable=false, unique=true, encrypt(atRest=false, mask=false)
+
+name: status 
+ label: Status 
+ purpose: Active/archived switch 
+ details: type=String, required=true, nullable=false, enum=["active","archived"], default="active", index=single
+
+name: module 
+ label: Module 
+ purpose: High-level owning module tag (e.g., "Core", "Notifications")
+ details: type=String, length=64, required=false, nullable=true
+
+name: description
+ label: Description
+ purpose: Admin help text
+ details: type=String, length=1000, required=false, nullable=true
+ notes: Consider optional text index for admin search.
+
+name: items
+ label: Enum Items
+ purpose: List of codes + labels
+ details: type=Array<Object>, required=true, nullable=false 
+ item schema:
+
+code: String (required, case-sensitive; unique within this set; length ≤ 64)
+
+labels: Object (required) — map of ISO-639-1 → String; must include "en"
+
+labels.en: String (required, length ≤ 256)
+
+other languages optional (e.g., "hi", "fr")
+
+name: createdBy
+ label: Created By
+ purpose: Audit user id
+ details: type=ObjectId, required=true, nullable=false
+
+name: createdAt
+ label: Created At
+ purpose: Audit timestamp
+ details: type=Date, required=true, nullable=false, default=now, index=single(desc)
+
+name: updateAt
+ label: Updated At
+ purpose: Audit timestamp
+ details: type=Date, required=true, nullable=false, default=now, index=single(desc)
+
+constraints:
+
+unique:
+
+name: "uniq_valueSet_key"
+ fields: ["key"]
+ reason: "One document per enum key"
+
+validation:
+
+status ∈ {"active","archived"} 
+
+1 ≤ items.length ≤ 500 
+
+each items[i].code unique within the same document (case-sensitive) 
+
+items[i].labels.en must be present and non-empty 
+
+optional language keys must be 2-letter ISO-639-1 
+
+recommended code regex: ^[A-Z0-9_][A-Z0-9_\-]{0,63}$ (aligns with SCREAMING_SNAKE_CASE; allow hyphen if needed) 
+
+indexes: 
+
+"uniq_key" — { key: 1 } (unique) — reason: fast fetch by key 
+
+"idx_status" — { status: 1 } — reason: list active vs archived 
+
+"idx_updated_desc" — { updateDateTime: -1 } — reason: admin recency sort 
+
+optional: "text_description" — { description: "text" } — reason: admin search UX 
+
+relationships: 
+
+withModel: "errorMaster" | "errorLog" | "notifications" | others 
+ type: "reference-by-key" (no hard FK; consumed via helpers/cache) 
+ viaFields: ["key","items[].code"] 
+ cascade: { onDelete: "restrict", onUpdate: "propagate (app-level via cache refresh)" } 
+
+performance: 
+
+expectedVolume: "low" (few hundred sets max; each ≤ 500 items) 
+
+rpsPeak: 200 (reads across services/UI) 
+
+readWriteRatio: "95/5" (mostly reads) 
+
+hotspots: ["key","status","updateDateTime"] 
+
+caching: server TTL (e.g., 10m) + manual refresh; client bootstrap on app start 

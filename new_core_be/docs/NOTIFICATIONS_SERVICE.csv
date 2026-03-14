@@ -1,0 +1,9 @@
+Notification Text,Recipient,Trigger Action,Screen/Module,Notification Type,Notification Code,Target Audience
+New personnel record has been created,Admin Users & Unit Commanders,Personnel creation completed,Personnel Management (personnel_router.py),In-App,PERSONNEL_CREATED,System Administrators & Unit Commanders
+Personnel record has been updated,Admin Users & Personnel Owner,Personnel details modified,Personnel Management (personnel_router.py),In-App,PERSONNEL_UPDATED,System Administrators & Concerned Personnel
+Personnel record has been deleted,Admin Users,Personnel marked as deleted,Personnel Management (personnel_router.py),In-App,PERSONNEL_DELETED,System Administrators
+Personnel record has been restored,Admin Users,Deleted personnel restored,Personnel Management (personnel_router.py),In-App,PERSONNEL_RESTORED,System Administrators
+Unit has been assigned to personnel,Personnel Owner & Unit Commanders,Unit assignment to personnel,Personnel Management / Unit Assignment,In-App,PERSONNEL_UNIT_ASSIGNED,Assigned Personnel & Unit Commanders
+Unit has been removed from personnel,Personnel Owner & Unit Commanders,Unit removal from personnel,Personnel Management / Unit Assignment,In-App,PERSONNEL_UNIT_REMOVED,Affected Personnel & Unit Commanders
+Personnel rank has been changed,Personnel Owner & Admin Users,Rank modification,Personnel Management (personnel_router.py),In-App,PERSONNEL_RANK_CHANGED,Promoted/Demoted Personnel & Administrators
+User onboarding credentials sent,New User,User onboarded successfully,Onboarding (onboarding_router.py),SMS,USER_ONBOARDED_SMS,Newly Onboarded User

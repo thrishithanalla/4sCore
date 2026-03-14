@@ -1,0 +1,38 @@
+# 1️⃣ Use an official or enterprise-approved Python base image
+# FROM python:3.13
+FROM baseimages.azurecr.io/python:3.12-base AS base
+
+# 2️⃣ Set environment variables for reliability and performance
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/home/appuser/.local/bin:${PATH}"
+
+# 3️⃣ Set working directory
+WORKDIR /app
+
+# 4️⃣ Install only necessary system dependencies (lightweight)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 5️⃣ Copy dependency file first (better Docker layer caching)
+COPY requirements.txt .
+
+# 6️⃣ Install dependencies safely as non-root user later
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
+
+# 7️⃣ Copy project files
+COPY . .
+
+# 8️⃣ Create a non-root user (best security practice)
+RUN useradd -m appuser
+USER appuser
+
+# 9️⃣ Expose FastAPI port
+EXPOSE 8082
+
+# 🔟 Default command (run uvicorn app)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8082"]

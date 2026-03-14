@@ -1,0 +1,641 @@
+================================================================================
+ERROR MASTER & ERROR LOG - FIELD CONSTRAINTS & TEST DATA
+================================================================================
+
+================================================================================
+1. ERROR MASTER - FIELD CONSTRAINTS
+================================================================================
+
+FIELD               | TYPE              | REQUIRED | CONSTRAINTS
+--------------------|-------------------|----------|--------------------------------------------
+errorCode           | string            | YES      | 3-120 chars, pattern: ^[A-Za-z0-9_\.:-]{3,120}$
+                    |                   |          | Must follow: ERR.<MODULE>.<COMPONENT>.<ACTION>
+                    |                   |          | Example: ERR.AUTH.LOGIN.FAILED
+                    |                   |          | IMMUTABLE after creation (cannot update)
+errorType           | string            | YES      | Must exist in 'errorType' value-set
+                    |                   |          | Allowed: BUSINESS, TECHNICAL, VALIDATION, SECURITY (case-insensitive)
+errorSeverity       | string            | YES      | Must exist in 'errorSeverity' value-set
+                    |                   |          | Allowed: LOW, MEDIUM, HIGH, CRITICAL (case-insensitive)
+log                 | boolean           | NO       | Default: true
+sourceType          | string            | YES      | Must exist in 'sourceType' value-set
+                    |                   |          | Allowed: API, UI, SCREEN, FUNCTION, THIRDPARTY (case-insensitive)
+sourceName          | string            | YES      | Max 200 chars
+appCode             | string            | NO       | Optional application code identifier
+notificationId      | string            | NO       | FK to notification_master._id (ObjectId hex)
+moduleId            | string            | NO       | FK to modules._id (ObjectId hex)
+businessArea        | string            | NO       | Max 120 chars
+technicalArea       | string            | NO       | Max 120 chars
+tool                | string            | NO       | Max 120 chars
+partnerSystem       | string            | NO       | Max 120 chars
+thirdParty          | string            | NO       | Max 120 chars
+messages            | array             | YES      | At least 1 LocalizedMessage required
+  messages[].language  | string         | YES      | ISO-639-1 code (e.g., "en", "hi", "te")
+  messages[].template  | string         | YES      | Placeholders must be {lowerCamelCase}
+devMessage          | string            | NO       | Max 2000 chars
+helpLink            | string (URL)      | NO       | Must be valid HTTP/HTTPS URL
+videoLink           | string (URL)      | NO       | Must be valid HTTP/HTTPS URL
+
+UPDATE SCHEMA: All fields are OPTIONAL. errorCode CANNOT be updated.
+Additional update fields: sourceType, sourceName, appCode, notificationId
+
+
+================================================================================
+2. ERROR LOG - FIELD CONSTRAINTS
+================================================================================
+
+FIELD               | TYPE              | REQUIRED | CONSTRAINTS
+--------------------|-------------------|----------|--------------------------------------------
+errorCode           | string            | YES      | Must reference an existing error_master errorCode
+parametersJson      | object (dict)     | NO       | Default: {} - key/value pairs for placeholders
+language            | string            | NO       | Default: "en", ISO-639-1 (2 lowercase letters)
+actorUserId         | string            | NO       | ObjectId hex string (24 hex chars)
+sourceType          | string            | YES      | Must exist in 'sourceType' value-set
+                    |                   |          | Allowed: API, UI, SCREEN, FUNCTION, THIRDPARTY
+sourceName          | string            | YES      | Max 200 chars
+userAgent           | string            | NO       | Max 512 chars
+environment         | string            | NO       | Must exist in 'environment' value-set
+                    |                   |          | Allowed: DEVELOPMENT, STAGING, PRODUCTION, QA
+parameters          | array             | NO       | List of {name, value} pairs (both min 1 char)
+
+
+================================================================================
+3. DASHBOARD REQUEST - FIELD CONSTRAINTS
+================================================================================
+
+FIELD               | TYPE              | REQUIRED | CONSTRAINTS
+--------------------|-------------------|----------|--------------------------------------------
+timeRange           | string (enum)     | NO       | Default: "all". Values: all, 1h, 24h, 7d, 30d
+fromDate            | datetime (ISO)    | NO       | ISO 8601 format
+toDate              | datetime (ISO)    | NO       | ISO 8601 format
+sourceType          | string            | NO       | Filter by source type
+errorSeverity       | string            | NO       | Filter by severity
+errorCode           | string            | NO       | Filter by specific error code
+moduleId            | string            | NO       | Filter by module ID
+includeArchive      | boolean           | NO       | Default: false
+page                | integer           | NO       | Default: 1, min: 1
+limit               | integer           | NO       | Default: 5, min: 1, max: 200
+
+
+================================================================================
+4. VALUE-SET REFERENCE (seeded in value_sets_master)
+================================================================================
+
+errorType:     BUSINESS, TECHNICAL, VALIDATION, SECURITY
+errorSeverity: LOW, MEDIUM, HIGH, CRITICAL
+sourceType:    API, UI, SCREEN, FUNCTION, THIRDPARTY
+environment:   DEVELOPMENT, STAGING, PRODUCTION, QA
+
+NOTE: All value-set fields accept any case (e.g., "Business" -> "BUSINESS")
+
+
+################################################################################
+                           TEST DATA FOR ALL ENDPOINTS
+################################################################################
+
+
+================================================================================
+5. POST /api/v1/error-master/create
+================================================================================
+
+--- Test 1: Full payload with all fields ---
+{
+  "errorCode": "ERR.AUTH.LOGIN.FAILED",
+  "errorType": "Business",
+  "errorSeverity": "HIGH",
+  "log": true,
+  "sourceType": "API",
+  "sourceName": "/api/v1/auth/login",
+  "appCode": "4SCORE",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Login failed for user {userId}: {errorMessage}"
+    }
+  ],
+  "devMessage": "Authentication failed due to invalid credentials"
+}
+
+--- Test 2: Minimal required fields only ---
+{
+  "errorCode": "ERR.CORE.UNIT.CREATE.DUPLICATE",
+  "errorType": "Validation",
+  "errorSeverity": "Medium",
+  "sourceType": "API",
+  "sourceName": "/api/v1/units/create",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Unit with name {unitName} already exists"
+    }
+  ]
+}
+
+--- Test 3: Technical error with multiple languages ---
+{
+  "errorCode": "ERR.DB.CONNECTION.TIMEOUT",
+  "errorType": "Technical",
+  "errorSeverity": "Critical",
+  "log": true,
+  "sourceType": "Function",
+  "sourceName": "DatabaseConnectionPool.acquire",
+  "appCode": "4SCORE",
+  "businessArea": "Infrastructure",
+  "technicalArea": "Database",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Database connection timed out after {timeoutMs}ms on host {dbHost}"
+    },
+    {
+      "language": "hi",
+      "template": "Database connection {timeoutMs}ms ke baad timeout ho gaya host {dbHost} par"
+    }
+  ],
+  "devMessage": "Connection pool exhausted. Check max_pool_size and connection leak.",
+  "helpLink": "https://docs.example.com/troubleshooting/db-timeout",
+  "videoLink": "https://www.youtube.com/watch?v=example123"
+}
+
+--- Test 4: Security error with optional fields ---
+{
+  "errorCode": "ERR.AUTH.TOKEN.EXPIRED",
+  "errorType": "Security",
+  "errorSeverity": "Low",
+  "log": true,
+  "sourceType": "API",
+  "sourceName": "/api/v1/auth/verify",
+  "appCode": "4SCORE",
+  "moduleId": "507f1f77bcf86cd799439011",
+  "businessArea": "Authentication",
+  "technicalArea": "JWT",
+  "tool": "jose",
+  "partnerSystem": "Auth0",
+  "thirdParty": "Auth0 Inc",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Token expired for user {userId} at {expiredAt}"
+    }
+  ],
+  "devMessage": "JWT token has passed its exp claim"
+}
+
+--- Test 5: UI/Screen error ---
+{
+  "errorCode": "ERR.UI.FORM.VALIDATION.FAILED",
+  "errorType": "Validation",
+  "errorSeverity": "Low",
+  "sourceType": "Screen",
+  "sourceName": "PersonnelCreateForm",
+  "appCode": "4SCORE",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Form validation failed: {fieldName} - {validationMessage}"
+    }
+  ]
+}
+
+--- Test 6: Third party integration error ---
+{
+  "errorCode": "ERR.THIRDPARTY.SMS.SEND.FAILED",
+  "errorType": "Technical",
+  "errorSeverity": "High",
+  "sourceType": "ThirdParty",
+  "sourceName": "MSDPSmsService.sendOtp",
+  "appCode": "4SCORE",
+  "thirdParty": "MSDP Government SMS Gateway",
+  "messages": [
+    {
+      "language": "en",
+      "template": "SMS sending failed to {phoneNumber}: {errorMessage}"
+    }
+  ],
+  "devMessage": "MSDP API returned non-200 status. Check credentials and DLT template ID."
+}
+
+--- Test 7: CRUD operation error ---
+{
+  "errorCode": "ERR.CORE.DEPARTMENT.CREATE.FAILED",
+  "errorType": "Business",
+  "errorSeverity": "Medium",
+  "sourceType": "API",
+  "sourceName": "/api/v1/departments/create",
+  "appCode": "4SCORE",
+  "businessArea": "Organization",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Failed to create department {departmentName}: {reason}"
+    }
+  ]
+}
+
+--- Test 8: Permission denied error ---
+{
+  "errorCode": "ERR.CORE.PERMISSION.ACCESS.DENIED",
+  "errorType": "Security",
+  "errorSeverity": "Medium",
+  "sourceType": "API",
+  "sourceName": "PermissionMiddleware",
+  "appCode": "4SCORE",
+  "messages": [
+    {
+      "language": "en",
+      "template": "Access denied for user {userId} on resource {resourceName}: requires {requiredPermission}"
+    }
+  ],
+  "devMessage": "User lacks the required permission for this operation"
+}
+
+
+================================================================================
+6. POST /api/v1/error-master/bulk-create
+================================================================================
+
+{
+  "items": [
+    {
+      "errorCode": "ERR.PERSONNEL.CREATE.FAILED",
+      "errorType": "Business",
+      "errorSeverity": "Medium",
+      "sourceType": "API",
+      "sourceName": "/api/v1/personnel/create",
+      "appCode": "4SCORE",
+      "messages": [
+        {
+          "language": "en",
+          "template": "Failed to create personnel record for {personnelName}: {reason}"
+        }
+      ]
+    },
+    {
+      "errorCode": "ERR.PERSONNEL.UPDATE.NOT_FOUND",
+      "errorType": "Business",
+      "errorSeverity": "Medium",
+      "sourceType": "API",
+      "sourceName": "/api/v1/personnel/update",
+      "appCode": "4SCORE",
+      "messages": [
+        {
+          "language": "en",
+          "template": "Personnel record {personnelId} not found for update"
+        }
+      ]
+    },
+    {
+      "errorCode": "ERR.PERSONNEL.DELETE.FAILED",
+      "errorType": "Business",
+      "errorSeverity": "Low",
+      "sourceType": "API",
+      "sourceName": "/api/v1/personnel/delete",
+      "appCode": "4SCORE",
+      "messages": [
+        {
+          "language": "en",
+          "template": "Failed to delete personnel {personnelId}: {reason}"
+        }
+      ]
+    }
+  ]
+}
+
+
+================================================================================
+7. GET /api/v1/error-master/list
+================================================================================
+
+--- Test 1: No filters (get all) ---
+GET /api/v1/error-master/list
+
+--- Test 2: With pagination ---
+GET /api/v1/error-master/list?page=1&pageSize=10
+
+--- Test 3: Search by errorCode prefix ---
+GET /api/v1/error-master/list?q=ERR.AUTH
+
+--- Test 4: Filter by severity ---
+GET /api/v1/error-master/list?errorSeverity=HIGH
+
+--- Test 5: Filter by error type ---
+GET /api/v1/error-master/list?errorType=Business
+
+--- Test 6: Filter by source type ---
+GET /api/v1/error-master/list?sourceType=API
+
+--- Test 7: Filter by appCode ---
+GET /api/v1/error-master/list?appCode=4SCORE
+
+--- Test 8: Combined filters with pagination ---
+GET /api/v1/error-master/list?errorSeverity=HIGH&sourceType=API&page=1&pageSize=5
+
+--- Test 9: Date range filter ---
+GET /api/v1/error-master/list?createdFrom=2025-01-01T00:00:00&createdTo=2026-12-31T23:59:59
+
+
+================================================================================
+8. GET /api/v1/error-master/get/{id}
+================================================================================
+
+--- Use an ID returned from create ---
+GET /api/v1/error-master/get/507f1f77bcf86cd799439011
+
+--- Invalid ID (should return 404 or validation error) ---
+GET /api/v1/error-master/get/invalidid123
+
+
+================================================================================
+9. GET /api/v1/error-master/get/by-code/{error_code}
+================================================================================
+
+--- Valid error code ---
+GET /api/v1/error-master/get/by-code/ERR.AUTH.LOGIN.FAILED
+
+--- Non-existent code (should return 404) ---
+GET /api/v1/error-master/get/by-code/ERR.NONEXISTENT.CODE
+
+
+================================================================================
+10. PATCH /api/v1/error-master/update/{id}
+================================================================================
+
+--- Test 1: Update severity only ---
+{
+  "errorSeverity": "Critical"
+}
+
+--- Test 2: Update multiple fields ---
+{
+  "errorSeverity": "Low",
+  "errorType": "Technical",
+  "devMessage": "Updated: This is now classified as a technical issue",
+  "businessArea": "Operations"
+}
+
+--- Test 3: Update messages ---
+{
+  "messages": [
+    {
+      "language": "en",
+      "template": "Updated: Login failed for user {userId} due to {errorMessage}"
+    },
+    {
+      "language": "hi",
+      "template": "Updated: User {userId} ka login fail hua: {errorMessage}"
+    }
+  ]
+}
+
+--- Test 4: Update sourceType and sourceName ---
+{
+  "sourceType": "Function",
+  "sourceName": "AuthService.validateCredentials"
+}
+
+--- Test 5: Update appCode ---
+{
+  "appCode": "4SCORE-V2"
+}
+
+--- Test 6: Add help link ---
+{
+  "helpLink": "https://docs.example.com/errors/auth-login-failed",
+  "videoLink": "https://www.youtube.com/watch?v=fixguide123"
+}
+
+
+================================================================================
+11. DELETE /api/v1/error-master/delete/{id}
+================================================================================
+
+--- Use an ID returned from create ---
+DELETE /api/v1/error-master/delete/507f1f77bcf86cd799439011
+
+
+================================================================================
+12. PATCH /api/v1/error-master/restore/{id}
+================================================================================
+
+--- Use the same ID that was soft-deleted ---
+PATCH /api/v1/error-master/restore/507f1f77bcf86cd799439011
+
+
+================================================================================
+13. POST /api/v1/error-logs/create
+================================================================================
+
+--- Test 1: Full payload ---
+{
+  "errorCode": "ERR.AUTH.LOGIN.FAILED",
+  "parametersJson": {
+    "userId": "user123@example.com",
+    "errorMessage": "Invalid password"
+  },
+  "language": "en",
+  "actorUserId": "507f1f77bcf86cd799439012",
+  "sourceType": "API",
+  "sourceName": "/api/v1/auth/login",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0",
+  "environment": "Development",
+  "parameters": [
+    {"name": "userId", "value": "user123@example.com"},
+    {"name": "errorMessage", "value": "Invalid password"}
+  ]
+}
+
+--- Test 2: Minimal required fields ---
+{
+  "errorCode": "ERR.CORE.UNIT.CREATE.DUPLICATE",
+  "sourceType": "API",
+  "sourceName": "/api/v1/units/create",
+  "parametersJson": {
+    "unitName": "Traffic Division"
+  }
+}
+
+--- Test 3: Database connection error ---
+{
+  "errorCode": "ERR.DB.CONNECTION.TIMEOUT",
+  "parametersJson": {
+    "timeoutMs": "30000",
+    "dbHost": "mongodb-primary.internal:27017"
+  },
+  "sourceType": "Function",
+  "sourceName": "DatabaseConnectionPool.acquire",
+  "environment": "Production"
+}
+
+--- Test 4: UI screen error ---
+{
+  "errorCode": "ERR.UI.FORM.VALIDATION.FAILED",
+  "parametersJson": {
+    "fieldName": "email",
+    "validationMessage": "Invalid email format"
+  },
+  "sourceType": "Screen",
+  "sourceName": "PersonnelCreateForm",
+  "actorUserId": "507f1f77bcf86cd799439099",
+  "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)",
+  "environment": "Staging"
+}
+
+--- Test 5: Third party error ---
+{
+  "errorCode": "ERR.THIRDPARTY.SMS.SEND.FAILED",
+  "parametersJson": {
+    "phoneNumber": "+91-9876543210",
+    "errorMessage": "DLT template ID mismatch"
+  },
+  "sourceType": "ThirdParty",
+  "sourceName": "MSDPSmsService.sendOtp",
+  "environment": "QA"
+}
+
+--- Test 6: Permission error ---
+{
+  "errorCode": "ERR.CORE.PERMISSION.ACCESS.DENIED",
+  "parametersJson": {
+    "userId": "507f1f77bcf86cd799439012",
+    "resourceName": "/api/v1/admin/settings",
+    "requiredPermission": "ADMIN.WRITE"
+  },
+  "sourceType": "API",
+  "sourceName": "PermissionMiddleware",
+  "actorUserId": "507f1f77bcf86cd799439012",
+  "environment": "Development"
+}
+
+
+================================================================================
+14. GET /api/v1/error-logs/list
+================================================================================
+
+--- Test 1: No filters (get all) ---
+GET /api/v1/error-logs/list
+
+--- Test 2: With pagination ---
+GET /api/v1/error-logs/list?page=1&pageSize=10
+
+--- Test 3: Filter by errorCode ---
+GET /api/v1/error-logs/list?errorCode=ERR.AUTH.LOGIN.FAILED
+
+--- Test 4: Filter by severity ---
+GET /api/v1/error-logs/list?errorSeverity=HIGH
+
+--- Test 5: Filter by sourceType ---
+GET /api/v1/error-logs/list?sourceType=API
+
+--- Test 6: Filter by environment ---
+GET /api/v1/error-logs/list?environment=PRODUCTION
+
+--- Test 7: Full-text search ---
+GET /api/v1/error-logs/list?q=Login failed
+
+--- Test 8: Date range ---
+GET /api/v1/error-logs/list?fromDate=2025-01-01T00:00:00&toDate=2026-12-31T23:59:59
+
+--- Test 9: Include archive ---
+GET /api/v1/error-logs/list?includeArchive=true&page=1&pageSize=50
+
+--- Test 10: Combined filters ---
+GET /api/v1/error-logs/list?errorCode=ERR.AUTH.LOGIN.FAILED&errorSeverity=HIGH&sourceType=API&page=1&pageSize=20
+
+
+================================================================================
+15. GET /api/v1/error-logs/export
+================================================================================
+
+--- Test 1: Export all ---
+GET /api/v1/error-logs/export
+
+--- Test 2: Export filtered ---
+GET /api/v1/error-logs/export?errorSeverity=CRITICAL&sourceType=API
+
+--- Test 3: Export with date range ---
+GET /api/v1/error-logs/export?fromDate=2025-01-01T00:00:00&toDate=2026-12-31T23:59:59
+
+
+================================================================================
+16. POST /api/v1/error-logs/dashboard
+================================================================================
+
+--- Test 1: Default (all time, no filters) ---
+{
+  "timeRange": "all"
+}
+
+--- Test 2: Last 24 hours ---
+{
+  "timeRange": "24h"
+}
+
+--- Test 3: Last 7 days with source filter ---
+{
+  "timeRange": "7d",
+  "sourceType": "API"
+}
+
+--- Test 4: Last 30 days with severity filter ---
+{
+  "timeRange": "30d",
+  "errorSeverity": "CRITICAL"
+}
+
+--- Test 5: Custom date range ---
+{
+  "timeRange": "all",
+  "fromDate": "2025-01-01T00:00:00",
+  "toDate": "2026-12-31T23:59:59"
+}
+
+--- Test 6: Filter by error code ---
+{
+  "timeRange": "all",
+  "errorCode": "ERR.AUTH.LOGIN.FAILED"
+}
+
+--- Test 7: With pagination for error groups ---
+{
+  "timeRange": "all",
+  "page": 1,
+  "limit": 10
+}
+
+--- Test 8: Include archive ---
+{
+  "timeRange": "30d",
+  "includeArchive": true,
+  "page": 1,
+  "limit": 50
+}
+
+--- Test 9: Combined filters ---
+{
+  "timeRange": "7d",
+  "sourceType": "API",
+  "errorSeverity": "HIGH",
+  "includeArchive": false,
+  "page": 1,
+  "limit": 20
+}
+
+
+================================================================================
+17. RECOMMENDED TESTING ORDER
+================================================================================
+
+Step 1: Create error masters (POST /error-master/create) - use Tests 1-8
+Step 2: Verify with list (GET /error-master/list)
+Step 3: Get by ID (GET /error-master/get/{id}) - use ID from Step 1
+Step 4: Get by code (GET /error-master/get/by-code/ERR.AUTH.LOGIN.FAILED)
+Step 5: Update (PATCH /error-master/update/{id}) - use Tests 1-6
+Step 6: Create error logs (POST /error-logs/create) - use Tests 1-6
+Step 7: List error logs (GET /error-logs/list)
+Step 8: Export CSV (GET /error-logs/export)
+Step 9: Dashboard (POST /error-logs/dashboard) - use Tests 1-9
+Step 10: Delete error master (DELETE /error-master/delete/{id})
+Step 11: Restore error master (PATCH /error-master/restore/{id})
+Step 12: Bulk create (POST /error-master/bulk-create)
+
+NOTE: Error logs reference error masters by errorCode, so create the
+      error masters FIRST before creating error logs.
