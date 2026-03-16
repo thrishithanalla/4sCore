@@ -171,7 +171,14 @@ async def log_transaction(
             "json": json_values,
             "templateId": template_doc["_id"],
             "createdAt": get_ist_now(),
-            "createdIp": client_ip
+            "createdIp": client_ip,
+            "eventcode": template_doc.get("eventCode", ""),
+            "EventTimeStamp": get_ist_now(),
+            "entityType": template_doc.get("logObject", ""),
+            "keyFields": template_doc.get("keyFields", ""),
+            "retentionPeriod": template_doc.get("retentionPeriod", 365),
+            "actorRole": "SYSTEM",
+            "parameters": json_values,
         }
 
         # Add endpoint if provided

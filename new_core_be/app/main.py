@@ -13,7 +13,7 @@ from app.constants.error_codes import ErrorCodes
 from app.core.correlation import new_id, set_actor_user, set_ids
 from app.api.v1.middleware import RequestContextMiddleware
 from app.core.database import (close_mongodb_connection, connect_to_mongodb,
-                               get_database)
+                               get_database, create_indexes)
 # from app.core.db_indexes import initialize_database_indexes
 from app.api.v1.routers import (auth_router, department_router, district_router,
                          error_log_router, error_master_router,
@@ -43,8 +43,7 @@ async def lifespan(app: FastAPI):
     await connect_to_mongodb()
 
     # Initialize database indexes
-    db = get_database()
-    #await initialize_database_indexes(db)
+    await create_indexes()
 
     yield
 

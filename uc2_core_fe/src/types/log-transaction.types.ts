@@ -14,6 +14,7 @@ export interface LogTransaction {
   eventcode: string;
   EventTimeStamp: string;
   actorId?: string;
+  actorName?: string;
   actorRole?: string;
   keyFields?: string;
   parameters?: Record<string, any>;
@@ -91,4 +92,121 @@ export interface LogTransactionAnalyticsResponse {
   code: number;
   message: string;
   data: LogStats;
+}
+
+// ---- Dashboard Types ----
+
+export interface AuditOverview {
+  totalLogs: number;
+  totalTemplates: number;
+  todayLogs: number;
+  weekLogs: number;
+}
+
+export interface LevelBreakdown {
+  info: number;
+  warning: number;
+  error: number;
+}
+
+export interface TopUser {
+  actorId: string;
+  name: string;
+  count: number;
+}
+
+export interface TopEndpoint {
+  endpoint: string;
+  count: number;
+}
+
+export interface MostRepeatedLog {
+  eventcode: string;
+  name: string;
+  logObject?: string;
+  count: number;
+}
+
+export interface TemplateHealth {
+  total: number;
+  activeWithLogs: number;
+  activeNoLogs: number;
+  inactive: number;
+  deleted: number;
+}
+
+export interface TopLogModule {
+  entityType: string;
+  logCount: number;
+}
+
+export interface TrendPoint {
+  timestamp: string;
+  count: number;
+}
+
+export interface TrendData {
+  lastHour: TrendPoint[];
+  last24Hours: TrendPoint[];
+  last7Days: TrendPoint[];
+  last30Days: TrendPoint[];
+}
+
+export interface DashboardData {
+  analytics: Record<string, number>;
+  trend: TrendData;
+  topLogModules: TopLogModule[];
+  logs: {
+    items: LogTransaction[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  };
+  overview: AuditOverview;
+  byLevel: LevelBreakdown;
+  topUsers: TopUser[];
+  topEndpoints: TopEndpoint[];
+  mostRepeated: MostRepeatedLog[];
+  templateHealth: TemplateHealth;
+  allEntityTypes: string[];
+}
+
+export interface DashboardResponse {
+  success: boolean;
+  code: number;
+  message: string;
+  data: DashboardData;
+}
+
+export interface AuditDashboardFilters {
+  layer?: string;
+  entityType?: string;
+  eventcode?: string;
+  actorId?: string;
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
+  timeline?: string;
+  paramKey?: string;
+  paramValue?: string;
+  sortField?: string;
+  sortOrder?: number;
+  tab?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface LogTemplate {
+  eventCode: string;
+  name: string;
+  logObject: string;
+  logLevel: string;
+  isActive: boolean;
+  keyFields?: string;
+}
+
+export interface UserOption {
+  actorId: string;
+  name: string;
 }

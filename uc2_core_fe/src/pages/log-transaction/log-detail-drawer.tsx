@@ -90,7 +90,7 @@ const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide mb-1">Event Code</p>
-                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 font-mono">
+                <p className="text-sm font-semibold text-blue-600 dark:text-blue-400 font-mono break-all">
                   {log.eventcode || '-'}
                 </p>
               </div>
@@ -104,10 +104,13 @@ const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide mb-1">Actor ID</p>
-                <p className="text-sm text-gray-900 dark:text-white font-mono text-xs break-all">
-                  {log.actorId || '-'}
+                <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide mb-1">Actor</p>
+                <p className="text-sm text-gray-900 dark:text-white font-medium">
+                  {log.actorName || log.actorId || '-'}
                 </p>
+                {log.actorName && log.actorId && (
+                  <p className="text-xs text-gray-400 font-mono break-all mt-0.5">{log.actorId}</p>
+                )}
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase tracking-wide mb-1">Retention</p>

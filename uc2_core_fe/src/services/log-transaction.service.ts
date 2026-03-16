@@ -3,6 +3,10 @@ import type {
   LogTransactionSearchParams,
   LogTransactionSearchResponse,
   LogTransactionAnalyticsResponse,
+  DashboardResponse,
+  AuditDashboardFilters,
+  UserOption,
+  LogTemplate,
 } from '../types/log-transaction.types';
 
 // Create a separate axios instance for auditlog API
@@ -41,6 +45,24 @@ export const logTransactionService = {
       params,
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  // Get combined dashboard data
+  getDashboard: async (params?: AuditDashboardFilters): Promise<DashboardResponse> => {
+    const response = await auditlogApi.get<DashboardResponse>('/api/v1/log-transactions/dashboard', { params });
+    return response.data;
+  },
+
+  // Get all distinct users for filter dropdown
+  getAllUsers: async (): Promise<{ success: boolean; data: UserOption[] }> => {
+    const response = await auditlogApi.get('/api/v1/log-transactions/all-users');
+    return response.data;
+  },
+
+  // Get all log templates for filter dropdown
+  getAllTemplates: async (): Promise<{ success: boolean; data: LogTemplate[] }> => {
+    const response = await auditlogApi.get('/api/v1/log-transactions/all-templates');
     return response.data;
   },
 };

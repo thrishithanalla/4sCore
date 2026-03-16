@@ -281,12 +281,64 @@ class DashboardLogsData(BaseModel):
     )
 
 
+class OverviewData(BaseModel):
+    """Overview summary counts"""
+    totalLogs: int = Field(0, description="Total log entries")
+    totalTemplates: int = Field(0, description="Total active templates")
+    todayLogs: int = Field(0, description="Logs created today")
+    weekLogs: int = Field(0, description="Logs created this week")
+
+
+class LevelBreakdown(BaseModel):
+    """Log level breakdown"""
+    info: int = Field(0, description="Info level count")
+    warning: int = Field(0, description="Warning level count")
+    error: int = Field(0, description="Error level count")
+
+
+class TopUserItem(BaseModel):
+    """Top user by log count"""
+    actorId: Optional[str] = Field(None, description="Actor/user ID")
+    name: str = Field("Unknown", description="User name")
+    count: int = Field(0, description="Log count")
+
+
+class TopEndpointItem(BaseModel):
+    """Top endpoint by log count"""
+    endpoint: str = Field("", description="Endpoint path")
+    count: int = Field(0, description="Log count")
+
+
+class MostRepeatedItem(BaseModel):
+    """Most repeated log template"""
+    eventcode: str = Field("", description="Event code")
+    name: str = Field("", description="Template name")
+    logObject: Optional[str] = Field("", description="Log object/entity")
+    count: int = Field(0, description="Occurrence count")
+
+
+class TemplateHealthData(BaseModel):
+    """Template health status"""
+    total: int = Field(0, description="Total templates")
+    activeWithLogs: int = Field(0, description="Active templates with log entries")
+    activeNoLogs: int = Field(0, description="Active templates with no log entries")
+    inactive: int = Field(0, description="Inactive templates")
+    deleted: int = Field(0, description="Deleted templates")
+
+
 class DashboardResponse(BaseModel):
     """Combined dashboard response with all data"""
     analytics: DashboardAnalytics = Field(..., description="Log level counts")
     trend: TrendData = Field(..., description="Log trend data for multiple time ranges")
     topLogModules: List[TopLogModule] = Field(..., description="Top log-prone modules")
     logs: DashboardLogsData = Field(..., description="Paginated logs list")
+    overview: Optional[OverviewData] = Field(None, description="Overview summary counts")
+    byLevel: Optional[LevelBreakdown] = Field(None, description="Log level breakdown")
+    topUsers: Optional[List[TopUserItem]] = Field(None, description="Top users by activity")
+    topEndpoints: Optional[List[TopEndpointItem]] = Field(None, description="Top endpoints")
+    mostRepeated: Optional[List[MostRepeatedItem]] = Field(None, description="Most repeated log templates")
+    templateHealth: Optional[TemplateHealthData] = Field(None, description="Template health status")
+    allEntityTypes: Optional[List[str]] = Field(None, description="All distinct entity types")
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -298,20 +350,16 @@ class DashboardResponse(BaseModel):
                 },
                 "trend": {
                     "lastHour": [
-                        {"timestamp": "2025-01-16T10:30:00", "count": 25},
-                        {"timestamp": "2025-01-16T10:31:00", "count": 30}
+                        {"timestamp": "2025-01-16T10:30:00", "count": 25}
                     ],
                     "last24Hours": [
-                        {"timestamp": "2025-01-16T10:00:00", "count": 1500},
-                        {"timestamp": "2025-01-16T11:00:00", "count": 1800}
+                        {"timestamp": "2025-01-16T10:00:00", "count": 1500}
                     ],
                     "last7Days": [
-                        {"timestamp": "2025-01-10", "count": 15000},
-                        {"timestamp": "2025-01-11", "count": 18000}
+                        {"timestamp": "2025-01-10", "count": 15000}
                     ],
                     "last30Days": [
-                        {"timestamp": "2024-12-17", "count": 45000},
-                        {"timestamp": "2024-12-18", "count": 48000}
+                        {"timestamp": "2024-12-17", "count": 45000}
                     ]
                 },
                 "topLogModules": [
@@ -323,7 +371,18 @@ class DashboardResponse(BaseModel):
                     "page": 1,
                     "page_size": 10,
                     "total_pages": 48510
-                }
+                },
+                "overview": {
+                    "totalLogs": 485100,
+                    "totalTemplates": 42,
+                    "todayLogs": 1250,
+                    "weekLogs": 8500
+                },
+                "byLevel": {"info": 480000, "warning": 4000, "error": 1100},
+                "topUsers": [{"actorId": "abc123", "name": "John Doe", "count": 5000}],
+                "topEndpoints": [{"endpoint": "/api/v1/users", "count": 3000}],
+                "mostRepeated": [{"eventcode": "LOG.USER.LOGIN", "name": "User Login", "logObject": "User", "count": 2000}],
+                "templateHealth": {"total": 50, "activeWithLogs": 35, "activeNoLogs": 10, "inactive": 3, "deleted": 2}
             }
         }
     )

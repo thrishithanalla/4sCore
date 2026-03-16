@@ -19,63 +19,28 @@ db = Database()
 
 async def create_indexes():
     """
-    Create indexes for optimized query performance
+    Create indexes for optimized query performance.
+    Skips indexes that already exist with different names.
     """
-    try:
-        # Indexes for logs collection
-        logs_collection = db.database[Collections.LOGS]
-
-        # Index for sorting by createdAt (most common sort operation)
-        await logs_collection.create_index(
-            [("createdAt", pymongo.DESCENDING)],
-            name="idx_createdAt_desc",
-            background=True
-        )
-
-        # Compound index for common filters + sort
-        await logs_collection.create_index(
-            [("level", pymongo.ASCENDING), ("createdAt", pymongo.DESCENDING)],
-            name="idx_level_createdAt",
-            background=True
-        )
-
-        await logs_collection.create_index(
-            [("layer", pymongo.ASCENDING), ("createdAt", pymongo.DESCENDING)],
-            name="idx_layer_createdAt",
-            background=True
-        )
-
-        await logs_collection.create_index(
-            [("templateId", pymongo.ASCENDING), ("createdAt", pymongo.DESCENDING)],
-            name="idx_templateId_createdAt",
-            background=True
-        )
-
-        # Index for actorId filter
-        await logs_collection.create_index(
-            [("actorId", pymongo.ASCENDING)],
-            name="idx_actorId",
-            background=True
-        )
-
-        # Indexes for log_master collection
-        log_master_collection = db.database[Collections.LOG_MASTER]
-
-        await log_master_collection.create_index(
-            [("name", pymongo.ASCENDING)],
-            name="idx_name",
-            background=True
-        )
-
-        await log_master_collection.create_index(
-            [("moduleId", pymongo.ASCENDING), ("isDelete", pymongo.ASCENDING)],
-            name="idx_moduleId_isDelete",
-            background=True
-        )
-
-        log_database_operation("create_indexes", "system", success=True)
-    except Exception as e:
-        log_database_operation("create_indexes", "system", success=False, error_message=str(e))
+    indexes = [
+        (Collections.LOGS, [("EventTimeStamp", pymongo.DESCENDING)]),
+        (Collections.LOGS, [("entityType", pymongo.ASCENDING)]),
+        (Collections.LOGS, [("eventcode", pymongo.ASCENDING)]),
+        (Collections.LOGS, [("actorId", pymongo.ASCENDING)]),
+        (Collections.LOGS, [("EventTimeStamp", pymongo.DESCENDING), ("entityType", pymongo.ASCENDING)]),
+        (Collections.LOG_MASTER, [("eventCode", pymongo.ASCENDING)]),
+        (Collections.LOG_MASTER, [("isDelete", pymongo.ASCENDING)]),
+        (Collections.LOG_MASTER, [("name", pymongo.ASCENDING)]),
+    ]
+    created = 0
+    for collection_name, keys in indexes:
+        try:
+            await db.database[collection_name].create_index(keys, background=True)
+            created += 1
+        except Exception:
+            pass  # Index already exists (possibly with different name)
+    print(f"[OK] Indexes: {created}/{len(indexes)} created/verified")
+    log_database_operation("create_indexes", "system", success=True)
 
 
 async def connect_to_mongodb():

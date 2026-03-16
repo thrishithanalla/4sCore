@@ -5,9 +5,12 @@ CRUD operations for audit log entry management.
 from typing import List, Optional
 from datetime import datetime, timedelta
 import asyncio
+import csv
+import io
 
 from bson import ObjectId
 from fastapi import APIRouter, HTTPException, status, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.core.database import get_database
@@ -523,7 +526,13 @@ def get_timeline_date_range(timeline: Optional[str]) -> tuple:
 
     now = get_ist_now()
 
-    if timeline == "lastHour":
+    if timeline == "today":
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        return today_start, now
+    elif timeline == "thisMonth":
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return month_start, now
+    elif timeline == "lastHour":
         return now - timedelta(hours=1), now
     elif timeline == "last24Hours":
         return now - timedelta(hours=24), now
@@ -543,7 +552,10 @@ async def build_filter_query(
     search: Optional[str] = None,
     fromDate: Optional[datetime] = None,
     toDate: Optional[datetime] = None,
-    timeline: Optional[str] = None
+    timeline: Optional[str] = None,
+    paramKey: Optional[str] = None,
+    paramValue: Optional[str] = None,
+    actorId: Optional[str] = None
 ) -> dict:
     """Build filter query for dashboard - shared across all aggregations"""
     query = {}
@@ -558,7 +570,16 @@ async def build_filter_query(
         query["eventcode"] = eventcode
 
     if search:
-        query["message"] = {"$regex": search, "$options": "i"}
+        query["$or"] = [
+            {"message": {"$regex": search, "$options": "i"}},
+            {"endpoint": {"$regex": search, "$options": "i"}}
+        ]
+
+    if paramKey and paramValue:
+        query[f"parameters.{paramKey}"] = {"$regex": paramValue, "$options": "i"}
+
+    if actorId:
+        query["actorId"] = actorId
 
     # Apply timeline-based date filter (takes priority if no explicit dates provided)
     timeline_from, timeline_to = get_timeline_date_range(timeline)
@@ -586,7 +607,7 @@ async def get_analytics_counts(db, query: dict) -> dict:
 
     pipeline.append({
         "$group": {
-            "_id": "$layer",
+            "_id": {"$toUpper": "$layer"},
             "count": {"$sum": 1}
         }
     })
@@ -840,6 +861,12 @@ async def get_trend_data(db, query: dict, timeline: Optional[str] = None) -> dic
     }
 
 
+async def get_all_entity_types(db) -> list:
+    """Get all distinct entityType values from audit_log collection"""
+    values = await db[Collections.LOG_TRANSACTION].distinct("entityType")
+    return sorted([v for v in values if v and v.strip()])
+
+
 async def get_top_log_entities(db, query: dict, limit: int = 5) -> list:
     """
     Get top logged entity types based on filter query.
@@ -869,11 +896,44 @@ async def get_top_log_entities(db, query: dict, limit: int = 5) -> list:
     ]
 
 
-async def get_paginated_logs(db, query: dict, page: int, page_size: int) -> dict:
-    """Get paginated audit logs based on filter query"""
+async def get_paginated_logs(db, query: dict, page: int, page_size: int, sort_field: str = "EventTimeStamp", sort_order: int = -1) -> dict:
+    """Get paginated audit logs based on filter query, with personnel name lookup"""
     skip = (page - 1) * page_size
 
-    cursor = db[Collections.LOG_TRANSACTION].find(query).sort("EventTimeStamp", -1).skip(skip).limit(page_size)
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {"$sort": {sort_field: sort_order}},
+        {"$skip": skip},
+        {"$limit": page_size},
+        {
+            "$addFields": {
+                "actorIdObj": {
+                    "$cond": {
+                        "if": {"$and": [{"$ne": ["$actorId", None]}, {"$ne": ["$actorId", ""]}]},
+                        "then": {"$toObjectId": "$actorId"},
+                        "else": None
+                    }
+                }
+            }
+        },
+        {
+            "$lookup": {
+                "from": "personnel_master",
+                "localField": "actorIdObj",
+                "foreignField": "_id",
+                "as": "personnel"
+            }
+        },
+        {"$unwind": {"path": "$personnel", "preserveNullAndEmptyArrays": True}},
+        {
+            "$addFields": {
+                "actorName": {"$ifNull": ["$personnel.name", None]}
+            }
+        },
+        {"$project": {"personnel": 0, "actorIdObj": 0}}
+    ]
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
     logs_list = await cursor.to_list(length=page_size)
     total = await db[Collections.LOG_TRANSACTION].count_documents(query)
     total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
@@ -886,6 +946,197 @@ async def get_paginated_logs(db, query: dict, page: int, page_size: int) -> dict
         "page": page,
         "page_size": page_size,
         "total_pages": total_pages
+    }
+
+
+async def get_overview_counts(db, query: dict) -> dict:
+    """Get overview summary counts: total, today, this week, total templates"""
+    now = get_ist_now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=today_start.weekday())
+
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {
+            "$facet": {
+                "total": [{"$count": "count"}],
+                "today": [
+                    {"$match": {"EventTimeStamp": {"$gte": today_start}}},
+                    {"$count": "count"}
+                ],
+                "week": [
+                    {"$match": {"EventTimeStamp": {"$gte": week_start}}},
+                    {"$count": "count"}
+                ]
+            }
+        }
+    ]
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
+    results = await cursor.to_list(length=1)
+    facet = results[0] if results else {}
+
+    total_templates = await db[Collections.LOG_MASTER].count_documents({"isDelete": False})
+
+    return {
+        "totalLogs": facet.get("total", [{}])[0].get("count", 0) if facet.get("total") else 0,
+        "totalTemplates": total_templates,
+        "todayLogs": facet.get("today", [{}])[0].get("count", 0) if facet.get("today") else 0,
+        "weekLogs": facet.get("week", [{}])[0].get("count", 0) if facet.get("week") else 0
+    }
+
+
+async def get_level_breakdown(db, query: dict) -> dict:
+    """Get log counts grouped by logLevel (via $lookup to audit_log_master)"""
+    pipeline = []
+    if query:
+        pipeline.append({"$match": query})
+
+    pipeline.extend([
+        {
+            "$lookup": {
+                "from": Collections.LOG_MASTER,
+                "localField": "eventcode",
+                "foreignField": "eventCode",
+                "as": "master"
+            }
+        },
+        {"$unwind": {"path": "$master", "preserveNullAndEmptyArrays": True}},
+        {
+            "$group": {
+                "_id": {"$toLower": {"$ifNull": ["$master.logLevel", "info"]}},
+                "count": {"$sum": 1}
+            }
+        }
+    ])
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
+    results = await cursor.to_list(length=None)
+
+    breakdown = {"info": 0, "warning": 0, "error": 0}
+    for r in results:
+        level = (r["_id"] or "info").lower()
+        if level in ("warning", "warn"):
+            breakdown["warning"] += r["count"]
+        elif level == "error":
+            breakdown["error"] += r["count"]
+        else:
+            breakdown["info"] += r["count"]
+    return breakdown
+
+
+async def get_top_users(db, query: dict, limit: int = 10) -> list:
+    """Get top users by audit log count with personnel name lookup"""
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {"$group": {"_id": "$actorId", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": "personnel_master",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "personnel"
+            }
+        },
+        {"$unwind": {"path": "$personnel", "preserveNullAndEmptyArrays": True}},
+        {
+            "$project": {
+                "_id": 0,
+                "actorId": {"$toString": "$_id"},
+                "name": {"$ifNull": ["$personnel.name", "Unknown"]},
+                "count": 1
+            }
+        }
+    ]
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
+    return await cursor.to_list(length=None)
+
+
+async def get_top_endpoints(db, query: dict, limit: int = 10) -> list:
+    """Get top endpoints by audit log count"""
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {"$match": {"endpoint": {"$ne": None, "$ne": ""}}},
+        {"$group": {"_id": "$endpoint", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+        {"$project": {"_id": 0, "endpoint": "$_id", "count": 1}}
+    ]
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
+    return await cursor.to_list(length=None)
+
+
+async def get_most_repeated(db, query: dict, limit: int = 10) -> list:
+    """Get most repeated log templates by eventcode"""
+    pipeline = [
+        {"$match": query} if query else {"$match": {}},
+        {"$match": {"eventcode": {"$ne": None, "$ne": ""}}},
+        {"$group": {"_id": "$eventcode", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": Collections.LOG_MASTER,
+                "localField": "_id",
+                "foreignField": "eventCode",
+                "as": "master"
+            }
+        },
+        {"$unwind": {"path": "$master", "preserveNullAndEmptyArrays": True}},
+        {
+            "$project": {
+                "_id": 0,
+                "eventcode": "$_id",
+                "name": {"$ifNull": ["$master.name", "$_id"]},
+                "logObject": {"$ifNull": ["$master.logObject", ""]},
+                "count": 1
+            }
+        }
+    ]
+
+    cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
+    return await cursor.to_list(length=None)
+
+
+async def get_template_health(db) -> dict:
+    """Get audit_log_master template health status"""
+    pipeline = [
+        {
+            "$facet": {
+                "total": [{"$count": "count"}],
+                "active": [{"$match": {"isDelete": False, "isActive": True}}, {"$count": "count"}],
+                "inactive": [{"$match": {"isDelete": False, "isActive": False}}, {"$count": "count"}],
+                "deleted": [{"$match": {"isDelete": True}}, {"$count": "count"}]
+            }
+        }
+    ]
+    cursor = db[Collections.LOG_MASTER].aggregate(pipeline)
+    results = await cursor.to_list(length=1)
+    facet = results[0] if results else {}
+
+    total = facet.get("total", [{}])[0].get("count", 0) if facet.get("total") else 0
+    active = facet.get("active", [{}])[0].get("count", 0) if facet.get("active") else 0
+    inactive = facet.get("inactive", [{}])[0].get("count", 0) if facet.get("inactive") else 0
+    deleted = facet.get("deleted", [{}])[0].get("count", 0) if facet.get("deleted") else 0
+
+    # Check which active templates have log entries (fast: use distinct instead of $lookup)
+    used_eventcodes = set(await db[Collections.LOG_TRANSACTION].distinct("eventcode"))
+    active_masters_cursor = db[Collections.LOG_MASTER].find(
+        {"isDelete": False, "isActive": True}, {"eventCode": 1}
+    )
+    active_masters_list = await active_masters_cursor.to_list(length=None)
+    active_with_logs = sum(1 for m in active_masters_list if m.get("eventCode") in used_eventcodes)
+
+    return {
+        "total": total,
+        "activeWithLogs": active_with_logs,
+        "activeNoLogs": active - active_with_logs,
+        "inactive": inactive,
+        "deleted": deleted
     }
 
 
@@ -908,6 +1159,12 @@ async def get_dashboard_data(
     fromDate: Optional[datetime] = Query(None, description="Filter logs from this date"),
     toDate: Optional[datetime] = Query(None, description="Filter logs until this date"),
     timeline: Optional[str] = Query(None, description="Timeline filter (lastHour, last24Hours, last7Days, last30Days)"),
+    paramKey: Optional[str] = Query(None, description="Parameter key to filter by (e.g. vehicleId)"),
+    paramValue: Optional[str] = Query(None, description="Parameter value to search for"),
+    actorId: Optional[str] = Query(None, description="Filter by actor/user ID"),
+    sortField: Optional[str] = Query("EventTimeStamp", description="Field to sort by"),
+    sortOrder: Optional[int] = Query(-1, description="Sort order: 1=asc, -1=desc"),
+    tab: Optional[str] = Query(None, description="Tab to fetch data for: overview, activity, or None for all"),
 
 ):
     """
@@ -928,28 +1185,241 @@ async def get_dashboard_data(
         search=search,
         fromDate=fromDate,
         toDate=toDate,
-        timeline=timeline
+        timeline=timeline,
+        paramKey=paramKey,
+        paramValue=paramValue,
+        actorId=actorId
     )
 
-    analytics_task = get_analytics_counts(db, query)
-    trend_task = get_trend_data(db, query, timeline)
-    top_entities_task = get_top_log_entities(db, query)
-    logs_task = get_paginated_logs(db, query, page, page_size)
+    # Fetch only what the active tab needs
+    empty_trend = {"lastHour": [], "last24Hours": [], "last7Days": [], "last30Days": []}
 
-    analytics, trend, top_log_entities, logs = await asyncio.gather(
-        analytics_task,
-        trend_task,
-        top_entities_task,
-        logs_task
-    )
+    if tab == "activity":
+        # Activity Log tab: logs + overview counts (for header cards) + allEntityTypes for filter
+        logs, overview, by_level, all_entity_types = await asyncio.gather(
+            get_paginated_logs(db, query, page, page_size, sortField or "EventTimeStamp", sortOrder or -1),
+            get_overview_counts(db, query),
+            get_level_breakdown(db, query),
+            get_all_entity_types(db)
+        )
+        return success_response(
+            data={
+                "analytics": {"total": 0},
+                "trend": empty_trend,
+                "topLogModules": [],
+                "logs": logs,
+                "overview": overview,
+                "byLevel": by_level,
+                "topUsers": [],
+                "topEndpoints": [],
+                "mostRepeated": [],
+                "templateHealth": {"total": 0, "activeWithLogs": 0, "activeNoLogs": 0, "inactive": 0, "deleted": 0},
+                "allEntityTypes": all_entity_types
+            },
+            message="Activity log data retrieved successfully",
+            status_code=200
+        )
+
+    elif tab == "overview":
+        # Overview tab: everything except paginated logs and trend (trend not used in UI)
+        (analytics, top_log_entities, overview, by_level,
+         top_users, top_endpoints, most_repeated, template_health,
+         all_entity_types) = await asyncio.gather(
+            get_analytics_counts(db, query),
+            get_top_log_entities(db, query),
+            get_overview_counts(db, query),
+            get_level_breakdown(db, query),
+            get_top_users(db, query),
+            get_top_endpoints(db, query),
+            get_most_repeated(db, query),
+            get_template_health(db),
+            get_all_entity_types(db)
+        )
+        return success_response(
+            data={
+                "analytics": analytics,
+                "trend": empty_trend,
+                "topLogModules": top_log_entities,
+                "logs": {"items": [], "total": 0, "page": 1, "page_size": page_size, "total_pages": 0},
+                "overview": overview,
+                "byLevel": by_level,
+                "topUsers": top_users,
+                "topEndpoints": top_endpoints,
+                "mostRepeated": most_repeated,
+                "templateHealth": template_health,
+                "allEntityTypes": all_entity_types
+            },
+            message="Overview data retrieved successfully",
+            status_code=200
+        )
+
+    else:
+        # Default: fetch everything
+        (analytics, trend, top_log_entities, logs, overview, by_level,
+         top_users, top_endpoints, most_repeated, template_health,
+         all_entity_types) = await asyncio.gather(
+            get_analytics_counts(db, query),
+            get_trend_data(db, query, timeline),
+            get_top_log_entities(db, query),
+            get_paginated_logs(db, query, page, page_size, sortField or "EventTimeStamp", sortOrder or -1),
+            get_overview_counts(db, query),
+            get_level_breakdown(db, query),
+            get_top_users(db, query),
+            get_top_endpoints(db, query),
+            get_most_repeated(db, query),
+            get_template_health(db),
+            get_all_entity_types(db)
+        )
+        return success_response(
+            data={
+                "analytics": analytics,
+                "trend": trend,
+                "topLogModules": top_log_entities,
+                "logs": logs,
+                "overview": overview,
+                "byLevel": by_level,
+                "topUsers": top_users,
+                "topEndpoints": top_endpoints,
+                "mostRepeated": most_repeated,
+                "templateHealth": template_health,
+                "allEntityTypes": all_entity_types
+            },
+            message="Dashboard data retrieved successfully",
+            status_code=200
+        )
+
+
+@router.get(
+    "/all-users",
+    response_model=StandardResponse,
+    responses={
+        200: {"description": "All distinct users retrieved successfully"}
+    }
+)
+async def get_all_users(request: Request):
+    """Get all personnel from personnel_master for user filter dropdown"""
+    db = get_database()
+
+    cursor = db["personnel_master"].find(
+        {"isDelete": {"$ne": True}},
+        {"_id": 1, "name": 1}
+    ).sort("name", 1)
+    personnel_list = await cursor.to_list(length=None)
+
+    results = [
+        {"actorId": str(p["_id"]), "name": p.get("name", "Unknown")}
+        for p in personnel_list if p.get("name")
+    ]
 
     return success_response(
-        data={
-            "analytics": analytics,
-            "trend": trend,
-            "topLogModules": top_log_entities,
-            "logs": logs
-        },
-        message="Dashboard data retrieved successfully",
+        data=results,
+        message="All users retrieved successfully",
         status_code=200
+    )
+
+
+@router.get(
+    "/all-templates",
+    response_model=StandardResponse,
+    responses={
+        200: {"description": "All log templates retrieved successfully"}
+    }
+)
+async def get_all_templates(request: Request):
+    """Get all audit log master templates for filter dropdown"""
+    db = get_database()
+
+    cursor = db[Collections.LOG_MASTER].find(
+        {"isDelete": False},
+        {"eventCode": 1, "name": 1, "logObject": 1, "logLevel": 1, "isActive": 1, "keyFields": 1}
+    ).sort("eventCode", 1)
+    templates = await cursor.to_list(length=None)
+
+    results = []
+    for t in templates:
+        results.append({
+            "eventCode": t.get("eventCode", ""),
+            "name": t.get("name", ""),
+            "logObject": t.get("logObject", ""),
+            "logLevel": t.get("logLevel", ""),
+            "isActive": t.get("isActive", True),
+            "keyFields": t.get("keyFields", "")
+        })
+
+    return success_response(
+        data=results,
+        message="All templates retrieved successfully",
+        status_code=200
+    )
+
+
+@router.get(
+    "/export",
+    responses={
+        200: {"description": "CSV export of audit logs", "content": {"text/csv": {}}},
+    }
+)
+async def export_logs_csv(
+    request: Request,
+    layer: Optional[str] = Query(None, description="Filter by layer"),
+    actorId: Optional[str] = Query(None, description="Filter by actor/user ID"),
+    eventcode: Optional[str] = Query(None, description="Filter by eventcode"),
+    entityType: Optional[str] = Query(None, description="Filter by entityType"),
+    endpoint: Optional[str] = Query(None, description="Filter by endpoint"),
+    search: Optional[str] = Query(None, description="Search in message"),
+    fromDate: Optional[datetime] = Query(None, description="Filter logs from this date"),
+    toDate: Optional[datetime] = Query(None, description="Filter logs until this date"),
+):
+    """Export filtered audit logs as CSV (max 10,000 records)"""
+    db = get_database()
+
+    query = {}
+    if layer:
+        query["layer"] = layer
+    if actorId:
+        try:
+            query["actorId"] = ObjectId(actorId)
+        except Exception:
+            pass
+    if eventcode:
+        query["eventcode"] = eventcode
+    if entityType:
+        query["entityType"] = entityType
+    if endpoint:
+        query["endpoint"] = {"$regex": endpoint, "$options": "i"}
+    if search:
+        query["message"] = {"$regex": search, "$options": "i"}
+    if fromDate or toDate:
+        date_query = {}
+        if fromDate:
+            date_query["$gte"] = fromDate
+        if toDate:
+            date_query["$lte"] = toDate
+        query["EventTimeStamp"] = date_query
+
+    cursor = db[Collections.LOG_TRANSACTION].find(query).sort("EventTimeStamp", -1).limit(10000)
+    logs = await cursor.to_list(length=10000)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Timestamp", "Layer", "Event Code", "Message", "Actor Role", "Endpoint", "Entity Type", "Entity ID", "Org Unit ID"])
+
+    for log in logs:
+        writer.writerow([
+            str(log.get("EventTimeStamp", "")),
+            log.get("layer", ""),
+            log.get("eventcode", ""),
+            log.get("message", ""),
+            log.get("actorRole", ""),
+            log.get("endpoint", ""),
+            log.get("entityType", ""),
+            log.get("entityId", ""),
+            log.get("orgUnitId", ""),
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=audit_logs_export.csv"}
     )
