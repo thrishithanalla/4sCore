@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Toast } from 'mainFe/Toast';
 import { Tag } from 'mainFe/Tag';
 import { Tooltip } from 'mainFe/Tooltip';
@@ -12,10 +11,9 @@ import { useSecureNavigation } from '../../hooks/useSecureNavigation';
 import { RefreshButton } from 'mainFe/RefreshButton';
 import { ExportButton } from 'mainFe/ExportButton';
 import { logMasterService } from '../../services/log-master.service';
-import { modulesService } from '../../services/modules.service';
 import { useAppNavigate } from '../../hooks/useAppNavigate';
 import { useDebounce } from '../../hooks/useDebounce';
-import type { LogMaster } from '../../types';
+import type { LogMaster, LogMasterQueryParams } from '../../types';
 import { extractErrorMessage } from '../../utils/error-handler';
 import DeleteConfirmDialog from '../../components/dialogs/delete-confirm-dialog';
 import PermissionGuard from '../../components/guards/PermissionGuard';
@@ -38,7 +36,7 @@ const LogMasterList = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [selectedModuleId, setSelectedModuleId] = useState<string>('');
+  const [selectedLayer, setSelectedLayer] = useState<string>('');
   const [searchText, setSearchText] = useState('');
 
   // Pagination states for server-side pagination
@@ -48,12 +46,6 @@ const LogMasterList = () => {
 
   // Debounce search text (500ms delay)
   const debouncedSearchText = useDebounce(searchText, 500);
-
-  // Fetch modules for dropdown
-  const { data: modules = [] } = useQuery({
-    queryKey: ['modules-dropdown'],
-    queryFn: () => modulesService.getAllForDropdown(),
-  });
 
   const showError = useCallback((message: string) => {
     toast.current?.show({
@@ -71,16 +63,13 @@ const LogMasterList = () => {
 
       const response = await logMasterService.getAllPaginated({
         page,
-        limit: size,
-        moduleId: selectedModuleId || undefined,
-        name: debouncedSearchText || undefined,
+        page_size: size,
+        layer: selectedLayer || undefined,
+        eventCode: debouncedSearchText || undefined,
       });
 
-      // Map _id to id for DataGrid compatibility
       const mappedData = (response.items || []).map((item) => ({ ...item, id: item._id }));
       setLogMasters(mappedData);
-
-      // Handle pagination from API response
       setTotalRecords(response.total || 0);
     } catch (err: any) {
       console.error('Failed to fetch log masters:', err);
@@ -88,9 +77,8 @@ const LogMasterList = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedModuleId, debouncedSearchText, pageSize, showError]);
+  }, [selectedLayer, debouncedSearchText, pageSize, showError]);
 
-  // Handle page change from DataTable
   const handlePageChange = (event: any) => {
     const newPage = Math.floor(event.first / event.rows) + 1;
     setFirst(event.first);
@@ -98,20 +86,13 @@ const LogMasterList = () => {
     fetchLogMasters(newPage, event.rows);
   };
 
-  // Reset to first page when filters change
   useEffect(() => {
     setFirst(0);
     fetchLogMasters(1, pageSize);
-  }, [selectedModuleId, debouncedSearchText]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedLayer, debouncedSearchText]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleView = (id: string | number) => {
-    navigateToView(String(id));
-  };
-
-  const handleEdit = (id: string | number) => {
-    navigateToEdit(String(id));
-  };
-
+  const handleView = (id: string | number) => navigateToView(String(id));
+  const handleEdit = (id: string | number) => navigateToEdit(String(id));
   const handleDeleteClick = (id: string | number) => {
     setSelectedId(id as string);
     setDeleteDialogOpen(true);
@@ -119,7 +100,6 @@ const LogMasterList = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedId) return;
-
     try {
       setDeleteLoading(true);
       await logMasterService.delete(selectedId);
@@ -141,95 +121,121 @@ const LogMasterList = () => {
     setSelectedId(null);
   };
 
-  // Create module name lookup map
-  const moduleNameMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    modules.forEach((m) => {
-      map[m._id] = m.name;
-    });
-    return map;
-  }, [modules]);
-
-  // Module options for dropdown
-  const moduleOptions = [
-    { label: 'All Modules', value: '' },
-    ...modules.map((m) => ({
-      label: m.name,
-      value: m._id,
-    })),
+  const layerOptions = [
+    { label: 'All Layers', value: '' },
+    { label: 'API', value: 'API' },
+    { label: 'Screen', value: 'screen' },
+    { label: 'Server', value: 'Server' },
+    { label: 'DB', value: 'db' },
+    { label: 'Function', value: 'function' },
   ];
 
   // Export columns configuration
   const exportColumns = useMemo(() => [
-    { field: 'name', header: 'Name' },
-    { field: 'module.name', header: 'Module' },
-    { field: 'purpose', header: 'Purpose' },
-    { field: 'template', header: 'Template' },
-    { field: 'retentionPeriod', header: 'Retention (days)' },
+    { field: 'eventCode', header: 'Event Code' },
+    { field: 'logObject', header: 'Log Object' },
+    { field: 'action', header: 'Action' },
+    { field: 'description', header: 'Description' },
+    { field: 'messageTemplate', header: 'Message Template' },
+    { field: 'layer', header: 'Layer' },
+    { field: 'logLevel', header: 'Log Level' },
+    { field: 'keyFields', header: 'Key Fields' },
   ], []);
 
-  // Fetch all data for export
   const fetchExportData = useCallback(async (): Promise<LogMaster[]> => {
-    const params: Omit<LogMasterQueryParams, 'page' | 'limit'> = {};
-    if (selectedModuleId) {
-      params.moduleId = selectedModuleId;
-    }
-    if (debouncedSearchText?.trim()) {
-      params.name = debouncedSearchText.trim();
-    }
+    const params: Omit<LogMasterQueryParams, 'page' | 'page_size'> = {};
+    if (selectedLayer) params.layer = selectedLayer;
+    if (debouncedSearchText?.trim()) params.eventCode = debouncedSearchText.trim();
     return logMasterService.getAllForExport(params, pageSize);
-  }, [selectedModuleId, debouncedSearchText, pageSize]);
+  }, [selectedLayer, debouncedSearchText, pageSize]);
+
+  const getLevelSeverity = (level: string): 'info' | 'warning' | 'danger' | 'secondary' => {
+    switch (level?.toUpperCase()) {
+      case 'INFO': return 'info';
+      case 'WARNING': case 'WARN': return 'warning';
+      case 'ERROR': return 'danger';
+      default: return 'secondary';
+    }
+  };
 
   const columns: DataTableColumn<LogMaster & { id: string }>[] = useMemo(() => {
     const baseColumns: DataTableColumn<LogMaster & { id: string }>[] = [
       {
-        field: 'name',
-        header: 'Name',
-        sortable: true,
-      },
-      {
-        field: 'moduleId',
-        header: 'Module',
-        sortable: true,
-        body: (rowData: LogMaster) => {
-          const moduleName = rowData.module?.name || moduleNameMap[rowData.moduleId];
-          if (!moduleName) {
-            return <span className="text-gray-400 dark:text-gray-500 text-xs italic">No module</span>;
-          }
-          return <Tag value={moduleName} severity="info" className="text-xs" />;
-        },
-      },
-      {
-        field: 'purpose',
-        header: 'Purpose',
-        sortable: false,
-        body: (rowData: LogMaster) => rowData.purpose || '-',
-      },
-      {
-        field: 'template',
-        header: 'Template',
-        sortable: false,
-        style: { minWidth: '450px', maxWidth: '600px' },
+        field: 'eventCode',
+        header: 'Event Code',
+        style: { minWidth: '280px' },
         body: (rowData: LogMaster) => (
-          <span className="whitespace-normal break-words">{rowData.template || '-'}</span>
+          <div>
+            <span className="font-mono text-xs text-gray-900 dark:text-white break-all">
+              {rowData.eventCode || '-'}
+            </span>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {rowData.logObject || '-'}
+            </div>
+          </div>
         ),
       },
       {
-        field: 'retentionPeriod',
-        header: 'Retention (days)',
-        sortable: true,
+        field: 'action',
+        header: 'Action',
+        style: { width: '100px' },
+        body: (rowData: LogMaster) => (
+          <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+            {rowData.action || '-'}
+          </span>
+        ),
+      },
+      {
+        field: 'description',
+        header: 'Description',
+        sortable: false,
+        style: { minWidth: '250px' },
+        body: (rowData: LogMaster) => (
+          <span
+            className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1"
+            data-pr-tooltip={rowData.description || undefined}
+          >
+            {rowData.description || '-'}
+          </span>
+        ),
+      },
+      {
+        field: 'layer',
+        header: 'Layer',
+        style: { width: '80px' },
+        body: (rowData: LogMaster) => (
+          <span className="text-xs text-gray-600 dark:text-gray-400">
+            {rowData.layer || '-'}
+          </span>
+        ),
+      },
+      {
+        field: 'logLevel',
+        header: 'Level',
+        style: { width: '90px' },
+        body: (rowData: LogMaster) => (
+          <Tag value={rowData.logLevel || 'INFO'} severity={getLevelSeverity(rowData.logLevel)} className="text-xs" />
+        ),
+      },
+      {
+        field: 'keyFields',
+        header: 'Key Fields',
+        style: { width: '120px' },
+        body: (rowData: LogMaster) => (
+          <span className="text-xs text-gray-700 dark:text-gray-300 font-mono">
+            {rowData.keyFields || '-'}
+          </span>
+        ),
       },
     ];
 
-    // Always add actions column at the end
     baseColumns.push({
       field: 'actions',
       header: 'Actions',
       headerStyle: { textAlign: 'center' },
       sortable: false,
       body: (rowData: LogMaster & { id: string }) => {
-        const isDeleted = (rowData as any).isDelete || rowData.isDeleted;
-
+        const isDeleted = rowData.isDelete;
         return (
           <div className="flex gap-1 justify-center">
             <button
@@ -240,7 +246,6 @@ const LogMasterList = () => {
             >
               <i className="pi pi-eye text-sm text-green-600 dark:text-green-400" style={{ fontSize: '1.125rem' }} />
             </button>
-
             {!isDeleted && (
               <>
                 {canUpdate && (
@@ -253,7 +258,6 @@ const LogMasterList = () => {
                     <i className="pi pi-pencil text-blue-600" style={{ fontSize: '1.125rem' }} />
                   </button>
                 )}
-
                 {canDelete && (
                   <button
                     className="p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
@@ -272,7 +276,7 @@ const LogMasterList = () => {
     });
 
     return baseColumns;
-  }, [canUpdate, canDelete, moduleNameMap]);
+  }, [canUpdate, canDelete]);
 
   return (
     <PermissionGuard jobName={JOB_NAMES.LOG_MASTER}>
@@ -297,30 +301,27 @@ const LogMasterList = () => {
             {/* Filter / Control Bar */}
             <div className={styles.filterBar}>
               <div className={styles.filterBarContent}>
-                {/* Left side - All filters grouped together */}
                 <div className={styles.filterGroup}>
                   <Input
                     name="search"
-                    placeholder="Search log masters..."
+                    placeholder="Search by event code..."
                     value={searchText}
-                    onChange={(value: string) => setSearchText(value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
                     testId="LogMasterList.Search"
-                    style={{ minWidth: '180px', width: '180px' }}
+                    style={{ minWidth: '200px', width: '200px' }}
                     clearable
                   />
-
                   <Dropdown
-                    value={selectedModuleId}
-                    options={moduleOptions}
-                    onChange={(e: { value: string }) => setSelectedModuleId(e.value || '')}
-                    placeholder="All Modules"
+                    value={selectedLayer}
+                    options={layerOptions}
+                    onChange={(e: { value: string }) => setSelectedLayer(e.value || '')}
+                    placeholder="All Layers"
                     style={{ width: '160px' }}
-                    data-testid="LogMasterList.Filter.Module"
+                    data-testid="LogMasterList.Filter.Layer"
                     resetFilterOnHide={true}
                   />
                 </div>
 
-                {/* Right side - Record count and Actions */}
                 <div className={styles.filterActions}>
                   <span className={styles.recordCount}>
                     {totalRecords} {totalRecords === 1 ? 'record' : 'records'}
@@ -349,7 +350,6 @@ const LogMasterList = () => {
               </div>
             </div>
 
-            {/* DataTable */}
             <DataTable
               data={logMasters}
               columns={columns}
@@ -368,7 +368,6 @@ const LogMasterList = () => {
         </div>
         <Tooltip target="[data-pr-tooltip]" />
 
-        {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           visible={deleteDialogOpen}
           onCancel={handleDeleteCancel}

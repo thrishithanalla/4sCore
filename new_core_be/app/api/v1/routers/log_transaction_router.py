@@ -394,7 +394,7 @@ async def get_log_analytics(
     toDate: Optional[datetime] = Query(None, description="Filter logs until this date"),
 
 ):
-    """Get analytics for audit log counts grouped by layer"""
+    """Get analytics for audit log counts grouped by log level (via audit_log_master lookup)"""
 
     db = get_database()
 
@@ -412,9 +412,28 @@ async def get_log_analytics(
     if match_query:
         pipeline.append({"$match": match_query})
 
+    # Lookup audit_log_master to get logLevel for each transaction
+    pipeline.append({
+        "$lookup": {
+            "from": Collections.LOG_MASTER,
+            "localField": "eventcode",
+            "foreignField": "eventCode",
+            "as": "master"
+        }
+    })
+
+    # Unwind master (use preserveNullAndEmptyArrays so transactions without a master still count)
+    pipeline.append({
+        "$unwind": {
+            "path": "$master",
+            "preserveNullAndEmptyArrays": True
+        }
+    })
+
+    # Group by logLevel from master
     pipeline.append({
         "$group": {
-            "_id": "$layer",
+            "_id": {"$toLower": {"$ifNull": ["$master.logLevel", "info"]}},
             "count": {"$sum": 1}
         }
     })
@@ -422,18 +441,31 @@ async def get_log_analytics(
     cursor = db[Collections.LOG_TRANSACTION].aggregate(pipeline)
     results = await cursor.to_list(length=None)
 
-    layer_counts = {}
+    info_count = 0
+    warning_count = 0
+    error_count = 0
     total = 0
-    for result in results:
-        layer = result["_id"]
-        count = result["count"]
-        layer_counts[layer] = count
-        total += count
 
-    layer_counts["total"] = total
+    for result in results:
+        level = (result["_id"] or "info").lower()
+        count = result["count"]
+        total += count
+        if level == "info":
+            info_count += count
+        elif level in ("warning", "warn"):
+            warning_count += count
+        elif level == "error":
+            error_count += count
+        else:
+            info_count += count  # default unknown levels to info
 
     return success_response(
-        data=layer_counts,
+        data={
+            "total": total,
+            "infoCount": info_count,
+            "warningCount": warning_count,
+            "errorCount": error_count
+        },
         message="Audit log analytics retrieved successfully",
         status_code=200
     )

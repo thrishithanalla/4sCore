@@ -10,7 +10,6 @@ import { ExportButton } from 'mainFe/ExportButton';
 import { formatTimestamp } from 'mainFe/dateUtils';
 import { useQuery } from '@tanstack/react-query';
 import { logTransactionService } from '../../services/log-transaction.service';
-import { modulesService } from '../../services/modules.service';
 import type {
   LogTransaction,
   LogLevel,
@@ -58,12 +57,6 @@ const LogTransactionList = () => {
       fromDate: filters.fromDate,
       toDate: filters.toDate,
     }),
-  });
-
-  // Fetch modules for dropdown
-  const { data: modules = [] } = useQuery({
-    queryKey: ['modules-dropdown'],
-    queryFn: () => modulesService.getAllForDropdown(),
   });
 
   // Get stats from analytics response
@@ -206,11 +199,6 @@ const LogTransactionList = () => {
     { label: 'Config', value: 'config' },
   ];
 
-  const moduleOptions = [
-    { label: 'All Modules', value: '' },
-    ...modules.map((m) => ({ label: m.name, value: m._id })),
-  ];
-
   // Map data for DataTable
   // API returns { success, code, message, data: { items: [...], page, page_size, total, total_pages } }
   const tableData = useMemo(() => {
@@ -226,54 +214,37 @@ const LogTransactionList = () => {
 
   // Export columns configuration
   const exportColumns = useMemo(() => [
-    { field: 'createdAt', header: 'Timestamp' },
-    { field: 'level', header: 'Level' },
+    { field: 'EventTimeStamp', header: 'Timestamp' },
     { field: 'layer', header: 'Layer' },
-    { field: 'logCode', header: 'Log Code' },
+    { field: 'eventcode', header: 'Event Code' },
     { field: 'message', header: 'Message' },
-    { field: 'actorName', header: 'Actor' },
+    { field: 'actorRole', header: 'Actor Role' },
     { field: 'endpoint', header: 'Endpoint' },
   ], []);
 
   // Fetch data for export - formats current table data for Excel
   const fetchExportData = useCallback(async () => {
     return tableData.map((log) => ({
-      createdAt: formatTimestamp(log.createdAt),
-      level: log.level?.toUpperCase() || '-',
+      EventTimeStamp: formatTimestamp(log.EventTimeStamp || log.createdAt),
       layer: log.layer?.toUpperCase() || '-',
-      logCode: log.logCode || '-',
+      eventcode: log.eventcode || '-',
       message: log.message || '-',
-      actorName: log.actorName || '-',
+      actorRole: log.actorRole || '-',
       endpoint: log.endpoint || '-',
     }));
   }, [tableData]);
 
   const columns: DataTableColumn<LogTransaction>[] = useMemo(() => [
     {
-      field: 'createdAt',
+      field: 'EventTimeStamp',
       header: 'Timestamp',
       sortable: true,
       body: (rowData: LogTransaction) => (
         <span className="font-mono text-xs text-gray-900 dark:text-white">
-          {formatTimestamp(rowData.createdAt)}
+          {formatTimestamp(rowData.EventTimeStamp || rowData.createdAt)}
         </span>
       ),
       style: { width: '140px' },
-    },
-    {
-      field: 'level',
-      header: 'Level',
-      sortable: true,
-      body: (rowData: LogTransaction) => (
-        rowData.level ? (
-          <Tag
-            value={rowData.level.toUpperCase()}
-            severity={getLevelColor(rowData.level)}
-            icon={getLevelIcon(rowData.level)}
-          />
-        ) : <span className="text-gray-400">-</span>
-      ),
-      style: { width: '100px' },
     },
     {
       field: 'layer',
@@ -283,19 +254,19 @@ const LogTransactionList = () => {
         rowData.layer ? (
           <Tag
             value={rowData.layer.toUpperCase()}
-            severity={getLayerColor(rowData.layer)}
+            severity={getLayerColor(rowData.layer as LogLayer)}
           />
         ) : <span className="text-gray-400">-</span>
       ),
       style: { width: '90px' },
     },
     {
-      field: 'logCode',
-      header: 'Log Code',
+      field: 'eventcode',
+      header: 'Event Code',
       sortable: true,
       body: (rowData: LogTransaction) => (
         <span className="text-gray-900 dark:text-white font-mono text-xs">
-          {rowData.logCode || '-'}
+          {rowData.eventcode || '-'}
         </span>
       ),
     },
@@ -311,11 +282,11 @@ const LogTransactionList = () => {
       ),
     },
     {
-      field: 'actorName',
-      header: 'Actor',
+      field: 'actorRole',
+      header: 'Actor Role',
       sortable: true,
       body: (rowData: LogTransaction) => (
-        <span className="text-gray-900 dark:text-white text-xs">{rowData.actorName || '-'}</span>
+        <span className="text-gray-900 dark:text-white text-xs">{rowData.actorRole || '-'}</span>
       ),
     },
     {
@@ -461,26 +432,12 @@ const LogTransactionList = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
             <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
-              Module
-            </label>
-            <Dropdown
-              value={filters.moduleId ?? ''}
-              options={moduleOptions}
-              onChange={(e: { value: string }) => handleFilterChange('moduleId', e.value)}
-              placeholder="All Modules"
-              className="w-full"
-              data-testid="LogTransaction.Filter.Module"
-              resetFilterOnHide={true}
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1 }}>
-            <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>
               Search Message
             </label>
             <Input
               name="search"
               value={filters.search || ''}
-              onChange={(value: any) => handleFilterChange('search', value)}
+              onChange={(e: any) => handleFilterChange('search', e.target.value)}
               placeholder="Search in message..."
               icon="pi pi-search"
               className="w-full"

@@ -1,7 +1,7 @@
-// Log Transaction Types
+// Log Transaction Types - aligned with new_core_be audit_log schema
 
 export type LogLevel = 'info' | 'warning' | 'error';
-export type LogLayer = 'screen' | 'function' | 'api' | 'config';
+export type LogLayer = 'screen' | 'function' | 'api' | 'config' | 'API' | 'Server' | 'db';
 
 export interface LogTransactionMetadata {
   [key: string]: string | number | boolean | null | undefined;
@@ -10,27 +10,25 @@ export interface LogTransactionMetadata {
 export interface LogTransaction {
   _id: string;
   id?: string;
-  templateId: string;
-  logCode?: string;
-  level: LogLevel;
-  layer: LogLayer;
+  layer: string;
+  eventcode: string;
+  EventTimeStamp: string;
   actorId?: string;
-  actorName?: string;
+  actorRole?: string;
+  keyFields?: string;
+  parameters?: Record<string, any>;
+  retentionPeriod?: number;
+  message?: string;
   endpoint?: string;
-  message: string;
-  json?: LogTransactionMetadata;
-  createdAt: string;
-  updatedAt?: string;
-  // Populated fields
-  template?: {
-    _id: string;
-    name: string;
-    moduleId: string;
-    module?: {
-      _id: string;
-      name: string;
-    };
-  };
+  entityType?: string;
+  entityId?: string;
+  orgUnitId?: string;
+  requestId?: string;
+  Details?: Record<string, any>;
+  // Keep for backward compat in UI
+  createdAt?: string;
+  level?: LogLevel;
+  logCode?: string;
 }
 
 export interface LogStats {
@@ -62,11 +60,12 @@ export interface LogVolumeData {
 
 export interface LogTransactionSearchParams {
   search?: string;
-  level?: LogLevel;
-  layer?: LogLayer;
-  moduleId?: string;
-  logCode?: string;
+  layer?: string;
+  eventcode?: string;
   actorId?: string;
+  entityType?: string;
+  entityId?: string;
+  orgUnitId?: string;
   endpoint?: string;
   fromDate?: string;
   toDate?: string;

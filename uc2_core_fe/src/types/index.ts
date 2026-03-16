@@ -1419,55 +1419,91 @@ export interface PromptFormData {
 // Log Master Types
 export interface LogMaster {
   _id: string;
-  moduleId: string;
-  name: string;
-  purpose?: string;
-  template: string;
-  json?: Record<string, string>;
+  eventCode: string;
+  logObject: string;
+  action: string;
+  keyFields: string;
+  parameters?: string[];
   retentionPeriod: number;
-  module?: {
-    _id: string;
-    name: string;
-  };
+  messageTemplate: string;
+  templateParameters?: Record<string, any>;
+  isActive?: boolean;
+  layer: string;
+  isUsageTrackable: boolean;
+  isSensitive: boolean;
+  description: string;
+  logLevel: string;
+  logtype: string;
   createdBy?: string;
   createdAt?: string;
+  createdIp?: string;
   updatedBy?: string;
   updatedAt?: string;
-  isDeleted?: boolean;
+  updatedIp?: string;
+  isDelete?: boolean;
 }
 
 export interface LogMasterCreateRequest {
-  moduleId: string;
-  name: string;
-  purpose?: string;
-  template: string;
-  json?: Record<string, string>;
+  eventCode: string;
+  logObject: string;
+  action: string;
+  keyFields: string;
+  parameters?: string[];
   retentionPeriod: number;
+  messageTemplate: string;
+  templateParameters?: Record<string, any>;
+  isActive?: boolean;
+  layer: string;
+  isUsageTrackable: boolean;
+  isSensitive: boolean;
+  description: string;
+  logLevel?: string;
+  logtype?: string;
 }
 
 export interface LogMasterUpdateRequest {
-  moduleId?: string;
-  purpose?: string;
-  template?: string;
-  json?: Record<string, string>;
+  logObject?: string;
+  action?: string;
+  keyFields?: string;
+  parameters?: string[];
   retentionPeriod?: number;
+  messageTemplate?: string;
+  templateParameters?: Record<string, any>;
+  isActive?: boolean;
+  layer?: string;
+  isUsageTrackable?: boolean;
+  isSensitive?: boolean;
+  eventCode?: string;
+  description?: string;
+  logLevel?: string;
+  logtype?: string;
 }
 
 export interface LogMasterQueryParams {
-  moduleId?: string;
-  name?: string;
+  eventCode?: string;
+  layer?: string;
+  action?: string;
+  logObject?: string;
+  logtype?: string;
   include_deleted?: boolean;
   page?: number;
-  limit?: number;
+  page_size?: number;
 }
 
 export interface LogMasterFormData {
-  moduleId: string;
-  name: string;
-  purpose: string;
-  template: string;
-  json: string; // JSON string for form editing
+  eventCode: string;
+  logObject: string;
+  action: string;
+  keyFields: string;
+  description: string;
+  messageTemplate: string;
+  templateParameters: string; // JSON string for form editing
+  layer: string;
+  logLevel: string;
+  logtype: string;
   retentionPeriod: string;
+  isSensitive: boolean;
+  isUsageTrackable: boolean;
 }
 
 // Level (Hierarchy Level) Types

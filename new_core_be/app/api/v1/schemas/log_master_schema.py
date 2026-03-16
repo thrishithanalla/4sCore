@@ -18,7 +18,6 @@ class LogMasterBaseSchema(BaseModel):
     isUsageTrackable: bool = Field(..., description="Whether this log is trackable for analytics")
     isSensitive: bool = Field(..., description="Whether this log contains sensitive data for masking")
     eventCode: str = Field(..., min_length=1, max_length=200, description="Unique event code (logObject.action pattern)")
-    category: str = Field(..., min_length=1, max_length=200, description="Audit category")
     description: str = Field(..., min_length=1, max_length=1000, description="Description of the audit log")
     logLevel: str = Field(default="INFO", min_length=1, max_length=50, description="Log level (e.g., INFO, WARNING, ERROR)")
     logtype: str = Field(default="AUDIT", min_length=1, max_length=50, description="Log type (ValueSet: logType)")
@@ -58,13 +57,6 @@ class LogMasterBaseSchema(BaseModel):
             raise ValueError("eventCode cannot be empty")
         return v.strip()
 
-    @field_validator('category')
-    @classmethod
-    def validate_category(cls, v):
-        if not v or v.strip() == "":
-            raise ValueError("category cannot be empty")
-        return v.strip()
-
     @field_validator('description')
     @classmethod
     def validate_description(cls, v):
@@ -99,7 +91,6 @@ class LogMasterUpdateSchema(BaseModel):
     isUsageTrackable: Optional[bool] = None
     isSensitive: Optional[bool] = None
     eventCode: Optional[str] = None
-    category: Optional[str] = None
     description: Optional[str] = None
     logLevel: Optional[str] = None
     logtype: Optional[str] = None
@@ -137,13 +128,6 @@ class LogMasterUpdateSchema(BaseModel):
     def validate_event_code(cls, v):
         if v is not None and (not v or v.strip() == ""):
             raise ValueError("eventCode cannot be empty")
-        return v.strip() if v else v
-
-    @field_validator('category')
-    @classmethod
-    def validate_category(cls, v):
-        if v is not None and (not v or v.strip() == ""):
-            raise ValueError("category cannot be empty")
         return v.strip() if v else v
 
     @field_validator('description')

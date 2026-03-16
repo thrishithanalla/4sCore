@@ -7,7 +7,6 @@ import { Button } from 'mainFe/Button';
 import { useBreadcrumbTitle } from 'mainFe/BreadcrumbContext';
 import { useSecureNavigation } from '../../hooks/useSecureNavigation';
 import { logMasterService } from '../../services/log-master.service';
-import { modulesService } from '../../services/modules.service';
 import type { LogMaster } from '../../types';
 import { extractErrorMessage } from '../../utils/error-handler';
 import DeleteConfirmDialog from '../../components/dialogs/delete-confirm-dialog';
@@ -26,49 +25,27 @@ const LogMasterView = () => {
   const [data, setData] = useState<LogMaster | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [moduleName, setModuleName] = useState<string>('-');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Set breadcrumb title to show log name instead of UUID
-  useBreadcrumbTitle(data?.name);
+  useBreadcrumbTitle(data?.eventCode);
 
-  // Fetch log master data - wait for ID decryption
   useEffect(() => {
-    if (!isReady || !id) {
-      return;
-    }
+    if (!isReady || !id) return;
     (async () => {
       try {
         setLoading(true);
         const res = await logMasterService.getById(id);
         setData(res);
-
-        // Fetch module name if moduleId exists
-        if (res.moduleId) {
-          try {
-            const moduleData = await modulesService.getById(res.moduleId);
-            setModuleName(moduleData.name);
-          } catch {
-            setModuleName(res.moduleId);
-          }
-        }
       } catch (err: any) {
         setError(extractErrorMessage(err, 'Failed to fetch log master'));
       } finally {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, id]);
 
-  const handleEdit = () => {
-    if (id) navigateToEdit(id);
-  };
-
-  const handleDeleteClick = () => {
-    setDeleteDialogOpen(true);
-  };
-
+  const handleEdit = () => { if (id) navigateToEdit(id); };
+  const handleDeleteClick = () => setDeleteDialogOpen(true);
   const handleDeleteConfirm = async () => {
     if (!id) return;
     try {
@@ -80,12 +57,8 @@ const LogMasterView = () => {
       setDeleteDialogOpen(false);
     }
   };
+  const handleDeleteCancel = () => setDeleteDialogOpen(false);
 
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-  };
-
-  // Loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
@@ -94,18 +67,11 @@ const LogMasterView = () => {
     );
   }
 
-  // Error state
   if (error || !data) {
     return (
       <div className="p-3">
         <Message severity="error" text={error || 'Log Master not found'} className="mb-4 w-full" />
-        <Button
-          label="Back to Log Master"
-          icon="pi pi-arrow-left"
-          severity="secondary"
-          outlined
-          onClick={() => navigateToList()}
-        />
+        <Button label="Back to Log Master" icon="pi pi-arrow-left" severity="secondary" outlined onClick={() => navigateToList()} />
       </div>
     );
   }
@@ -113,18 +79,10 @@ const LogMasterView = () => {
   return (
     <PermissionGuard jobName={JOB_NAMES.LOG_MASTER}>
       <div className="p-3" data-testid="SCR-LogMaster-View">
-        {/* Header Section */}
+        {/* Header */}
         <div className="mb-2">
           <div className="flex items-center gap-2 mb-1.5">
-            <Button
-              icon="pi pi-arrow-left"
-              severity="secondary"
-              text
-              rounded
-              onClick={() => navigateToList()}
-              className="p-0"
-              style={{ width: '28px', height: '28px' }}
-            />
+            <Button icon="pi pi-arrow-left" severity="secondary" text rounded onClick={() => navigateToList()} className="p-0" style={{ width: '28px', height: '28px' }} />
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Log Master Details</h1>
           </div>
         </div>
@@ -132,48 +90,28 @@ const LogMasterView = () => {
         {/* Log Master Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
           <div className="flex items-start gap-2.5">
-            {/* Icon */}
             <div className="w-12 h-12 rounded bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
               <i className="pi pi-file-edit text-xl text-blue-600 dark:text-blue-400" />
             </div>
-
             <div>
               <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                <h2 className="text-base font-semibold text-gray-900 dark:text-white">{data.name}</h2>
-                {((data as any).isDelete || data.isDeleted) ? (
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white font-mono">{data.eventCode}</h2>
+                {data.isDelete ? (
                   <Tag value="Deleted" severity="danger" className="text-xs px-1.5 py-0.5" />
                 ) : (
                   <Tag value="Active" severity="success" className="text-xs px-1.5 py-0.5" />
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {data.module?.name || moduleName} &bull; Retention: {data.retentionPeriod} days
+                {data.logObject} &bull; {data.action} &bull; Retention: {data.retentionPeriod} days
               </p>
             </div>
           </div>
 
-          {/* Edit/Delete buttons */}
-          {!((data as any).isDelete || data.isDeleted) && (
+          {!data.isDelete && (
             <div className="flex gap-1.5 sm:self-center">
-              {canUpdate && (
-                <Button
-                  label="Edit"
-                  icon="pi pi-pencil"
-                  onClick={handleEdit}
-                  size="small"
-                  testId="LogMasterView.Button.Edit"
-                />
-              )}
-              {canDelete && (
-                <Button
-                  label="Delete"
-                  icon="pi pi-trash"
-                  severity="danger"
-                  onClick={handleDeleteClick}
-                  size="small"
-                  testId="LogMasterView.Button.Delete"
-                />
-              )}
+              {canUpdate && <Button label="Edit" icon="pi pi-pencil" onClick={handleEdit} size="small" testId="LogMasterView.Button.Edit" />}
+              {canDelete && <Button label="Delete" icon="pi pi-trash" severity="danger" onClick={handleDeleteClick} size="small" testId="LogMasterView.Button.Delete" />}
             </div>
           )}
         </div>
@@ -188,52 +126,95 @@ const LogMasterView = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
               <div className="sm:col-span-3">
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Name</label>
-                <p className="text-sm text-gray-900 dark:text-white break-all">{data.name || '-'}</p>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Event Code</label>
+                <p className="text-sm text-gray-900 dark:text-white font-mono break-all">{data.eventCode || '-'}</p>
               </div>
               <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Module</label>
-                <p className="text-sm text-gray-900 dark:text-white">{data.module?.name || moduleName}</p>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Log Object</label>
+                <p className="text-sm text-gray-900 dark:text-white">{data.logObject || '-'}</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Action</label>
+                <p className="text-sm text-gray-900 dark:text-white">{data.action || '-'}</p>
               </div>
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Retention Period</label>
                 <p className="text-sm text-gray-900 dark:text-white">{data.retentionPeriod} days</p>
               </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Layer</label>
+                <Tag value={data.layer || '-'} severity="warning" className="text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Log Level</label>
+                <Tag value={data.logLevel || 'INFO'} severity={data.logLevel === 'ERROR' ? 'danger' : data.logLevel === 'WARNING' ? 'warning' : 'info'} className="text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Log Type</label>
+                <p className="text-sm text-gray-900 dark:text-white">{data.logtype || '-'}</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Key Fields</label>
+                <p className="text-sm text-gray-900 dark:text-white">{data.keyFields || '-'}</p>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Sensitive</label>
+                <Tag value={data.isSensitive ? 'Yes' : 'No'} severity={data.isSensitive ? 'danger' : 'success'} className="text-xs" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Usage Trackable</label>
+                <Tag value={data.isUsageTrackable ? 'Yes' : 'No'} severity={data.isUsageTrackable ? 'info' : 'secondary'} className="text-xs" />
+              </div>
               <div className="sm:col-span-3">
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Purpose</label>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{data.purpose || 'No purpose provided'}</p>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Description</label>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{data.description || 'No description provided'}</p>
               </div>
             </div>
           </div>
 
-          {/* Template */}
+          {/* Message Template */}
           <div className="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-3">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1.5">
               <i className="pi pi-code text-blue-600" style={{ fontSize: '0.875rem' }} />
-              Template
+              Message Template
             </h2>
             <div className="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded border border-gray-200 dark:border-gray-600">
               <code className="text-gray-900 dark:text-white font-mono text-xs break-words">
-                {data.template || '-'}
+                {data.messageTemplate || '-'}
               </code>
             </div>
+
+            {/* Parameters */}
+            {data.parameters && data.parameters.length > 0 && (
+              <div className="mt-3">
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Parameters</label>
+                <div className="flex flex-wrap gap-1">
+                  {data.parameters.map((param, idx) => (
+                    <span key={idx} className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-mono text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">
+                      {param}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* JSON Configuration */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-3">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1.5">
-              <i className="pi pi-file-edit text-blue-600" style={{ fontSize: '0.875rem' }} />
-              JSON Configuration
-            </h2>
-            <div className="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded border border-gray-200 dark:border-gray-600 overflow-auto max-h-64">
-              <pre className="text-gray-900 dark:text-white font-mono text-xs whitespace-pre-wrap">
-                {data.json ? JSON.stringify(data.json, null, 2) : '{}'}
-              </pre>
+          {/* Template Parameters */}
+          {data.templateParameters && Object.keys(data.templateParameters).length > 0 && (
+            <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-3">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-1.5">
+                <i className="pi pi-file-edit text-blue-600" style={{ fontSize: '0.875rem' }} />
+                Template Parameters
+              </h2>
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded border border-gray-200 dark:border-gray-600 overflow-auto max-h-64">
+                <pre className="text-gray-900 dark:text-white font-mono text-xs whitespace-pre-wrap">
+                  {JSON.stringify(data.templateParameters, null, 2)}
+                </pre>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Delete Confirmation Dialog */}
         <DeleteConfirmDialog
           visible={deleteDialogOpen}
           onCancel={handleDeleteCancel}
