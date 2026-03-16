@@ -179,6 +179,12 @@ const ErrorDetailDrawer = ({ open, error, onClose }: ErrorDetailDrawerProps) => 
                 <span className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase">Source Name</span>
                 <span className="text-sm text-gray-900 dark:text-white font-mono">{error.sourceName}</span>
               </div>
+              {(error as any).endpoint && (
+                <div className="flex justify-between py-2 border-b border-teal-100 dark:border-gray-700 items-center">
+                  <span className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase">Endpoint</span>
+                  <span className="text-sm text-gray-900 dark:text-white font-mono break-all text-right max-w-[60%]">{(error as any).endpoint}</span>
+                </div>
+              )}
               <div className="flex justify-between py-2 border-b border-teal-100 dark:border-gray-700 items-center">
                 <span className="text-xs font-medium text-slate-500 dark:text-gray-400 uppercase">Severity</span>
                 <Tag value={error.severity || 'MEDIUM'} severity={getSeverityColor(error.severity)} />
@@ -205,20 +211,14 @@ const ErrorDetailDrawer = ({ open, error, onClose }: ErrorDetailDrawerProps) => 
         {/* Footer Actions */}
         <div className="border-t border-gray-200 dark:border-gray-700 pt-5 mt-5 flex gap-3">
           <Button
-            label="Copy Error Code"
-            icon="pi pi-copy"
-            onClick={handleCopyErrorCode}
-            testId="ErrorDetail.Button.CopyErrorCode"
-          />
-          <Button
-            label="Investigate"
-            icon="pi pi-search"
+            label="Notify"
+            icon="pi pi-bell"
             severity="warning"
             onClick={() => {
-              // TODO: Navigate to investigation view
-              console.log('Investigating:', error.errorCode);
+              // TODO: Integrate with notification service
+              console.log('Notify for:', error.errorCode);
             }}
-            testId="ErrorDetail.Button.Investigate"
+            testId="ErrorDetail.Button.Notify"
           />
           <Button
             label="Close"

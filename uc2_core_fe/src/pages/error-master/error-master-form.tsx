@@ -21,7 +21,6 @@ import DiscardChangesDialog from '../../components/dialogs/discard-changes-dialo
 import FormSelect from '../../components/forms/form-select';
 import { errorMasterService } from '../../services/error-master.service';
 import { valueSetsService } from '../../services/value-sets.service';
-import { getModulesForDropdown } from '../../services/feedback-master.service';
 import { extractErrorMessage } from '../../utils/error-handler';
 
 // Zod Validation Schema
@@ -38,7 +37,6 @@ const localizedMessageSchema = z.object({
 });
 
 const errorMasterSchema = z.object({
-  moduleId: z.string().min(1, 'Module is required'),
   errorCode: z
     .string()
     .min(3, 'Error code must be at least 3 characters')
@@ -50,12 +48,16 @@ const errorMasterSchema = z.object({
     .trim(),
   errorType: z.string().min(1, 'Error type is required'),
   errorSeverity: z.string().min(1, 'Error severity is required'),
+  sourceType: z.string().min(1, 'Source type is required'),
+  sourceName: z.string().min(1, 'Source name is required').max(120),
+  appCode: z.string().min(1, 'App code is required').max(120),
   log: z.boolean(),
   businessArea: z.string().max(120).optional().or(z.literal('')),
   technicalArea: z.string().max(120).optional().or(z.literal('')),
   tool: z.string().max(120).optional().or(z.literal('')),
   partnerSystem: z.string().max(120).optional().or(z.literal('')),
   thirdParty: z.string().max(120).optional().or(z.literal('')),
+  notificationId: z.string().optional().or(z.literal('')),
   messages: z
     .array(localizedMessageSchema)
     .min(1, 'At least one localized message is required'),
@@ -82,19 +84,6 @@ const ErrorMasterForm = () => {
   const [draftData, setDraftData] = useState<ErrorMasterFormData | null>(null);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
 
-
-  // Fetch modules for dropdown
-  const { data: modules = [] } = useQuery({
-    queryKey: ['modules', 'dropdown'],
-    queryFn: getModulesForDropdown,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const moduleOptions = modules.map((m) => ({
-    label: m.name,
-    value: m._id,
-  }));
-
   // React Hook Form
   const {
     control,
@@ -105,16 +94,19 @@ const ErrorMasterForm = () => {
   } = useForm<ErrorMasterFormData>({
     resolver: zodResolver(errorMasterSchema),
     defaultValues: {
-      moduleId: '',
       errorCode: '',
       errorType: '',
       errorSeverity: '',
+      sourceType: '',
+      sourceName: '',
+      appCode: '',
       log: true,
       businessArea: '',
       technicalArea: '',
       tool: '',
       partnerSystem: '',
       thirdParty: '',
+      notificationId: '',
       messages: [{ language: 'en', template: '' }],
       devMessage: '',
       helpLink: '',
@@ -145,24 +137,26 @@ const ErrorMasterForm = () => {
     queryFn: () => valueSetsService.getItems('errorSeverity', 'en'),
   });
 
-  // Fetch error master data for edit mode - wait for ID decryption
+  const { data: sourceTypeItems = [] } = useQuery({
+    queryKey: ['value-sets', 'sourceType'],
+    queryFn: () => valueSetsService.getItems('sourceType', 'en'),
+  });
+
+  // Fetch error master data for edit mode
   const { data: errorMaster, isLoading: fetchLoading } = useQuery({
     queryKey: ['error-master', id],
     queryFn: () => errorMasterService.getById(id!),
     enabled: isEditMode && isReady && !!id,
   });
 
-  // Set breadcrumb title to show error code instead of UUID in edit mode
+  // Set breadcrumb title
   useBreadcrumbTitle(isEditMode ? errorMaster?.errorCode : null);
 
   // Helper function to match backend format to value-set code
   const matchValueSetCode = useCallback((backendValue: string | undefined, valueSetItems: any[]) => {
     if (!backendValue) return '';
-    // Try exact match first
     const exactMatch = valueSetItems.find(item => item.code === backendValue);
     if (exactMatch) return backendValue;
-
-    // Try case-insensitive match
     const caseInsensitiveMatch = valueSetItems.find(
       item => item.code.toLowerCase() === backendValue.toLowerCase()
     );
@@ -173,32 +167,33 @@ const ErrorMasterForm = () => {
   useEffect(() => {
     if (errorMaster && isEditMode && errorTypeItems.length > 0 && errorSeverityItems.length > 0) {
       reset({
-        moduleId: errorMaster.moduleId || '',
         errorCode: errorMaster.errorCode || '',
-        errorType: matchValueSetCode(errorMaster.errorType, errorTypeItems),
+        errorType: matchValueSetCode((errorMaster as any).errorType, errorTypeItems),
         errorSeverity: matchValueSetCode(errorMaster.errorSeverity, errorSeverityItems),
+        sourceType: matchValueSetCode((errorMaster as any).sourceType, sourceTypeItems),
+        sourceName: (errorMaster as any).sourceName || '',
+        appCode: (errorMaster as any).appCode || '',
         log: errorMaster.log ?? true,
         businessArea: errorMaster.businessArea || '',
         technicalArea: errorMaster.technicalArea || '',
         tool: errorMaster.tool || '',
         partnerSystem: errorMaster.partnerSystem || '',
         thirdParty: errorMaster.thirdParty || '',
+        notificationId: (errorMaster as any).notificationId || '',
         messages: errorMaster.messages || [{ language: 'en', template: '' }],
         devMessage: errorMaster.devMessage || '',
         helpLink: errorMaster.helpLink || '',
         videoLink: errorMaster.videoLink || '',
       });
     }
-  }, [errorMaster, isEditMode, reset, errorTypeItems, errorSeverityItems, matchValueSetCode]);
+  }, [errorMaster, isEditMode, reset, errorTypeItems, errorSeverityItems, sourceTypeItems, matchValueSetCode]);
 
   // Draft autosave (only for create mode)
   useEffect(() => {
     if (isEditMode || !isDirty) return;
-
     const timer = setTimeout(() => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(formValues));
     }, 1500);
-
     return () => clearTimeout(timer);
   }, [formValues, isDirty, isEditMode, DRAFT_KEY]);
 
@@ -218,7 +213,6 @@ const ErrorMasterForm = () => {
     }
   }, [isEditMode, DRAFT_KEY]);
 
-
   // Mutation for create/update
   const mutation = useMutation({
     mutationFn: (data: any) => {
@@ -236,41 +230,27 @@ const ErrorMasterForm = () => {
         detail: `Error master ${isEditMode ? 'updated' : 'created'} successfully`,
         life: 3000,
       });
-      setTimeout(() => {
-        navigateToList();
-      }, 1000);
+      setTimeout(() => { navigateToList(); }, 1000);
     },
     onError: (error: any) => {
       console.error('Error response:', error.response);
-
-      // Use standardized error message extraction
-      const errorMessage = extractErrorMessage(
-        error,
-        `Failed to ${isEditMode ? 'update' : 'create'} error master`
-      );
-
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: errorMessage,
-        life: 10000,
-      });
+      const errorMessage = extractErrorMessage(error, `Failed to ${isEditMode ? 'update' : 'create'} error master`);
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: errorMessage, life: 10000 });
     },
   });
 
-  // Combined loading state for button disable
   const isSaving = mutation.isPending;
 
   const onSubmit = (data: ErrorMasterFormData) => {
     const payload: any = {
       ...data,
-      moduleId: data.moduleId,
       log: data.log ?? true,
       businessArea: data.businessArea || undefined,
       technicalArea: data.technicalArea || undefined,
       tool: data.tool || undefined,
       partnerSystem: data.partnerSystem || undefined,
       thirdParty: data.thirdParty || undefined,
+      notificationId: data.notificationId || undefined,
       devMessage: data.devMessage || undefined,
       helpLink: data.helpLink || undefined,
       videoLink: data.videoLink || undefined,
@@ -281,18 +261,11 @@ const ErrorMasterForm = () => {
       delete payload.errorCode;
     }
 
-    // Note: createdBy and updatedBy are handled by the backend from JWT token
-
-    console.log('Submitting error master payload:', payload);
-
     mutation.mutate(payload);
   };
 
   const handleRestoreDraft = () => {
-    if (draftData) {
-      reset(draftData);
-      setShowDraftBanner(false);
-    }
+    if (draftData) { reset(draftData); setShowDraftBanner(false); }
   };
 
   const handleDiscardDraft = () => {
@@ -300,7 +273,6 @@ const ErrorMasterForm = () => {
     setDraftData(null);
     setShowDraftBanner(false);
   };
-
 
   // Dropdown options
   const errorTypeOptions = useMemo(
@@ -311,6 +283,11 @@ const ErrorMasterForm = () => {
   const errorSeverityOptions = useMemo(
     () => errorSeverityItems.map((item) => ({ value: item.code, label: item.label })),
     [errorSeverityItems]
+  );
+
+  const sourceTypeDropdownOptions = useMemo(
+    () => sourceTypeItems.map((item) => ({ value: item.code, label: item.label })),
+    [sourceTypeItems]
   );
 
   if (fetchLoading) {
@@ -329,11 +306,7 @@ const ErrorMasterForm = () => {
       <div className="py-4 px-4 lg:px-6 bg-gray-50 dark:bg-gray-900 min-h-screen" data-testid="SCR-ErrorMaster-Form">
         {/* Header */}
         <div className="mb-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => handleNavigate('/error-master')}
-            className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
-          >
+          <button type="button" onClick={() => handleNavigate('/error-master')} className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors">
             <i className="pi pi-arrow-left text-lg" />
           </button>
           <div>
@@ -346,73 +319,34 @@ const ErrorMasterForm = () => {
           </div>
         </div>
 
-          {/* Draft Recovery Banner */}
-          {showDraftBanner && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded mb-3">
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2">
-                  <i className="pi pi-exclamation-circle text-blue-600 dark:text-blue-400" style={{ fontSize: '1rem' }} />
-                  <span className="text-sm text-blue-800 dark:text-blue-200">You have unsaved changes from a previous session. Would you like to restore them?</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button label="Restore" size="small" severity="info" onClick={handleRestoreDraft} />
-                  <Button label="Discard" size="small" severity="secondary" outlined onClick={handleDiscardDraft} />
-                </div>
+        {/* Draft Recovery Banner */}
+        {showDraftBanner && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded mb-3">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <i className="pi pi-exclamation-circle text-blue-600 dark:text-blue-400" style={{ fontSize: '1rem' }} />
+                <span className="text-sm text-blue-800 dark:text-blue-200">You have unsaved changes from a previous session. Would you like to restore them?</span>
+              </div>
+              <div className="flex gap-2">
+                <Button label="Restore" size="small" severity="info" onClick={handleRestoreDraft} />
+                <Button label="Discard" size="small" severity="secondary" outlined onClick={handleDiscardDraft} />
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Basic Information Section */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded p-3 mb-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                Basic Information
-              </h3>
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Basic Information Section */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded p-3 mb-3">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Module Dropdown */}
-              <Controller
-                name="moduleId"
-                control={control}
-                render={({ field }) => (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Module <span className="text-red-500">*</span>
-                    </label>
-                    <Dropdown
-                      value={field.value}
-                      options={moduleOptions}
-                      onChange={(e) => field.onChange(e.value)}
-                      placeholder="Select module..."
-                      filter
-                      filterPlaceholder="Search modules..."
-                      className={`w-full ${errors.moduleId ? 'p-invalid' : ''}`}
-                      showClear
-                    />
-                    {errors.moduleId && (
-                      <small className="text-red-500">{errors.moduleId.message}</small>
-                    )}
-                  </div>
-                )}
-              />
-
               <div className="md:col-span-2">
                 <Controller
                   name="errorCode"
                   control={control}
                   render={({ field }) => (
-                    <FormInput
-                      {...field}
-                      label="Error Code"
-                      placeholder="ERR.MODULE.COMPONENT.ACTION"
-                      error={!!errors.errorCode}
-                      helperText={
-                        errors.errorCode?.message ||
-                        'Format: ERR.<MODULE>.<COMPONENT>.<ACTION> (e.g., ERR.AUTH.LOGIN.INVALID_CREDENTIALS)'
-                      }
-                      required
-                      disabled={isEditMode}
-                    />
+                    <FormInput {...field} label="Error Code" placeholder="ERR.MODULE.COMPONENT.ACTION" error={!!errors.errorCode} helperText={errors.errorCode?.message || 'Format: ERR.<MODULE>.<COMPONENT>.<ACTION>'} required disabled={isEditMode} />
                   )}
                 />
               </div>
@@ -421,16 +355,7 @@ const ErrorMasterForm = () => {
                 name="errorType"
                 control={control}
                 render={({ field: { value, onChange, ...field } }) => (
-                  <FormSelect
-                    {...field}
-                    value={value || ''}
-                    onChange={(e) => onChange(e.target.value)}
-                    label="Error Type"
-                    options={errorTypeOptions}
-                    error={!!errors.errorType}
-                    helperText={errors.errorType?.message}
-                    required
-                  />
+                  <FormSelect {...field} value={value || ''} onChange={(e) => onChange(e.target.value)} label="Error Type" options={errorTypeOptions} error={!!errors.errorType} helperText={errors.errorType?.message} required />
                 )}
               />
 
@@ -438,16 +363,31 @@ const ErrorMasterForm = () => {
                 name="errorSeverity"
                 control={control}
                 render={({ field: { value, onChange, ...field } }) => (
-                  <FormSelect
-                    {...field}
-                    value={value || ''}
-                    onChange={(e) => onChange(e.target.value)}
-                    label="Error Severity"
-                    options={errorSeverityOptions}
-                    error={!!errors.errorSeverity}
-                    helperText={errors.errorSeverity?.message}
-                    required
-                  />
+                  <FormSelect {...field} value={value || ''} onChange={(e) => onChange(e.target.value)} label="Error Severity" options={errorSeverityOptions} error={!!errors.errorSeverity} helperText={errors.errorSeverity?.message} required />
+                )}
+              />
+
+              <Controller
+                name="sourceType"
+                control={control}
+                render={({ field: { value, onChange, ...field } }) => (
+                  <FormSelect {...field} value={value || ''} onChange={(e) => onChange(e.target.value)} label="Source Type" options={sourceTypeDropdownOptions} error={!!errors.sourceType} helperText={errors.sourceType?.message} required />
+                )}
+              />
+
+              <Controller
+                name="sourceName"
+                control={control}
+                render={({ field }) => (
+                  <FormInput {...field} value={field.value || ''} label="Source Name" placeholder="e.g., core-service, auth-module" error={!!errors.sourceName} helperText={errors.sourceName?.message} required />
+                )}
+              />
+
+              <Controller
+                name="appCode"
+                control={control}
+                render={({ field }) => (
+                  <FormInput {...field} value={field.value || ''} label="App Code" placeholder="e.g., CORE, AUTH, HR" error={!!errors.appCode} helperText={errors.appCode?.message} required />
                 )}
               />
 
@@ -457,14 +397,8 @@ const ErrorMasterForm = () => {
                   control={control}
                   render={({ field: { value, onChange } }) => (
                     <div className="flex items-center gap-2">
-                      <Checkbox
-                        inputId="log"
-                        checked={value}
-                        onChange={(e) => onChange(e.checked)}
-                      />
-                      <label htmlFor="log" className="text-sm text-gray-700 dark:text-gray-300">
-                        Enable Logging
-                      </label>
+                      <Checkbox inputId="log" checked={value} onChange={(e) => onChange(e.checked)} />
+                      <label htmlFor="log" className="text-sm text-gray-700 dark:text-gray-300">Enable Logging</label>
                     </div>
                   )}
                 />
@@ -474,156 +408,38 @@ const ErrorMasterForm = () => {
 
           {/* Context Information Section */}
           <div className="border border-gray-200 dark:border-gray-700 rounded p-3 mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              Context Information (Optional)
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Context Information (Optional)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Controller
-                name="businessArea"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Business Area"
-                    placeholder="e.g., Authentication, Personnel Management"
-                    error={!!errors.businessArea}
-                    helperText={errors.businessArea?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="technicalArea"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Technical Area"
-                    placeholder="e.g., Database, API, Frontend"
-                    error={!!errors.technicalArea}
-                    helperText={errors.technicalArea?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="tool"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Tool"
-                    placeholder="e.g., MongoDB, Redis, JWT"
-                    error={!!errors.tool}
-                    helperText={errors.tool?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="partnerSystem"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Partner System"
-                    placeholder="e.g., PaymentGateway, SMS Provider"
-                    error={!!errors.partnerSystem}
-                    helperText={errors.partnerSystem?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="thirdParty"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Third Party"
-                    placeholder="e.g., Azure, AWS, Twilio"
-                    error={!!errors.thirdParty}
-                    helperText={errors.thirdParty?.message}
-                  />
-                )}
-              />
+              <Controller name="businessArea" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Business Area" placeholder="e.g., Authentication, Personnel Management" error={!!errors.businessArea} helperText={errors.businessArea?.message} />)} />
+              <Controller name="technicalArea" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Technical Area" placeholder="e.g., Database, API, Frontend" error={!!errors.technicalArea} helperText={errors.technicalArea?.message} />)} />
+              <Controller name="tool" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Tool" placeholder="e.g., MongoDB, Redis, JWT" error={!!errors.tool} helperText={errors.tool?.message} />)} />
+              <Controller name="partnerSystem" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Partner System" placeholder="e.g., PaymentGateway, SMS Provider" error={!!errors.partnerSystem} helperText={errors.partnerSystem?.message} />)} />
+              <Controller name="thirdParty" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Third Party" placeholder="e.g., Azure, AWS, Twilio" error={!!errors.thirdParty} helperText={errors.thirdParty?.message} />)} />
+              <Controller name="notificationId" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Notification ID" placeholder="Notification master reference ID" error={!!errors.notificationId} helperText={errors.notificationId?.message} />)} />
             </div>
           </div>
 
           {/* Localized Messages Section */}
           <div className="border border-gray-200 dark:border-gray-700 rounded p-3 mb-3">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Localized Messages
-              </h3>
-              <Button
-                type="button"
-                label="Add Language"
-                icon="pi pi-plus"
-                size="small"
-                outlined
-                onClick={() => append({ language: '', template: '' })}
-              />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Localized Messages</h3>
+              <Button type="button" label="Add Language" icon="pi pi-plus" size="small" outlined onClick={() => append({ language: '', template: '' })} />
             </div>
 
             {fields.map((field, index) => (
               <div key={field.id} className="p-3 mb-3 bg-gray-50 dark:bg-gray-700/50 rounded">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs text-gray-600 dark:text-gray-400">
-                    Message #{index + 1}
-                  </span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">Message #{index + 1}</span>
                   {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                    >
+                    <button type="button" onClick={() => remove(index)} className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
                       <i className="pi pi-trash" style={{ fontSize: '1rem' }} />
                     </button>
                   )}
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <Controller
-                    name={`messages.${index}.language`}
-                    control={control}
-                    render={({ field }) => (
-                      <FormInput
-                        {...field}
-                        label="Language Code"
-                        placeholder="en, hi, te"
-                        error={!!errors.messages?.[index]?.language}
-                        helperText={errors.messages?.[index]?.language?.message || 'ISO-639-1 (2 letters)'}
-                        required
-                      />
-                    )}
-                  />
-
+                  <Controller name={`messages.${index}.language`} control={control} render={({ field }) => (<FormInput {...field} label="Language Code" placeholder="en, hi, te" error={!!errors.messages?.[index]?.language} helperText={errors.messages?.[index]?.language?.message || 'ISO-639-1 (2 letters)'} required />)} />
                   <div className="md:col-span-3">
-                    <Controller
-                      name={`messages.${index}.template`}
-                      control={control}
-                      render={({ field }) => (
-                        <FormInput
-                          {...field}
-                          label="Message Template"
-                          placeholder="Use {placeholderName} for dynamic values"
-                          error={!!errors.messages?.[index]?.template}
-                          helperText={
-                            errors.messages?.[index]?.template?.message ||
-                            'Use {lowerCamelCase} placeholders for dynamic content'
-                          }
-                          multiline
-                          rows={2}
-                          required
-                        />
-                      )}
-                    />
+                    <Controller name={`messages.${index}.template`} control={control} render={({ field }) => (<FormInput {...field} label="Message Template" placeholder="Use {placeholderName} for dynamic values" error={!!errors.messages?.[index]?.template} helperText={errors.messages?.[index]?.template?.message || 'Use {lowerCamelCase} placeholders for dynamic content'} multiline rows={2} required />)} />
                   </div>
                 </div>
               </div>
@@ -636,87 +452,23 @@ const ErrorMasterForm = () => {
 
           {/* Additional Information Section */}
           <div className="border border-gray-200 dark:border-gray-700 rounded p-3">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              Additional Information (Optional)
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Additional Information (Optional)</h3>
             <div className="space-y-3">
-              <Controller
-                name="devMessage"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Developer Message"
-                    placeholder="Technical details for developers..."
-                    error={!!errors.devMessage}
-                    helperText={errors.devMessage?.message}
-                    multiline
-                    rows={3}
-                  />
-                )}
-              />
-
-              <Controller
-                name="helpLink"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Help Link"
-                    placeholder="https://docs.example.com/errors/..."
-                    error={!!errors.helpLink}
-                    helperText={errors.helpLink?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="videoLink"
-                control={control}
-                render={({ field }) => (
-                  <FormInput
-                    {...field}
-                    value={field.value || ''}
-                    label="Video Link"
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    error={!!errors.videoLink}
-                    helperText={errors.videoLink?.message}
-                  />
-                )}
-              />
+              <Controller name="devMessage" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Developer Message" placeholder="Technical details for developers..." error={!!errors.devMessage} helperText={errors.devMessage?.message} multiline rows={3} />)} />
+              <Controller name="helpLink" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Help Link" placeholder="https://docs.example.com/errors/..." error={!!errors.helpLink} helperText={errors.helpLink?.message} />)} />
+              <Controller name="videoLink" control={control} render={({ field }) => (<FormInput {...field} value={field.value || ''} label="Video Link" placeholder="https://www.youtube.com/watch?v=..." error={!!errors.videoLink} helperText={errors.videoLink?.message} />)} />
             </div>
           </div>
 
           {/* Form Actions */}
           <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 flex justify-end gap-2 rounded-lg mt-3">
-            <Button
-              label="Cancel"
-              severity="secondary"
-              outlined
-              onClick={() => handleNavigate('/error-master')}
-              disabled={isSaving}
-              size="small"
-            />
-            <Button
-              type="submit"
-              label={isSaving ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
-              icon={isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'}
-              disabled={isSaving}
-              size="small"
-              testId="ErrorMasterForm.Button.Submit"
-            />
+            <Button label="Cancel" severity="secondary" outlined onClick={() => handleNavigate('/error-master')} disabled={isSaving} size="small" />
+            <Button type="submit" label={isSaving ? 'Saving...' : isEditMode ? 'Update' : 'Create'} icon={isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'} disabled={isSaving} size="small" testId="ErrorMasterForm.Button.Submit" />
           </div>
         </form>
 
         {/* Leave Confirmation Dialog */}
-        <DiscardChangesDialog
-          visible={showLeaveDialog}
-          onStay={cancelLeave}
-          onLeave={confirmLeave}
-          testId="ErrorMasterForm.Dialog.Leave"
-        />
+        <DiscardChangesDialog visible={showLeaveDialog} onStay={cancelLeave} onLeave={confirmLeave} testId="ErrorMasterForm.Dialog.Leave" />
       </div>
     </>
   );
