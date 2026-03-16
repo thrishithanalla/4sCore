@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type f \\\\\\(-iname *error*dashboard* -o -iname *dashboard*error* \\\\\\))",
+      "Bash(xargs grep:*)",
+      "Bash(npx vite:*)",
+      "Bash(ls \"c:/Users/trish/OneDrive/Documents/4sight/core_fe/uc2_core_fe/\"*.env*)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}

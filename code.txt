@@ -1,0 +1,2739 @@
+`code.txt`
+
+```
+
+```
+
+`eslint.config.js`
+
+```javascript
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+```
+
+`index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+```
+
+`postcss.config.js`
+
+```javascript
+export default {
+    plugins: {
+        autoprefixer: {},
+    },
+}
+
+```
+
+`src/App.css`
+
+```css
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+```
+
+`src/App.tsx`
+
+```typescript
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { ThemeProvider, createTheme } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+
+// Import existing modules
+import Dashboard from './pages/Dashboard'
+import AIInsights from './pages/AIInsights'
+import ErrorDashboard from './pages/ErrorDashboard'
+
+const lightTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#4f46e5',
+    },
+    background: {
+      default: '#f8fafc',
+      paper: '#ffffff',
+    },
+    error: {
+      main: '#ef4444',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+  },
+})
+
+function NavLinks() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  return (
+    <nav className="sidebar-nav">
+      <Link
+        to="/"
+        className="nav-link"
+        style={{ backgroundColor: path === '/' ? 'var(--bg-hover)' : 'transparent', color: path === '/' ? '#0f172a' : '#475569' }}
+      >
+        Dashboard
+      </Link>
+      <Link
+        to="/insights"
+        className="nav-link"
+        style={{ backgroundColor: path === '/insights' ? 'var(--bg-hover)' : 'transparent', color: path === '/insights' ? '#0f172a' : '#475569' }}
+      >
+        AI Insights
+      </Link>
+      <Link
+        to="/error-dashboard"
+        className="nav-link"
+        style={{ backgroundColor: path === '/error-dashboard' ? 'var(--bg-hover)' : 'transparent', color: path === '/error-dashboard' ? '#0f172a' : '#475569' }}
+      >
+        Error Dashboard
+      </Link>
+    </nav>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider theme={lightTheme}>
+      <CssBaseline />
+      <Router>
+        <div className="app-container">
+          {/* Sidebar */}
+          <aside className="sidebar">
+            <div className="sidebar-header">
+              <h1 className="sidebar-title">
+                Error Intelligence
+              </h1>
+            </div>
+
+            <NavLinks />
+
+            <div className="sidebar-footer">
+              <div className="status-indicator">
+                <span className="status-dot"></span> System Online
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="main-content">
+            <header className="header">
+              <div className="header-title">Overview</div>
+            </header>
+
+            <div className="page-container">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/insights" element={<AIInsights />} />
+                <Route path="/error-dashboard" element={<ErrorDashboard />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </Router>
+    </ThemeProvider>
+  )
+}
+
+export default App
+
+```
+
+`src/index.css`
+
+```css
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #4f46e5;
+  --error: #ef4444;
+  --border-color: #e2e8f0;
+  --bg-darker: #ffffff;
+  --bg-hover: #f1f5f9;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* App Layout Classes */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.sidebar {
+  width: 256px;
+  background-color: var(--bg-darker);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  background: linear-gradient(to right, #4f46e5, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #475569;
+  /* slate-600 */
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background-color: var(--bg-hover);
+  color: #0f172a;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: center;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #64748b;
+  /* slate-500 */
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  /* green-500 */
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: var(--background);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  height: 64px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-title {
+  color: #64748b;
+  /* slate-500 */
+  font-weight: 500;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e0e7ff;
+  /* indigo-100 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4f46e5;
+  /* indigo-600 */
+  font-size: 0.875rem;
+  font-weight: bold;
+  border: 1px solid #c7d2fe;
+  /* indigo-200 */
+}
+
+.page-container {
+  padding: 24px;
+}
+
+/* Dashboard Classes */
+.space-y-6>*+* {
+  margin-top: 24px;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #0f172a;
+  margin: 0;
+}
+
+.time-filter-container {
+  display: flex;
+  background-color: var(--bg-darker);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.time-filter-btn {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, font-weight 0.2s;
+  border-right: 1px solid var(--border-color);
+}
+
+.time-filter-btn:last-child {
+  border-right: none;
+}
+
+.time-filter-btn:hover {
+  background-color: var(--bg-hover);
+}
+
+.time-filter-btn.active {
+  background-color: #4f46e5;
+  /* indigo-600 */
+  font-weight: bold;
+  color: white;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.metric-card {
+  background-color: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.metric-title {
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0 0 8px 0;
+}
+
+.metric-value {
+  font-size: 1.875rem;
+  font-weight: 900;
+  margin: 0;
+}
+
+.text-purple {
+  color: #8b5cf6;
+}
+
+.text-red {
+  color: #ef4444;
+}
+
+.text-orange {
+  color: #f97316;
+}
+
+.text-blue {
+  color: #3b82f6;
+}
+
+.text-green {
+  color: #10b981;
+}
+
+.chart-card {
+  background-color: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-title {
+  color: #0f172a;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+}
+
+.chart-container {
+  height: 288px;
+  width: 100%;
+}
+
+.chart-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.text-gray {
+  color: #64748b;
+}
+
+/* AI Insights specific */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .insights-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #4f46e5, #0ea5e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.ai-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.ai-date {
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.anomaly-alert {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.cluster-item {
+  background-color: #f8fafc;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  margin-bottom: 8px;
+}
+
+.cluster-meta {
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.cluster-msg {
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-insights {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #94a3b8;
+  padding: 48px 0;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  background-color: white;
+}
+```
+
+`src/main.tsx`
+
+```typescript
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.tsx'
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+```
+
+`src/pages/AIInsights.tsx`
+
+```typescript
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Card, CardContent, Typography, Chip } from '@mui/material';
+
+export default function AIInsights() {
+    const [insights, setInsights] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [countdown, setCountdown] = useState('');
+
+    useEffect(() => {
+        fetchInsights();
+    }, []);
+
+    useEffect(() => {
+        const tick = () => {
+            const now = new Date();
+            const totalSecs = (15 - (now.getMinutes() % 15)) * 60 - now.getSeconds();
+            const m = Math.floor(totalSecs / 60) % 15;
+            const s = totalSecs % 60;
+            setCountdown(`${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, []);
+
+    const fetchInsights = async () => {
+        try {
+            const res = await axios.get('http://localhost:8000/errors/insights');
+            setInsights(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
+    if (loading) return <div className="text-gray">Loading AI Insights...</div>;
+
+    return (
+        <div className="space-y-6">
+            <div className="flex-between">
+                <h2 className="page-title gradient-text">
+                    AI-Powered Error Insights
+                </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--bg-darker)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.85rem' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }}></span>
+                        <span style={{ color: '#94a3b8' }}>Next update in</span>
+                        <span style={{ color: '#22c55e', fontWeight: 'bold', fontFamily: 'monospace' }}>{countdown}</span>
+                    </div>
+                    <Chip label="Live Analysis" color="success" variant="outlined" />
+                </div>
+            </div>
+
+            <div className="insights-grid">
+                {insights.map((insight: any) => (
+                    <Card key={insight._id} sx={{ backgroundColor: 'var(--bg-darker)', backgroundImage: 'none', border: '1px solid var(--border-color)', borderRadius: 2, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)' }}>
+                        <CardContent>
+                            <div className="ai-card-header">
+                                <Chip
+                                    label={insight.type.replace('_', ' ').toUpperCase()}
+                                    size="small"
+                                    color={insight.type === 'anomaly' ? 'error' : 'secondary'}
+                                    sx={{ fontWeight: 'bold' }}
+                                />
+                                <span className="ai-date">
+                                    {new Date(insight.timestamp).toLocaleString()}
+                                </span>
+                            </div>
+
+                            {insight.type === 'summary' && (
+                                <Typography variant="body1" sx={{ color: '#334155', fontStyle: 'italic', borderLeft: '4px solid #4f46e5', pl: 2 }}>
+                                    "{insight.content}"
+                                </Typography>
+                            )}
+
+                            {insight.type === 'anomaly' && (
+                                <div className="anomaly-alert">
+                                    <Typography variant="subtitle1" sx={{ color: '#b91c1c', fontWeight: 'bold' }}>
+                                        🚨 Warning
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#991b1b', mt: 1 }}>
+                                        {insight.message}
+                                    </Typography>
+                                </div>
+                            )}
+
+                            {insight.type === 'clustering_and_rca' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <Typography variant="h6" sx={{ color: '#4f46e5', fontSize: '1.1rem' }}>
+                                        Root Cause Analysis
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#334155' }}>
+                                        <strong>Probable Cause:</strong> {insight.root_cause_analysis?.probable_root_cause}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#334155' }}>
+                                        <strong>Impacted:</strong> {insight.root_cause_analysis?.impacted_services?.join(', ')}
+                                    </Typography>
+
+                                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                                        <Typography variant="subtitle2" sx={{ color: '#64748b', mb: 2 }}>
+                                            Identified Clusters ({insight.clusters?.length || 0})
+                                        </Typography>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {insight.clusters?.map((c: any, i: number) => (
+                                                <div key={i} className="cluster-item">
+                                                    <div className="cluster-meta">Cluster {c.cluster_id} • Size: {c.size}</div>
+                                                    <div className="cluster-msg" title={c.sample_messages?.[0]}>{c.sample_messages?.[0]}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                ))}
+                {insights.length === 0 && (
+                    <div className="empty-insights">
+                        No AI insights generated yet. AI models are processing logs.
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+```
+
+`src/pages/Dashboard.tsx`
+
+```typescript
+import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import {
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
+    Select, MenuItem, FormControl, InputLabel, TablePagination, TableSortLabel,
+    Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Divider,
+    Autocomplete, TextField, CircularProgress
+} from '@mui/material';
+import { format } from 'date-fns';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+
+
+const API_BASE = 'http://localhost:8000/errors';
+
+function CountdownTimer() {
+    const [countdown, setCountdown] = useState('');
+    useEffect(() => {
+        const tick = () => {
+            const now = new Date();
+            const totalSecs = (15 - (now.getMinutes() % 15)) * 60 - now.getSeconds();
+            const m = Math.floor(totalSecs / 60) % 15;
+            const s = totalSecs % 60;
+            setCountdown(`${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+        };
+        tick();
+        const id = setInterval(tick, 1000);
+        return () => clearInterval(id);
+    }, []);
+
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: 'var(--bg-darker)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px 12px', fontSize: '0.85rem' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block', animation: 'pulse 2s infinite' }}></span>
+            <span style={{ color: '#94a3b8' }}>Next update in</span>
+            <span style={{ color: '#22c55e', fontWeight: 'bold', fontFamily: 'monospace' }}>{countdown}</span>
+        </div>
+    );
+}
+
+export default function Dashboard() {
+    const [collection, setCollection] = useState<'logs' | 'master'>(
+        () => (localStorage.getItem('4sight_tab') as 'logs' | 'master') || 'logs'
+    );
+    const [loading, setLoading] = useState(true);
+
+    // Data states
+    const [logs, setLogs] = useState([]);
+    const [masterList, setMasterList] = useState([]);
+
+    // Metrics
+    const [metrics, setMetrics] = useState({} as any);
+
+    // Filters for Data
+    const [timeFilter, setTimeFilter] = useState('all');
+    const [sourceType, setSourceType] = useState('all');
+    const [sourceName, setSourceName] = useState('all');
+    const [environment, setEnvironment] = useState('all');
+    const [severityFilter, setSeverityFilter] = useState('all');
+    const [errorCodeFilter, setErrorCodeFilter] = useState('All Error Codes');
+    const [moduleFilter, setModuleFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [businessAreaFilter, setBusinessAreaFilter] = useState('all');
+    const [technicalAreaFilter, setTechnicalAreaFilter] = useState('all');
+    const [userIdFilter, setUserIdFilter] = useState('all');
+    const [errorCodeSearch, setErrorCodeSearch] = useState('');
+    const [sourceTypeQuickFilter, setSourceTypeQuickFilter] = useState('');
+    const [errorCodeQuickFilter, setErrorCodeQuickFilter] = useState('');
+    const [endpointQuickFilter, setEndpointQuickFilter] = useState('');
+    const [masterModules, setMasterModules] = useState<string[]>([]);
+    const [masterTypes, setMasterTypes] = useState<string[]>([]);
+    const [masterBusinessAreas, setMasterBusinessAreas] = useState<string[]>([]);
+    const [masterTechnicalAreas, setMasterTechnicalAreas] = useState<string[]>([]);
+    const [masterUsers, setMasterUsers] = useState<string[]>([]);
+    const [masterUserFilter, setMasterUserFilter] = useState('all');
+
+    // Dialog state
+    const [selectedLog, setSelectedLog] = useState<any>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    // Source Breakdown Dialog State
+    const [sourceBreakDialogOpen, setSourceBreakDialogOpen] = useState(false);
+    const [selectedSourceBreakdown, setSelectedSourceBreakdown] = useState<{ type: string, breakdown: any } | null>(null);
+
+    // API Source Endpoints Dialog State
+    const [apiEndpointsDialogOpen, setApiEndpointsDialogOpen] = useState(false);
+
+    // Personnel name map: userId -> full name
+    const [personnelMap, setPersonnelMap] = useState<Record<string, string>>({});
+
+    // All Users Dialog State
+    const [allUsersDialogOpen, setAllUsersDialogOpen] = useState(false);
+
+    // User Analysis Dialog State
+    const [userAnalysisDialogOpen, setUserAnalysisDialogOpen] = useState(false);
+    const [selectedUserAnalysisData, setSelectedUserAnalysisData] = useState<any>(null);
+    const [loadingUserAnalysis, setLoadingUserAnalysis] = useState(false);
+    const [dialogUserId, setDialogUserId] = useState<string | null>(null);
+
+    // Sorting
+    const [sortColumn, setSortColumn] = useState<string>('eventDateTime');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+    const handleSort = (col: string) => {
+        if (sortColumn === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+        else { setSortColumn(col); setSortDir('asc'); }
+    };
+
+    // Pagination
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(20);
+
+    const handleChangePage = (_event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    // DB Available Filters
+    const [availableFilters, setAvailableFilters] = useState<any>({
+        sourceTypes: [],
+        sourceNames: [],
+        environments: [],
+        errorSeverities: [],
+        errorCodes: []
+    });
+
+    useEffect(() => {
+        const fetchFilters = async () => {
+            try {
+                const [filtersRes, personnelRes] = await Promise.all([
+                    axios.get(`${API_BASE}/filters`),
+                    axios.get(`${API_BASE}/personnel-map`)
+                ]);
+                setAvailableFilters(filtersRes.data);
+                setPersonnelMap(personnelRes.data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchFilters();
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [collection, timeFilter, sourceType, sourceName, environment, severityFilter, errorCodeFilter, moduleFilter, statusFilter, typeFilter, businessAreaFilter, technicalAreaFilter, masterUserFilter]);
+
+    const fetchData = async () => {
+        setLoading(true);
+        setPage(0); // Reset page on new fetch
+        try {
+            if (collection === 'logs') {
+                const queryParams = new URLSearchParams();
+                queryParams.append('timeFilter', timeFilter);
+                if (errorCodeFilter !== 'All Error Codes') queryParams.append('errorCode', errorCodeFilter);
+                if (sourceType !== 'all') queryParams.append('sourceType', sourceType);
+                if (sourceName !== 'all') queryParams.append('sourceName', sourceName);
+                if (environment !== 'all') queryParams.append('environment', environment);
+                if (severityFilter !== 'all') queryParams.append('errorSeverity', severityFilter);
+
+                const logsRes = await axios.get(`${API_BASE}/logs?${queryParams.toString()}`);
+                setLogs(logsRes.data);
+
+                // Custom counting logic
+                const total = logsRes.data.length;
+                const apiCount = logsRes.data.filter((l: any) => l.sourceType?.toLowerCase() === 'api' || l.sourceType === 'backend').length;
+                const critCount = logsRes.data.filter((l: any) => l.errorSeverity?.toUpperCase() === 'CRITICAL').length;
+
+                const envCounts: Record<string, number> = {};
+                const sourceNameCounts: Record<string, number> = {};
+                const sourceTypeCounts: Record<string, number> = {};
+                const sourceTypeBreakdown: Record<string, Record<string, number>> = {};
+                const severityCounts: Record<string, number> = {};
+                const errorCodeCounts: Record<string, number> = {};
+                const endpointCounts: Record<string, number> = {};
+                const userCounts: Record<string, number> = {};
+
+                logsRes.data.forEach((l: any) => {
+                    const st = (l.sourceType || 'Unknown Type').toLowerCase().trim();
+                    const sn = (l.sourceName || 'Unknown Source').trim();
+
+                    if (l.environment) envCounts[l.environment] = (envCounts[l.environment] || 0) + 1;
+                    if (l.sourceName) sourceNameCounts[l.sourceName] = (sourceNameCounts[l.sourceName] || 0) + 1;
+
+                    if (l.sourceType) sourceTypeCounts[st] = (sourceTypeCounts[st] || 0) + 1;
+
+                    if (!sourceTypeBreakdown[st]) sourceTypeBreakdown[st] = {};
+                    sourceTypeBreakdown[st][sn] = (sourceTypeBreakdown[st][sn] || 0) + 1;
+
+                    if (l.errorSeverity) severityCounts[l.errorSeverity] = (severityCounts[l.errorSeverity] || 0) + 1;
+
+                    if (l.errorCode) errorCodeCounts[l.errorCode] = (errorCodeCounts[l.errorCode] || 0) + 1;
+                    const ep = l.endpoint || 'Unknown Endpoint';
+                    endpointCounts[ep] = (endpointCounts[ep] || 0) + 1;
+                    if (l.actorUserId) userCounts[l.actorUserId] = (userCounts[l.actorUserId] || 0) + 1;
+                });
+
+                const functionCount = logsRes.data.filter((l: any) => l.sourceType?.toLowerCase().includes('function')).length;
+                const serverCount = logsRes.data.filter((l: any) => l.sourceType?.toLowerCase() === 'server' || l.sourceType?.toLowerCase() === 'backend').length;
+
+                setMetrics({
+                    totalErrors: total,
+                    apiErrors: apiCount,
+                    functionErrors: functionCount,
+                    serverErrors: serverCount,
+                    criticalErrors: critCount,
+                    envCounts,
+                    sourceNameCounts,
+                    sourceTypeCounts,
+                    sourceTypeBreakdown,
+                    severityCounts,
+                    errorCodeCounts,
+                    endpointCounts,
+                    userCounts
+                });
+
+            } else {
+                const masterRes = await axios.get(`${API_BASE}/master`);
+
+                const modules = Array.from(new Set(masterRes.data.map((m: any) => m.moduleName || m.moduleId).filter(Boolean))) as string[];
+                setMasterModules(modules.sort());
+                const types = Array.from(new Set(masterRes.data.map((m: any) => m.errorType).filter(Boolean))) as string[];
+                setMasterTypes(types.sort());
+                const businessAreas = Array.from(new Set(masterRes.data.map((m: any) => m.businessArea).filter(Boolean))) as string[];
+                setMasterBusinessAreas(businessAreas.sort());
+                const technicalAreas = Array.from(new Set(masterRes.data.map((m: any) => m.technicalArea).filter(Boolean))) as string[];
+                setMasterTechnicalAreas(technicalAreas.sort());
+                const users = Array.from(new Set(
+                    masterRes.data.flatMap((m: any) => [m.createdBy, m.updatedBy]).filter(Boolean)
+                )) as string[];
+                setMasterUsers(users.sort());
+
+                // Apply some client side filters if they selected severity on master
+                let filteredMaster = masterRes.data;
+                if (severityFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.errorSeverity === severityFilter);
+                }
+                if (errorCodeFilter !== 'All Error Codes') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.errorCode === errorCodeFilter);
+                }
+                if (moduleFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => (m.moduleName || m.moduleId) === moduleFilter);
+                }
+                if (typeFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.errorType === typeFilter);
+                }
+                if (statusFilter !== 'all') {
+                    const isTargetActive = statusFilter === 'active';
+                    filteredMaster = filteredMaster.filter((m: any) => !!m.isActive === isTargetActive);
+                }
+                if (businessAreaFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.businessArea === businessAreaFilter);
+                }
+                if (technicalAreaFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.technicalArea === technicalAreaFilter);
+                }
+                if (masterUserFilter !== 'all') {
+                    filteredMaster = filteredMaster.filter((m: any) => m.createdBy === masterUserFilter || m.updatedBy === masterUserFilter);
+                }
+
+                setMasterList(filteredMaster);
+
+                const activeCount = filteredMaster.filter((m: any) => m.isActive).length;
+                const critCount = filteredMaster.filter((m: any) => m.errorSeverity?.toUpperCase() === 'CRITICAL').length;
+
+                const mSeverityCounts: Record<string, number> = {};
+                const mTypeCounts: Record<string, number> = {};
+
+                filteredMaster.forEach((m: any) => {
+                    if (m.errorSeverity) mSeverityCounts[m.errorSeverity] = (mSeverityCounts[m.errorSeverity] || 0) + 1;
+                    if (m.errorType) mTypeCounts[m.errorType] = (mTypeCounts[m.errorType] || 0) + 1;
+                });
+
+                setMetrics({
+                    totalErrors: filteredMaster.length,
+                    apiErrors: activeCount, // repurpose card for Active Master
+                    functionErrors: 0,
+                    serverErrors: 0,
+                    criticalErrors: critCount,
+                    envCounts: {},
+                    sourceNameCounts: {},
+                    sourceTypeCounts: {},
+                    severityCounts: {},
+                    errorCodeCounts: {},
+                    endpointCounts: {},
+                    masterSeverityCounts: mSeverityCounts,
+                    masterTypeCounts: mTypeCounts
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
+    const severityColor = (sev: string) => {
+        switch (sev?.toUpperCase()) {
+            case 'CRITICAL': return 'error';
+            case 'HIGH': return 'warning';
+            case 'MEDIUM': return 'info';
+            default: return 'default';
+        }
+    };
+
+    const displayName = (userId: string) => personnelMap[userId] || userId;
+
+    const fetchUserAnalysis = async (userId: string) => {
+        setDialogUserId(userId);
+        setSelectedUserAnalysisData(null);
+        setLoadingUserAnalysis(true);
+        try {
+            const res = await axios.get(`${API_BASE}/user/${userId}/analysis`);
+            setSelectedUserAnalysisData({ userId, ...res.data });
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingUserAnalysis(false);
+        }
+    };
+
+    const handleUserClick = (e: React.MouseEvent, userId: string) => {
+        e.stopPropagation();
+        setDialogUserId(userId);
+        setUserAnalysisDialogOpen(true);
+        fetchUserAnalysis(userId);
+    };
+
+    const handleRowClick = (row: any) => {
+        setSelectedLog(row);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setSelectedLog(null);
+    };
+
+    const handleClearFilters = () => {
+        setTimeFilter('all');
+        setSourceType('all');
+        setSourceName('all');
+        setEnvironment('all');
+        setSeverityFilter('all');
+        setErrorCodeFilter('All Error Codes');
+        setModuleFilter('all');
+        setTypeFilter('all');
+        setStatusFilter('all');
+        setBusinessAreaFilter('all');
+        setTechnicalAreaFilter('all');
+        setUserIdFilter('all');
+        setMasterUserFilter('all');
+        setErrorCodeSearch('');
+        setSourceTypeQuickFilter('');
+        setErrorCodeQuickFilter('');
+        setEndpointQuickFilter('');
+    };
+
+    const displayedErrorCodes = Array.from(new Set(
+        collection === 'logs'
+            ? logs.map((l: any) => l.errorCode).filter(Boolean)
+            : masterList.map((m: any) => m.errorCode).filter(Boolean)
+    )).sort();
+
+    const uniqueUserIds = useMemo(() => {
+        const ids = [...new Set((logs as any[]).map((l: any) => l.actorUserId).filter(Boolean))].sort();
+        const hasMissing = (logs as any[]).some((l: any) => !l.actorUserId);
+        return hasMissing ? [...ids, '__missing__'] : ids;
+    }, [logs]);
+
+    useEffect(() => { setPage(0); }, [userIdFilter, errorCodeSearch, sortColumn, sortDir]);
+
+    const filteredLogs = useMemo(() => {
+        let result = logs as any[];
+        if (userIdFilter === '__missing__') result = result.filter((l: any) => !l.actorUserId);
+        else if (userIdFilter !== 'all') result = result.filter((l: any) => l.actorUserId === userIdFilter);
+        if (errorCodeSearch.trim()) result = result.filter((l: any) => l.errorCode?.toLowerCase().includes(errorCodeSearch.trim().toLowerCase()));
+        if (sourceTypeQuickFilter === 'function') result = result.filter((l: any) => l.sourceType?.toLowerCase().includes('function'));
+        else if (sourceTypeQuickFilter === 'server') result = result.filter((l: any) => l.sourceType?.toLowerCase() === 'server' || l.sourceType?.toLowerCase() === 'backend');
+        else if (sourceTypeQuickFilter === 'api') result = result.filter((l: any) => l.sourceType?.toLowerCase() === 'api' || l.sourceType?.toLowerCase() === 'backend');
+        if (errorCodeQuickFilter) result = result.filter((l: any) => l.errorCode === errorCodeQuickFilter);
+        if (endpointQuickFilter) result = result.filter((l: any) => l.endpoint === endpointQuickFilter);
+
+        result = [...result].sort((a, b) => {
+            let av = a[sortColumn] ?? '';
+            let bv = b[sortColumn] ?? '';
+            if (sortColumn === 'eventDateTime' || sortColumn === 'createdAt') {
+                av = av ? new Date(av).getTime() : 0;
+                bv = bv ? new Date(bv).getTime() : 0;
+            } else if (sortColumn === 'actorUserId') {
+                av = personnelMap[av] || av;
+                bv = personnelMap[bv] || bv;
+            }
+            if (av < bv) return sortDir === 'asc' ? -1 : 1;
+            if (av > bv) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    }, [logs, userIdFilter, errorCodeSearch, sourceTypeQuickFilter, errorCodeQuickFilter, endpointQuickFilter, sortColumn, sortDir, personnelMap]);
+
+    const sortedMasterList = useMemo(() => {
+        return [...(masterList as any[])].sort((a, b) => {
+            let av = a[sortColumn] ?? '';
+            let bv = b[sortColumn] ?? '';
+            if (sortColumn === 'createdAt' || sortColumn === 'updatedAt') {
+                av = av ? new Date(av).getTime() : 0;
+                bv = bv ? new Date(bv).getTime() : 0;
+            }
+            if (av < bv) return sortDir === 'asc' ? -1 : 1;
+            if (av > bv) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [masterList, sortColumn, sortDir]);
+
+    const severityPieData = useMemo(() => {
+        return Object.entries(collection === 'logs' ? (metrics.severityCounts || {}) : (metrics.masterSeverityCounts || {}))
+            .sort((a, b) => {
+                const order: any = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+                return (order[(b[0] as string).toUpperCase()] || 0) - (order[(a[0] as string).toUpperCase()] || 0);
+            })
+            .map(([name, value]) => ({ name, value }));
+    }, [collection, metrics]);
+
+    const severityColors: any = {
+        'CRITICAL': '#dc2626',
+        'HIGH': '#f97316',
+        'MEDIUM': '#eab308',
+        'LOW': '#22c55e'
+    };
+
+    const sourcePieData = useMemo(() => {
+        return Object.entries(collection === 'logs' ? (metrics.sourceTypeCounts || {}) : (metrics.masterTypeCounts || {}))
+            .sort((a, b) => (b[1] as number) - (a[1] as number))
+            .map(([name, value]) => ({ name, value }));
+    }, [collection, metrics]);
+
+    const SOURCE_COLORS = ['#0ea5e9', '#8b5cf6', '#ec4899', '#f43f5e', '#3b82f6', '#14b8a6', '#84cc16'];
+
+    return (
+        <div className="space-y-6">
+            <div className="flex-between">
+                <h2 className="page-title">System Overview</h2>
+
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                    <CountdownTimer />
+                    {/* Time Filter Toggle */}
+                    {collection === 'logs' && (
+                        <div className="time-filter-container">
+                            {[
+                                { value: '1h', label: '1 Hour' },
+                                { value: '24h', label: '24 Hours' },
+                                { value: '7d', label: '7 Days' },
+                                { value: '15d', label: '15 Days' },
+                                { value: '30d', label: '30 Days' },
+                                { value: 'all', label: 'All Time' }
+                            ].map(t => (
+                                <button
+                                    key={t.value}
+                                    onClick={() => setTimeFilter(t.value)}
+                                    className={`time-filter-btn ${timeFilter === t.value ? 'active' : ''}`}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Collection Toggle */}
+                    <div className="time-filter-container">
+                        {['logs', 'master'].map(t => (
+                            <button
+                                key={t}
+                                onClick={() => {
+                                    setCollection(t as 'logs' | 'master');
+                                    localStorage.setItem('4sight_tab', t);
+                                    // Reset standard filters when swapping modes
+                                    setSeverityFilter('all');
+                                    setTimeFilter('all');
+                                    setSourceType('all');
+                                    setSourceName('all');
+                                    setEnvironment('all');
+                                    setErrorCodeFilter('All Error Codes');
+                                    setModuleFilter('all');
+                                    setStatusFilter('all');
+                                }}
+                                className={`time-filter-btn ${collection === t ? 'active' : ''}`}
+                            >
+                                Error {t.charAt(0).toUpperCase() + t.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Analytics Area Loading Wrapper */}
+            {loading ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '350px', backgroundColor: 'var(--bg-darker)', borderRadius: '8px', border: '1px solid var(--border-color)', mt: 1, mb: 3 }}>
+                    <CircularProgress size={50} sx={{ color: 'var(--primary)', mb: 3 }} />
+                    <Typography sx={{ color: '#94a3b8', fontWeight: 'bold' }}>Gathering Analytics Data...</Typography>
+                </Box>
+            ) : (
+                <>
+                    {/* Metrics Row */}
+                    <div className="metrics-grid">
+                        <div
+                            className="metric-card"
+                            style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+                            onClick={() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' })}
+                            onMouseOver={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(168, 85, 247, 0.3)')}
+                            onMouseOut={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                        >
+                            <h3 className="metric-title">{collection === 'logs' ? 'Total Logged Errors' : 'Total Defined Masters'}</h3>
+                            <p className="metric-value text-purple">{metrics.totalErrors || 0}</p>
+                        </div>
+                        <div
+                            className="metric-card"
+                            style={collection === 'logs' ? { cursor: 'pointer', transition: 'box-shadow 0.2s' } : undefined}
+                            onClick={collection === 'logs' ? () => { setSourceTypeQuickFilter(sourceTypeQuickFilter === 'api' ? '' : 'api'); setPage(0); setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100); } : undefined}
+                            onMouseOver={collection === 'logs' ? (e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)') : undefined}
+                            onMouseOut={collection === 'logs' ? (e) => (e.currentTarget.style.boxShadow = 'none') : undefined}
+                        >
+                            <h3 className="metric-title">{collection === 'logs' ? 'API Source Errors' : 'Active Master Definitions'}</h3>
+                            <p className="metric-value text-blue">{metrics.apiErrors || 0}</p>
+                        </div>
+                        {collection === 'logs' && (
+                            <>
+                                <div
+                                    className="metric-card"
+                                    style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+                                    onClick={() => { setSourceTypeQuickFilter(sourceTypeQuickFilter === 'function' ? '' : 'function'); setPage(0); setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                    onMouseOver={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)')}
+                                    onMouseOut={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                                >
+                                    <h3 className="metric-title">Function Errors</h3>
+                                    <p className="metric-value" style={{ color: '#10b981' }}>{metrics.functionErrors || 0}</p>
+                                </div>
+                                <div
+                                    className="metric-card"
+                                    style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }}
+                                    onClick={() => { setSourceTypeQuickFilter(sourceTypeQuickFilter === 'server' ? '' : 'server'); setPage(0); setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                    onMouseOver={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)')}
+                                    onMouseOut={(e) => (e.currentTarget.style.boxShadow = 'none')}
+                                >
+                                    <h3 className="metric-title">Server Errors</h3>
+                                    <p className="metric-value" style={{ color: '#f59e0b' }}>{metrics.serverErrors || 0}</p>
+                                </div>
+                            </>
+                        )}
+                        {collection === 'logs' && (
+                            <>
+                                <div className="metric-card">
+                                    <h3 className="metric-title">Source Distribution</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                                        {(() => {
+                                            const entries = Object.entries(metrics.sourceTypeCounts || {});
+                                            if (entries.length === 0) return <span className="text-gray" style={{ fontSize: '0.875rem' }}>No data</span>;
+                                            const sorted = entries.sort((a, b) => (b[1] as number) - (a[1] as number));
+                                            const maxVal = Math.max(...sorted.map(([, c]) => c as number), 1);
+                                            const colors = ['#3b82f6', '#f97316', '#10b981', '#ef4444', '#8b5cf6', '#64748b'];
+                                            return sorted.map(([typeRaw, cnt], index) => {
+                                                const type = (typeRaw as string).toUpperCase();
+                                                const breakdown = metrics.sourceTypeBreakdown?.[typeRaw] || {};
+                                                const isApi = type.includes('API') || type === 'BACKEND';
+                                                const barColor = colors[index % colors.length];
+                                                const percentage = ((cnt as number) / maxVal) * 100;
+                                                return (
+                                                    <div
+                                                        key={type}
+                                                        onClick={isApi ? () => { setSelectedSourceBreakdown({ type, breakdown }); setSourceBreakDialogOpen(true); } : undefined}
+                                                        style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '2px 0', cursor: isApi ? 'pointer' : 'default' }}
+                                                    >
+                                                        <span style={{ minWidth: '120px', fontSize: '0.85rem', color: isApi ? '#3b82f6' : 'var(--primary)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{type}</span>
+                                                        <div style={{ flex: 1, backgroundColor: 'var(--bg-dark)', borderRadius: '4px', height: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                                                            <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: barColor, borderRadius: '4px', transition: 'width 0.5s ease-in-out' }}></div>
+                                                        </div>
+                                                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)', width: '40px', textAlign: 'right' }}>{cnt as number}</span>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                </div>
+                                <div className="metric-card">
+                                    <h3 className="metric-title">Severity Distribution</h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                                        {(() => {
+                                            const severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+                                            const severityData = severities.map(sev => {
+                                                const matchKey = Object.keys(metrics.severityCounts || {}).find(k => k.toUpperCase() === sev);
+                                                const cnt = matchKey ? (metrics.severityCounts[matchKey] as number) : 0;
+                                                return { sev, cnt };
+                                            }).sort((a, b) => b.cnt - a.cnt);
+                                            const maxSevVal = Math.max(...severityData.map(d => d.cnt), 1);
+
+                                            return severityData.map(({ sev, cnt }) => {
+                                                let barColor = '#64748b';
+                                                switch (sev.toUpperCase()) {
+                                                    case 'CRITICAL': barColor = '#ef4444'; break;
+                                                    case 'HIGH': barColor = '#f97316'; break;
+                                                    case 'MEDIUM': barColor = '#3b82f6'; break;
+                                                    case 'LOW': barColor = '#10b981'; break;
+                                                }
+
+                                                const percentage = (cnt / maxSevVal) * 100;
+
+                                                return (
+                                                    <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '2px 0' }}>
+                                                        <span style={{ width: '80px', fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 'bold' }}>{sev}</span>
+                                                        <div style={{ flex: 1, backgroundColor: 'var(--bg-dark)', borderRadius: '4px', height: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                                                            <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: barColor, borderRadius: '4px', transition: 'width 0.5s ease-in-out' }}></div>
+                                                        </div>
+                                                        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)', width: '40px', textAlign: 'right' }}>{cnt}</span>
+                                                    </div>
+                                                );
+                                            });
+                                        })()}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Activity Log (Top Errors & Endpoints) */}
+                    {collection === 'logs' && (metrics.totalErrors || 0) > 0 && (
+                        <div className="space-y-4">
+                            <h2 className="page-title text-xl border-b border-[var(--border-color)] pb-2 mb-6">Activity Analysis</h2>
+
+                            <div className="metrics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                <div className="metric-card">
+                                    <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)' }}></span>
+                                        Top 10 Repeated Error Codes
+                                    </h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', maxHeight: '220px', overflowY: 'auto', paddingRight: '8px' }}>
+                                        {Object.keys(metrics.errorCodeCounts || {}).length > 0 ? (
+                                            Object.entries(metrics.errorCodeCounts)
+                                                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                                .slice(0, 10)
+                                                .map(([code, cnt], index) => (
+                                                    <div key={code} style={{
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        padding: '10px 14px', backgroundColor: errorCodeQuickFilter === code ? 'rgba(99, 102, 241, 0.15)' : '#f8fafc',
+                                                        border: `1px solid ${errorCodeQuickFilter === code ? 'var(--primary)' : '#e2e8f0'}`, borderRadius: '8px',
+                                                        transition: 'all 0.2s ease', cursor: 'pointer'
+                                                    }} onClick={() => { setErrorCodeQuickFilter(errorCodeQuickFilter === code ? '' : code); setEndpointQuickFilter(''); setSourceTypeQuickFilter(''); setPage(0); setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                                    onMouseOver={(e) => { if (errorCodeQuickFilter !== code) e.currentTarget.style.backgroundColor = '#f1f5f9'; }} onMouseOut={(e) => { if (errorCodeQuickFilter !== code) e.currentTarget.style.backgroundColor = '#f8fafc'; }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '80%' }}>
+                                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', width: '20px' }}>#{index + 1}</span>
+                                                            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{code}</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: '#e2e8f0', color: '#334155', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cnt as number}</span>
+                                                    </div>
+                                                ))
+                                        ) : <span className="text-gray" style={{ fontSize: '0.875rem', padding: '12px' }}>No repeated errors detected.</span>}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card" style={{ minWidth: 0, overflow: 'hidden' }}>
+                                    <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0284c7' }}></span>
+                                        Top 10 API Endpoints
+                                    </h3>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px', maxHeight: '220px', overflowY: 'auto', paddingRight: '8px' }}>
+                                        {Object.keys(metrics.endpointCounts || {}).length > 0 ? (
+                                            Object.entries(metrics.endpointCounts)
+                                                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                                .slice(0, 10)
+                                                .map(([ep, cnt], index) => (
+                                                    <div key={ep} style={{
+                                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                        padding: '10px 14px', backgroundColor: endpointQuickFilter === ep ? 'rgba(2, 132, 199, 0.15)' : '#f8fafc',
+                                                        border: `1px solid ${endpointQuickFilter === ep ? '#0284c7' : '#e2e8f0'}`, borderRadius: '8px',
+                                                        transition: 'all 0.2s ease', cursor: 'pointer'
+                                                    }} onClick={() => { setEndpointQuickFilter(endpointQuickFilter === ep ? '' : ep); setErrorCodeQuickFilter(''); setSourceTypeQuickFilter(''); setPage(0); setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                                    onMouseOver={(e) => { if (endpointQuickFilter !== ep) e.currentTarget.style.backgroundColor = '#f1f5f9'; }} onMouseOut={(e) => { if (endpointQuickFilter !== ep) e.currentTarget.style.backgroundColor = '#f8fafc'; }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '80%' }}>
+                                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', width: '20px' }}>#{index + 1}</span>
+                                                            <span style={{ fontSize: '0.85rem', color: '#0284c7', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontFamily: 'monospace' }} title={ep}>{ep}</span>
+                                                        </div>
+                                                        <span style={{ backgroundColor: 'var(--primary)', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cnt as number}</span>
+                                                    </div>
+                                                ))
+                                        ) : <span className="text-gray" style={{ fontSize: '0.875rem', padding: '12px' }}>No endpoint activity tracked.</span>}
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div className="metric-card">
+                                <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
+                                        Top 10 Users
+                                    </div>
+                                    <button
+                                        onClick={() => setAllUsersDialogOpen(true)}
+                                        style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: 600, background: 'none', border: '1px solid #16a34a', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer' }}
+                                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; }}
+                                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                                    >
+                                        Show All Users
+                                    </button>
+                                </h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginTop: '16px' }}>
+                                    {Object.keys(metrics.userCounts || {}).length > 0 ? (
+                                        Object.entries(metrics.userCounts)
+                                            .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                            .slice(0, 10)
+                                            .map(([userId, cnt], index) => (
+                                                <div key={userId} style={{
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    padding: '10px 14px', backgroundColor: '#f8fafc',
+                                                    border: '1px solid #e2e8f0', borderRadius: '8px',
+                                                    transition: 'all 0.2s ease', cursor: 'pointer'
+                                                }}
+                                                    onClick={(e) => handleUserClick(e, userId)}
+                                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0fdf4'}
+                                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '80%' }}>
+                                                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', width: '20px' }}>#{index + 1}</span>
+                                                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#16a34a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={userId}>{displayName(userId)}</span>
+                                                    </div>
+                                                    <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cnt as number}</span>
+                                                </div>
+                                            ))
+                                    ) : <span className="text-gray" style={{ fontSize: '0.875rem', padding: '12px' }}>No user activity tracked.</span>}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Graphical Distribution */}
+                    {(metrics.totalErrors || 0) > 0 && (
+                        <div className="space-y-4">
+                            <h2 className="page-title text-xl border-b border-[var(--border-color)] pb-2 mb-6 mt-8">
+                                {collection === 'logs' ? 'Graphical Distribution' : 'Master Distribution'}
+                            </h2>
+
+                            <div className="metrics-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                <div className="metric-card">
+                                    <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                                        Severity Distribution
+                                    </h3>
+                                    <div style={{ width: '100%', height: '240px' }}>
+                                        {severityPieData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={severityPieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" stroke="none" isAnimationActive={false}>
+                                                        {severityPieData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={severityColors[entry.name.toUpperCase()] || '#94a3b8'} />
+                                                        ))}
+                                                    </Pie>
+                                                    <RechartsTooltip isAnimationActive={false} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }} itemStyle={{ color: '#334155', fontWeight: 600 }} />
+                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px', color: '#475569' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        ) : <span className="text-gray" style={{ fontSize: '0.875rem' }}>No data</span>}
+                                    </div>
+                                </div>
+
+                                <div className="metric-card">
+                                    <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></span>
+                                        {collection === 'logs' ? 'Source Type Breakdown' : 'Type Breakdown'}
+                                    </h3>
+                                    <div style={{ width: '100%', height: '240px' }}>
+                                        {sourcePieData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie data={sourcePieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" stroke="none" isAnimationActive={false}>
+                                                        {sourcePieData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={entry.name.toLowerCase() === 'third_party_api' ? '#ef4444' : SOURCE_COLORS[index % SOURCE_COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <RechartsTooltip isAnimationActive={false} contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }} itemStyle={{ color: '#334155', fontWeight: 600 }} />
+                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '13px', color: '#475569' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        ) : <span className="text-gray" style={{ fontSize: '0.875rem' }}>No data</span>}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* Filters Row */}
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', backgroundColor: 'var(--bg-darker)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                {collection === 'logs' && (
+                    <>
+                        <TextField
+                            size="small"
+                            label="Search Error Code"
+                            placeholder="Search..."
+                            value={errorCodeSearch}
+                            onChange={(e) => setErrorCodeSearch(e.target.value)}
+                            sx={{ minWidth: 180 }}
+                            InputProps={{
+                                endAdornment: errorCodeSearch ? (
+                                    <span
+                                        onClick={() => setErrorCodeSearch('')}
+                                        style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '1rem', lineHeight: 1 }}
+                                        title="Clear"
+                                    >✕</span>
+                                ) : null
+                            }}
+                        />
+
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Source Type</InputLabel>
+                            <Select value={sourceType} label="Source Type" onChange={(e) => setSourceType(e.target.value)}>
+                                <MenuItem value="all">All Types</MenuItem>
+                                <MenuItem value="type missing">Type Missing (Empty)</MenuItem>
+                                {availableFilters.sourceTypes?.map((t: string) => (
+                                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Source Name</InputLabel>
+                            <Select value={sourceName} label="Source Name" onChange={(e) => setSourceName(e.target.value)}>
+                                <MenuItem value="all">All Sources</MenuItem>
+                                {availableFilters.sourceNames?.map((s: string) => (
+                                    <MenuItem key={s} value={s}>{s}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Environment</InputLabel>
+                            <Select value={environment} label="Environment" onChange={(e) => setEnvironment(e.target.value)}>
+                                <MenuItem value="all">All Envs</MenuItem>
+                                <MenuItem value="env missing">Env Missing (Empty)</MenuItem>
+                                {availableFilters.environments?.map((e: string) => (
+                                    <MenuItem key={e} value={e}>{e}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <Autocomplete
+                            size="small"
+                            options={['all', ...uniqueUserIds]}
+                            value={userIdFilter}
+                            onChange={(_e, val) => setUserIdFilter(val || 'all')}
+                            disableClearable
+                            getOptionLabel={(opt) => opt === 'all' ? 'All Users' : opt === '__missing__' ? 'Missing' : displayName(opt)}
+                            PaperComponent={(props) => (
+                                <Paper {...props} sx={{ overflow: 'hidden', '& .MuiAutocomplete-listbox': { maxHeight: '200px !important', overflowY: 'scroll !important', overflowX: 'auto !important', '& .MuiAutocomplete-option': { whiteSpace: 'nowrap', minWidth: 'max-content' } } }} />
+                            )}
+                            renderInput={(params) => (
+                                <TextField {...params} label="User" sx={{ '& .MuiInputBase-input': { textOverflow: 'ellipsis' } }} />
+                            )}
+                            sx={{ minWidth: 180 }}
+                        />
+                    </>
+                )}
+                {collection === 'master' && (
+                    <>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Module</InputLabel>
+                            <Select value={moduleFilter} label="Module" onChange={(e) => setModuleFilter(e.target.value)}>
+                                <MenuItem value="all">All Modules</MenuItem>
+                                {masterModules.map((m: string) => (
+                                    <MenuItem key={m} value={m}>{m}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Type</InputLabel>
+                            <Select value={typeFilter} label="Type" onChange={(e) => setTypeFilter(e.target.value)}>
+                                <MenuItem value="all">All Types</MenuItem>
+                                {masterTypes.map((t: string) => (
+                                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Status</InputLabel>
+                            <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                                <MenuItem value="all">All Statuses</MenuItem>
+                                <MenuItem value="active">Active</MenuItem>
+                                <MenuItem value="inactive">Inactive</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Business Area</InputLabel>
+                            <Select value={businessAreaFilter} label="Business Area" onChange={(e) => setBusinessAreaFilter(e.target.value)}>
+                                <MenuItem value="all">All Areas</MenuItem>
+                                {masterBusinessAreas.map((b: string) => (
+                                    <MenuItem key={b} value={b}>{b}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                            <InputLabel>Technical Area</InputLabel>
+                            <Select value={technicalAreaFilter} label="Technical Area" onChange={(e) => setTechnicalAreaFilter(e.target.value)}>
+                                <MenuItem value="all">All Areas</MenuItem>
+                                {masterTechnicalAreas.map((t: string) => (
+                                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                            <InputLabel>Created By</InputLabel>
+                            <Select value={masterUserFilter} label="Created By" onChange={(e) => setMasterUserFilter(e.target.value)}>
+                                <MenuItem value="all">All Users</MenuItem>
+                                {masterUsers.map((u: string) => (
+                                    <MenuItem key={u} value={u}>{personnelMap[u] || u}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </>
+                )}
+
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Severity</InputLabel>
+                    <Select value={severityFilter} label="Severity" onChange={(e) => setSeverityFilter(e.target.value)}>
+                        <MenuItem value="all">All Severities</MenuItem>
+                        {availableFilters.errorSeverities?.map((s: string) => (
+                            <MenuItem key={s} value={s}>{s}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+                <Autocomplete
+                    size="small"
+                    options={['All Error Codes', ...(availableFilters.errorCodes?.length ? availableFilters.errorCodes : displayedErrorCodes)]}
+                    value={errorCodeFilter}
+                    onChange={(_, newValue) => setErrorCodeFilter(newValue || 'All Error Codes')}
+                    disableClearable
+                    PaperComponent={(props) => (
+                        <Paper {...props} sx={{ overflow: 'hidden', '& .MuiAutocomplete-listbox': { maxHeight: '200px !important', overflowY: 'scroll !important', overflowX: 'auto !important', '& .MuiAutocomplete-option': { whiteSpace: 'nowrap', minWidth: 'max-content' } } }} />
+                    )}
+                    renderInput={(params) => (
+                        <TextField {...params} label="Error Code" sx={{ '& .MuiInputBase-input': { textOverflow: 'ellipsis' } }} />
+                    )}
+                    sx={{ minWidth: 200 }}
+                />
+
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={handleClearFilters}
+                    sx={{ height: '40px', textTransform: 'none', fontWeight: 'bold' }}
+                >
+                    Clear Filters
+                </Button>
+            </div>
+
+            {/* Quick Filter Indicator */}
+            {(sourceTypeQuickFilter || errorCodeQuickFilter || endpointQuickFilter) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    {sourceTypeQuickFilter && (
+                        <Chip
+                            label={`Showing: ${sourceTypeQuickFilter === 'function' ? 'Function' : sourceTypeQuickFilter === 'api' ? 'API Source' : 'Server'} Errors`}
+                            onDelete={() => setSourceTypeQuickFilter('')}
+                            sx={{ backgroundColor: sourceTypeQuickFilter === 'function' ? '#10b981' : sourceTypeQuickFilter === 'api' ? '#3b82f6' : '#f59e0b', color: '#fff', fontWeight: 'bold', '& .MuiChip-deleteIcon': { color: '#fff' } }}
+                        />
+                    )}
+                    {errorCodeQuickFilter && (
+                        <Chip
+                            label={`Error Code: ${errorCodeQuickFilter}`}
+                            onDelete={() => setErrorCodeQuickFilter('')}
+                            sx={{ backgroundColor: 'var(--primary)', color: '#fff', fontWeight: 'bold', '& .MuiChip-deleteIcon': { color: '#fff' } }}
+                        />
+                    )}
+                    {endpointQuickFilter && (
+                        <Chip
+                            label={`Endpoint: ${endpointQuickFilter}`}
+                            onDelete={() => setEndpointQuickFilter('')}
+                            sx={{ backgroundColor: '#0284c7', color: '#fff', fontWeight: 'bold', '& .MuiChip-deleteIcon': { color: '#fff' } }}
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Table Content */}
+            <TableContainer id="data-table-section" component={Paper} elevation={0} sx={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-darker)', scrollMarginTop: '20px' }}>
+                {loading ? (
+                    <div className="chart-empty bg-white py-12">Fetching collection data...</div>
+                ) : collection === 'logs' ? (
+                    <div>
+                        <Table sx={{ minWidth: 650 }}>
+                            <TableHead sx={{ backgroundColor: 'var(--bg-hover)' }}>
+                                <TableRow>
+                                    {([
+                                        { label: 'Time', col: 'eventDateTime' },
+                                        { label: 'Error Code', col: 'errorCode' },
+                                        { label: 'Message', col: 'resolvedMessage' },
+                                        { label: 'Severity', col: 'errorSeverity' },
+                                        { label: 'Source', col: 'sourceName' },
+                                        { label: 'Endpoint', col: 'endpoint' },
+                                        { label: 'Environment', col: 'environment' },
+                                        { label: 'Created User', col: 'actorUserId' },
+                                    ] as { label: string; col: string }[]).map(({ label, col }) => (
+                                        <TableCell key={col} sx={{ fontWeight: 'bold' }} sortDirection={sortColumn === col ? sortDir : false}>
+                                            <TableSortLabel
+                                                active={sortColumn === col}
+                                                direction={sortColumn === col ? sortDir : 'asc'}
+                                                onClick={() => handleSort(col)}
+                                                sx={{ '& .MuiTableSortLabel-icon': { opacity: 0.4 } }}
+                                            >
+                                                {label}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredLogs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row: any) => (
+                                    <TableRow
+                                        key={row._id}
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: 'pointer', '&:hover': { backgroundColor: 'var(--bg-hover)' } }}
+                                        onClick={() => handleRowClick(row)}
+                                    >
+                                        <TableCell sx={{ color: '#64748b' }}>{format(new Date(row.eventDateTime), 'MM/dd HH:mm:ss')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: 'var(--primary)' }}>{row.errorCode}</TableCell>
+                                        <TableCell sx={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.resolvedMessage}>
+                                            {row.resolvedMessage}
+                                        </TableCell>
+                                        <TableCell><Chip label={row.errorSeverity} color={severityColor(row.errorSeverity)} size="small" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }} /></TableCell>
+                                        <TableCell>{row.sourceName} <br /><span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{(row.sourceType || '').toUpperCase()}</span></TableCell>
+                                        <TableCell sx={{ fontSize: '0.8rem', color: '#64748b' }}>{row.endpoint || '-'}</TableCell>
+                                        <TableCell>{row.environment}</TableCell>
+                                        <TableCell>
+                                            {row.actorUserId ? (
+                                                <Chip
+                                                    label={displayName(row.actorUserId)}
+                                                    onClick={(e) => handleUserClick(e, row.actorUserId)}
+                                                    size="small"
+                                                    sx={{ fontSize: '0.75rem', fontWeight: 'bold', backgroundColor: 'var(--primary)', color: '#fff', '&:hover': { backgroundColor: '#4f46e5' } }}
+                                                />
+                                            ) : '-'}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {filteredLogs.length === 0 && (
+                                    <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4, color: '#94a3b8' }}>No logs found for these filters.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                        <TablePagination
+                            rowsPerPageOptions={[20, 50, 100]}
+                            component="div"
+                            count={filteredLogs.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                        />
+                    </div>
+                ) : (
+                    <div>
+                        <Table sx={{ minWidth: 650 }}>
+                            <TableHead sx={{ backgroundColor: 'var(--bg-hover)' }}>
+                                <TableRow>
+                                    {([
+                                        { label: 'Record Time', col: 'createdAt' },
+                                        { label: 'Error Code', col: 'errorCode' },
+                                        { label: 'Type', col: 'errorType' },
+                                        { label: 'Severity', col: 'errorSeverity' },
+                                        { label: 'Module', col: 'moduleName' },
+                                        { label: 'Status', col: 'isActive' },
+                                        { label: 'Created By', col: 'createdBy' },
+                                        { label: 'Updated By', col: 'updatedBy' },
+                                        { label: 'Business Area', col: 'businessArea' },
+                                        { label: 'Tech Area', col: 'technicalArea' },
+                                    ] as { label: string; col: string }[]).map(({ label, col }) => (
+                                        <TableCell key={col} sx={{ fontWeight: 'bold' }} sortDirection={sortColumn === col ? sortDir : false}>
+                                            <TableSortLabel
+                                                active={sortColumn === col}
+                                                direction={sortColumn === col ? sortDir : 'asc'}
+                                                onClick={() => handleSort(col)}
+                                                sx={{ '& .MuiTableSortLabel-icon': { opacity: 0.4 } }}
+                                            >
+                                                {label}
+                                            </TableSortLabel>
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {sortedMasterList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row: any) => (
+                                    <TableRow
+                                        key={row._id}
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: 'pointer', '&:hover': { backgroundColor: 'var(--bg-hover)' } }}
+                                        onClick={() => handleRowClick(row)}
+                                    >
+                                        <TableCell sx={{ fontSize: '0.85rem', color: '#64748b' }}>{row.createdAt ? format(new Date(row.createdAt), 'MM/dd HH:mm') : '-'}</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: 'var(--primary)' }}>{row.errorCode}</TableCell>
+                                        <TableCell>{row.errorType}</TableCell>
+                                        <TableCell><Chip label={row.errorSeverity} color={severityColor(row.errorSeverity)} size="small" sx={{ fontSize: '0.75rem', fontWeight: 'bold' }} /></TableCell>
+                                        <TableCell>{row.moduleName || row.moduleId}</TableCell>
+                                        <TableCell><Chip label={row.isActive ? 'Active' : 'Inactive'} color={row.isActive ? 'success' : 'default'} size="small" variant="outlined" /></TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem' }}>{personnelMap[row.createdBy] || row.createdBy || '-'}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem' }}>{personnelMap[row.updatedBy] || row.updatedBy || '-'}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem' }}>{row.businessArea || '-'}</TableCell>
+                                        <TableCell sx={{ fontSize: '0.85rem' }}>{row.technicalArea || '-'}</TableCell>
+                                    </TableRow>
+                                ))}
+                                {sortedMasterList.length === 0 && (
+                                    <TableRow><TableCell colSpan={10} align="center" sx={{ py: 4, color: '#94a3b8' }}>No master records found.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                        <TablePagination
+                            rowsPerPageOptions={[20, 50, 100]}
+                            component="div"
+                            count={sortedMasterList.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                        />
+                    </div>
+                )}
+            </TableContainer>
+
+            {/* Interactive Detail Dialog */}
+            <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth disableRestoreFocus>
+                <DialogTitle sx={{ backgroundColor: 'var(--bg-darker)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span>{selectedLog?.errorCode || 'Record Details'}</span>
+                        {selectedLog?.errorSeverity && (
+                            <Chip label={selectedLog.errorSeverity} color={severityColor(selectedLog.errorSeverity) as any} size="small" sx={{ fontWeight: 'bold' }} />
+                        )}
+                    </div>
+                </DialogTitle>
+                <DialogContent sx={{ p: 4, backgroundColor: 'var(--bg-dark)', color: '#000' }}>
+                    {selectedLog && collection === 'logs' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Timestamp</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>
+                                        {selectedLog.eventDateTime ? format(new Date(selectedLog.eventDateTime), 'PPpp') : '-'}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Environment</Typography>
+                                    <Typography sx={{ fontWeight: 'medium', color: 'var(--primary)' }}>{selectedLog.environment || 'N/A'}</Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Source System</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>{selectedLog.sourceName || 'Unknown sourceName'}</Typography>
+                                    <Typography sx={{ fontSize: '0.8rem', color: '#000' }}>Type: {selectedLog.sourceType || 'Unknown sourceType'}</Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Network & Origin</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>{selectedLog.ip || 'Local/Internal'}</Typography>
+                                    <Typography sx={{ fontSize: '0.8rem', color: '#000' }}>{selectedLog.method} • {selectedLog.endpoint || '-'}</Typography>
+                                </Box>
+                            </div>
+
+                            <Divider sx={{ borderColor: 'var(--border-color)' }} />
+
+                            <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: 'left 4px solid var(--primary)', borderLeft: '4px solid #ef4444' }}>
+                                <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Resolved Message Breakdown</Typography>
+                                <Typography sx={{ fontSize: '1.1rem', color: '#000', whiteSpace: 'pre-wrap' }}>
+                                    {selectedLog.resolvedMessage || 'No descriptive message provided.'}
+                                </Typography>
+                            </Box>
+
+                            {selectedLog.parametersJson && Object.keys(selectedLog.parametersJson).length > 0 && (
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Parameters JSON</Typography>
+                                    <pre style={{ fontSize: '0.85rem', color: '#000', overflowX: 'auto', margin: 0 }}>
+                                        {JSON.stringify(selectedLog.parametersJson, null, 2)}
+                                    </pre>
+                                </Box>
+                            )}
+
+                            {/* Additional DB Fields typically mapped out inside the row format dynamically */}
+                            <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {Object.entries(selectedLog).map(([key, value]) => {
+                                    if (!['eventDateTime', 'environment', 'sourceName', 'sourceType', 'ip', 'method', 'endpoint', 'resolvedMessage', 'parametersJson', '_id', 'errorSeverity', 'errorCode'].includes(key) && value) {
+                                        return (
+                                            <Chip
+                                                key={key}
+                                                label={`${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`}
+                                                variant="outlined"
+                                                sx={{ color: '#000', borderColor: 'var(--border-color)' }}
+                                            />
+                                        )
+                                    }
+                                    return null;
+                                })}
+                            </Box>
+                        </div>
+                    )}
+
+                    {selectedLog && collection === 'master' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Record Time</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>
+                                        <span style={{ color: '#64748b' }}>Created:</span> {selectedLog.createdAt ? format(new Date(selectedLog.createdAt), 'PPpp') : '-'}
+                                        <br />
+                                        <span style={{ color: '#64748b' }}>Updated:</span> {selectedLog.updatedAt ? format(new Date(selectedLog.updatedAt), 'PPpp') : '-'}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Owner / Tracking</Typography>
+                                    <Typography sx={{ fontWeight: 'medium', color: 'var(--primary)' }}>
+                                        <span style={{ color: '#64748b' }}>Created By:</span> {selectedLog.createdBy || '-'}
+                                        <br />
+                                        <span style={{ color: '#64748b' }}>Updated By:</span> {selectedLog.updatedBy || '-'}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Type & Domain</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>
+                                        <span style={{ color: '#64748b' }}>Error Type:</span> {selectedLog.errorType || '-'}
+                                        <br />
+                                        <span style={{ color: '#64748b' }}>Business Area:</span> {selectedLog.businessArea || '-'}
+                                        <br />
+                                        <span style={{ color: '#64748b' }}>Tech Area:</span> {selectedLog.technicalArea || '-'}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Module Definition</Typography>
+                                    <Typography sx={{ fontWeight: 'medium' }}>{selectedLog.moduleName || selectedLog.moduleId || '-'}</Typography>
+                                    <Chip label={selectedLog.isActive ? 'Active Definition' : 'Inactive'} color={selectedLog.isActive ? 'success' : 'default'} size="small" variant="outlined" sx={{ mt: 1 }} />
+                                </Box>
+                            </div>
+
+                            <Divider sx={{ borderColor: 'var(--border-color)' }} />
+
+                            {selectedLog.messages && selectedLog.messages.length > 0 && (
+                                <Box sx={{ backgroundColor: 'var(--bg-darker)', p: 2, borderRadius: '8px', border: 'left 4px solid var(--primary)', borderLeft: '4px solid #3b82f6' }}>
+                                    <Typography variant="overline" sx={{ color: '#000', fontWeight: 'bold', mb: 1, display: 'block' }}>Master Messages Definition</Typography>
+                                    <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem' }}>
+                                        {selectedLog.messages.map((msg: any, i: number) => (
+                                            <li key={i} style={{ marginBottom: '8px' }}>
+                                                {typeof msg === 'object' ? JSON.stringify(msg) : msg}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Box>
+                            )}
+
+                            <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {Object.entries(selectedLog).map(([key, value]) => {
+                                    if (!['createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'businessArea', 'technicalArea', 'errorType', 'moduleId', 'moduleName', 'isActive', 'messages', '_id', 'errorSeverity', 'errorCode'].includes(key) && value) {
+                                        return (
+                                            <Chip
+                                                key={key}
+                                                label={`${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`}
+                                                variant="outlined"
+                                                sx={{ color: '#000', borderColor: 'var(--border-color)' }}
+                                            />
+                                        )
+                                    }
+                                    return null;
+                                })}
+                            </Box>
+                        </div>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ backgroundColor: 'var(--bg-darker)', borderTop: '1px solid var(--border-color)', p: 2, justifyContent: 'space-between' }}>
+                    <div>
+                        {selectedLog && (() => {
+                            const st = (selectedLog.sourceType || '').toLowerCase();
+                            let label = '';
+                            let color = '';
+                            if (st === 'api' || st === 'backend') { label = 'Notify Technical Team'; color = '#3b82f6'; }
+                            else if (st === 'function') { label = 'Notify Developer'; color = '#10b981'; }
+                            else if (st === 'server') { label = 'Notify Server Admin'; color = '#f59e0b'; }
+                            if (!label) return null;
+                            return (
+                                <Button
+                                    variant="contained"
+                                    sx={{ backgroundColor: color, color: '#fff', textTransform: 'none', fontWeight: 'bold', '&:hover': { backgroundColor: color, opacity: 0.9 } }}
+                                    onClick={async () => {
+                                        try {
+                                            await axios.post(`${API_BASE}/notify`, {
+                                                to: 'askapal@gmail.com',
+                                                subject: `[${selectedLog.errorSeverity}] ${selectedLog.errorCode}`,
+                                                errorCode: selectedLog.errorCode,
+                                                message: selectedLog.resolvedMessage || '',
+                                                sourceType: selectedLog.sourceType,
+                                                sourceName: selectedLog.sourceName || '',
+                                                environment: selectedLog.environment || '',
+                                                endpoint: selectedLog.endpoint || '',
+                                                timestamp: selectedLog.eventDateTime || '',
+                                            });
+                                            alert('Notification email sent successfully!');
+                                        } catch (err) {
+                                            alert('Failed to send notification email.');
+                                            console.error(err);
+                                        }
+                                    }}
+                                >
+                                    {label}
+                                </Button>
+                            );
+                        })()}
+                    </div>
+                    <Button onClick={handleCloseDialog} variant="contained" sx={{ backgroundColor: 'var(--primary)', color: 'white', '&:hover': { backgroundColor: '#4f46e5' } }}>Close Panel</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Source Breakdown Dialog */}
+            <Dialog open={sourceBreakDialogOpen} onClose={() => setSourceBreakDialogOpen(false)} PaperProps={{ sx: { maxWidth: '320px', width: '100%' } }} disableRestoreFocus>
+                <DialogTitle sx={{ backgroundColor: 'var(--bg-darker)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold' }}>
+                    {selectedSourceBreakdown?.type} Name Breakdown
+                </DialogTitle>
+                <DialogContent sx={{ p: 4, backgroundColor: 'var(--bg-dark)', color: '#000' }}>
+                    {selectedSourceBreakdown?.breakdown && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                            {Object.entries(selectedSourceBreakdown.breakdown)
+                                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                .map(([sn, snCount]) => (
+                                    <Box key={sn} sx={{ display: 'flex', justifyContent: 'space-between', backgroundColor: 'var(--bg-darker)', p: 1.5, borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                                        <Typography sx={{ color: 'var(--primary)', fontWeight: 'bold' }}>{sn}</Typography>
+                                        <Typography sx={{ fontWeight: 'bold', color: 'var(--primary)' }}>{snCount as number}</Typography>
+                                    </Box>
+                                ))
+                            }
+                        </div>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ backgroundColor: 'var(--bg-darker)', borderTop: '1px solid var(--border-color)', p: 2 }}>
+                    <Button onClick={() => setSourceBreakDialogOpen(false)} variant="outlined" sx={{ color: 'var(--primary)', borderColor: 'var(--primary)', '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'var(--primary)' } }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* API Endpoints Breakdown Dialog */}
+            <Dialog open={apiEndpointsDialogOpen} onClose={() => setApiEndpointsDialogOpen(false)} maxWidth="sm" fullWidth disableRestoreFocus>
+                <DialogTitle sx={{ backgroundColor: 'var(--bg-darker)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0284c7' }}></span>
+                    Top 10 API Endpoints
+                </DialogTitle>
+                <DialogContent sx={{ p: 4, backgroundColor: 'var(--bg-dark)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                        {Object.keys(metrics.endpointCounts || {}).length > 0 ? (
+                            Object.entries(metrics.endpointCounts)
+                                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                .slice(0, 10)
+                                .map(([ep, cnt], index) => (
+                                    <div key={ep} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', backgroundColor: 'var(--bg-darker)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '80%' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', width: '20px' }}>#{index + 1}</span>
+                                            <span style={{ fontSize: '0.85rem', color: '#0284c7', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', fontFamily: 'monospace' }} title={ep}>{ep}</span>
+                                        </div>
+                                        <span style={{ backgroundColor: 'var(--primary)', color: '#fff', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cnt as number}</span>
+                                    </div>
+                                ))
+                        ) : <span className="text-gray" style={{ fontSize: '0.875rem' }}>No endpoint activity tracked.</span>}
+                    </div>
+                </DialogContent>
+                <DialogActions sx={{ backgroundColor: 'var(--bg-darker)', borderTop: '1px solid var(--border-color)', p: 2 }}>
+                    <Button onClick={() => setApiEndpointsDialogOpen(false)} variant="outlined" sx={{ color: 'var(--primary)', borderColor: 'var(--primary)', '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'var(--primary)' } }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* User Analysis Dialog */}
+            <Dialog open={userAnalysisDialogOpen} onClose={() => { setUserAnalysisDialogOpen(false); setDialogUserId(null); setSelectedUserAnalysisData(null); }} maxWidth="md" fullWidth disableRestoreFocus>
+                <DialogTitle sx={{ backgroundColor: 'var(--bg-darker)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f97316' }}></span>
+                    User Analysis Activity
+                    {dialogUserId && (
+                        <Chip label={displayName(dialogUserId)} size="small" sx={{ ml: 1, backgroundColor: 'var(--primary)', color: '#fff', fontWeight: 'bold', fontSize: '0.8rem' }} />
+                    )}
+                </DialogTitle>
+                <DialogContent sx={{ p: 4, backgroundColor: 'var(--bg-dark)', minHeight: '300px' }}>
+                    {loadingUserAnalysis ? (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', mt: 4 }}>
+                            <CircularProgress size={40} sx={{ color: 'var(--primary)', mb: 2 }} />
+                            <Typography sx={{ color: '#94a3b8' }}>Loading activity profile...</Typography>
+                        </Box>
+                    ) : selectedUserAnalysisData ? (
+                        <div className="space-y-6 mt-4">
+                            <div className="metrics-grid" style={{ gridTemplateColumns: '1fr', gap: '24px' }}>
+                                <div className="metric-card" style={{ backgroundColor: 'var(--bg-darker)' }}>
+                                    <h3 className="metric-title">Total Created Requests</h3>
+                                    <p className="metric-value text-purple">{selectedUserAnalysisData.total_requests}</p>
+                                </div>
+
+                                <div className="metrics-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                                    <div className="metric-card" style={{ backgroundColor: 'var(--bg-darker)' }}>
+                                        <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444' }}></span>
+                                            Severity Impact
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {Object.entries(selectedUserAnalysisData.severities).map(([k, v]) => (
+                                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                                                    <span style={{ color: '#0f172a', fontWeight: 'bold', fontSize: '0.85rem' }}>{k}</span>
+                                                    <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.85rem' }}>{v as number}</span>
+                                                </div>
+                                            ))}
+                                            {Object.keys(selectedUserAnalysisData.severities).length === 0 && <span className="text-gray" style={{ fontSize: '0.85rem' }}>No data</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="metric-card" style={{ backgroundColor: 'var(--bg-darker)' }}>
+                                        <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></span>
+                                            Source Names
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {Object.entries(selectedUserAnalysisData.sources).map(([k, v]) => (
+                                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                                                    <span style={{ color: '#0f172a', fontWeight: 'bold', fontSize: '0.85rem' }}>{k}</span>
+                                                    <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.85rem' }}>{v as number}</span>
+                                                </div>
+                                            ))}
+                                            {Object.keys(selectedUserAnalysisData.sources).length === 0 && <span className="text-gray" style={{ fontSize: '0.85rem' }}>No data</span>}
+                                        </div>
+                                    </div>
+
+                                    <div className="metric-card" style={{ backgroundColor: 'var(--bg-darker)' }}>
+                                        <h3 className="metric-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#0284c7' }}></span>
+                                            Top Endpoints Triggered
+                                        </h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {Object.entries(selectedUserAnalysisData.endpoints).map(([k, v]) => (
+                                                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px', borderBottom: '1px solid var(--border-color)' }}>
+                                                    <span style={{ color: '#0f172a', fontSize: '0.8rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', paddingRight: '8px' }} title={k}>{k}</span>
+                                                    <span style={{ color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.85rem' }}>{v as number}</span>
+                                                </div>
+                                            ))}
+                                            {Object.keys(selectedUserAnalysisData.endpoints).length === 0 && <span className="text-gray" style={{ fontSize: '0.85rem' }}>No data</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-gray text-center mt-8">No analysis data available.</div>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ backgroundColor: 'var(--bg-darker)', borderTop: '1px solid var(--border-color)', p: 2, display: 'flex', justifyContent: 'space-between' }}>
+                    <Button
+                        variant="contained"
+                        disabled={!dialogUserId}
+                        onClick={() => {
+                            if (dialogUserId) setUserIdFilter(dialogUserId);
+                            setUserAnalysisDialogOpen(false);
+                            setTimeout(() => document.getElementById('data-table-section')?.scrollIntoView({ behavior: 'smooth' }), 100);
+                        }}
+                        sx={{ backgroundColor: '#16a34a', color: '#fff', fontWeight: 'bold', '&:hover': { backgroundColor: '#15803d' } }}
+                    >
+                        Show All Records
+                    </Button>
+                    <Button onClick={() => setUserAnalysisDialogOpen(false)} variant="outlined" sx={{ color: 'var(--primary)', borderColor: 'var(--primary)', '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'var(--primary)' } }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* All Users Dialog */}
+            <Dialog open={allUsersDialogOpen} onClose={() => setAllUsersDialogOpen(false)} maxWidth="sm" fullWidth disableRestoreFocus>
+                <DialogTitle sx={{ backgroundColor: 'var(--bg-darker)', borderBottom: '1px solid var(--border-color)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }}></span>
+                    All Users
+                    <Chip label={Object.keys(metrics.userCounts || {}).length} size="small" sx={{ ml: 1, backgroundColor: '#dcfce7', color: '#15803d', fontWeight: 'bold' }} />
+                </DialogTitle>
+                <DialogContent sx={{ p: 3, backgroundColor: 'var(--bg-dark)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+                        {Object.keys(metrics.userCounts || {}).length > 0 ? (
+                            Object.entries(metrics.userCounts)
+                                .sort((a, b) => (b[1] as number) - (a[1] as number))
+                                .map(([userId, cnt], index) => (
+                                    <div key={userId} style={{
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                        padding: '10px 14px', backgroundColor: 'var(--bg-darker)',
+                                        border: '1px solid var(--border-color)', borderRadius: '8px',
+                                        transition: 'all 0.2s ease', cursor: 'pointer'
+                                    }}
+                                        onClick={(e) => { setAllUsersDialogOpen(false); handleUserClick(e, userId); }}
+                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f0fdf4'}
+                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-darker)'}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '80%' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 'bold', width: '24px' }}>#{index + 1}</span>
+                                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#16a34a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={userId}>{displayName(userId)}</span>
+                                        </div>
+                                        <span style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '4px 10px', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>{cnt as number}</span>
+                                    </div>
+                                ))
+                        ) : <span className="text-gray" style={{ fontSize: '0.875rem' }}>No user activity tracked.</span>}
+                    </div>
+                </DialogContent>
+                <DialogActions sx={{ backgroundColor: 'var(--bg-darker)', borderTop: '1px solid var(--border-color)', p: 2 }}>
+                    <Button onClick={() => setAllUsersDialogOpen(false)} variant="outlined" sx={{ color: 'var(--primary)', borderColor: 'var(--primary)', '&:hover': { backgroundColor: 'rgba(59, 130, 246, 0.1)', borderColor: 'var(--primary)' } }}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+        </div >
+    );
+}
+
+```
+
+`src/pages/ErrorDashboard.tsx`
+
+```typescript
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import {
+    Card, CardContent, Typography, Chip, TextField, MenuItem, Select,
+    InputLabel, FormControl, IconButton, Collapse, Box, LinearProgress,
+    InputAdornment
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import FilterListIcon from '@mui/icons-material/FilterList';
+
+const API = 'http://localhost:8000/errors/dashboard';
+
+const severityColor: Record<string, string> = {
+    CRITICAL: '#dc2626',
+    HIGH: '#ea580c',
+    MEDIUM: '#ca8a04',
+    LOW: '#2563eb',
+};
+
+const severityBg: Record<string, string> = {
+    CRITICAL: '#fef2f2',
+    HIGH: '#fff7ed',
+    MEDIUM: '#fefce8',
+    LOW: '#eff6ff',
+};
+
+const statusColor: Record<string, 'error' | 'warning' | 'success' | 'default' | 'info'> = {
+    New: 'error',
+    Investigating: 'warning',
+    Resolved: 'success',
+    "Won't Fix": 'default',
+};
+
+interface DashboardLog {
+    _id: string;
+    errorCode: string;
+    errorSeverity: string;
+    eventDateTime: string;
+    sourceType: string;
+    sourceName: string;
+    ip: string;
+    userAgent: string;
+    environment: string;
+    endpoint: string;
+    method: string;
+    resolvedMessage: string;
+    category: string;
+    affectedFeature: string;
+    userFriendlyMessage: string;
+    suggestedAction: string;
+    status: string;
+    assignedTo: string | null;
+    userId: string;
+    userName: string;
+    occurrences: number;
+    firstOccurrence: string;
+    lastOccurrence: string;
+    impactLevel: string;
+    resolutionTime: number | null;
+    createdAt: string;
+}
+
+interface Summary {
+    total: number;
+    critical: number;
+    high: number;
+    newCount: number;
+    resolved: number;
+    categories: { _id: string; count: number }[];
+    impact: { _id: string; count: number }[];
+    statuses: { _id: string; count: number }[];
+}
+
+interface Filters {
+    categories: string[];
+    statuses: string[];
+    severities: string[];
+    impactLevels: string[];
+}
+
+export default function ErrorDashboard() {
+    const [logs, setLogs] = useState<DashboardLog[]>([]);
+    const [summary, setSummary] = useState<Summary | null>(null);
+    const [filters, setFilters] = useState<Filters | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
+
+    // Filter state
+    const [category, setCategory] = useState('');
+    const [status, setStatus] = useState('');
+    const [severity, setSeverity] = useState('');
+    const [impact, setImpact] = useState('');
+    const [search, setSearch] = useState('');
+
+    const fetchAll = async () => {
+        setLoading(true);
+        try {
+            const params: Record<string, string> = {};
+            if (category) params.category = category;
+            if (status) params.status = status;
+            if (severity) params.severity = severity;
+            if (impact) params.impactLevel = impact;
+            if (search) params.search = search;
+
+            const [logsRes, summaryRes, filtersRes] = await Promise.all([
+                axios.get(`${API}/logs`, { params }),
+                axios.get(`${API}/summary`),
+                axios.get(`${API}/filters`),
+            ]);
+            setLogs(logsRes.data);
+            setSummary(summaryRes.data);
+            setFilters(filtersRes.data);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchAll(); }, [category, status, severity, impact]);
+
+    const handleSearch = () => { fetchAll(); };
+
+    const clearFilters = () => {
+        setCategory('');
+        setStatus('');
+        setSeverity('');
+        setImpact('');
+        setSearch('');
+    };
+
+    const hasActiveFilters = category || status || severity || impact || search;
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex-between">
+                <h2 className="page-title gradient-text">Error Dashboard</h2>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Chip label={`${summary?.total ?? '—'} Total Errors`} variant="outlined" />
+                    <IconButton onClick={() => setShowFilters(!showFilters)} size="small"
+                        sx={{ border: '1px solid var(--border-color)', borderRadius: '8px', p: '6px' }}>
+                        <FilterListIcon fontSize="small" />
+                    </IconButton>
+                </div>
+            </div>
+
+            {/* Summary Cards */}
+            {summary && (
+                <div className="metrics-grid">
+                    <div className="metric-card">
+                        <p className="metric-title">Critical</p>
+                        <p className="metric-value text-red">{summary.critical}</p>
+                    </div>
+                    <div className="metric-card">
+                        <p className="metric-title">High Severity</p>
+                        <p className="metric-value text-orange">{summary.high}</p>
+                    </div>
+                    <div className="metric-card">
+                        <p className="metric-title">New / Unresolved</p>
+                        <p className="metric-value text-purple">{summary.newCount}</p>
+                    </div>
+                    <div className="metric-card">
+                        <p className="metric-title">Resolved</p>
+                        <p className="metric-value text-green">{summary.resolved}</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Breakdown row */}
+            {summary && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                    {/* By Category */}
+                    <div className="chart-card">
+                        <h4 className="chart-title">By Category</h4>
+                        {summary.categories.map(c => (
+                            <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
+                                <span style={{ fontSize: '0.875rem', color: '#334155' }}>{c._id}</span>
+                                <Chip label={c.count} size="small" sx={{ fontWeight: 'bold', minWidth: 32 }} />
+                            </div>
+                        ))}
+                    </div>
+                    {/* By Impact */}
+                    <div className="chart-card">
+                        <h4 className="chart-title">By Impact</h4>
+                        {summary.impact.map(c => (
+                            <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
+                                <span style={{ fontSize: '0.875rem', color: '#334155' }}>{c._id}</span>
+                                <Chip label={c.count} size="small" color={c._id === 'All users' ? 'error' : c._id === 'Multiple users' ? 'warning' : 'default'} sx={{ fontWeight: 'bold', minWidth: 32 }} />
+                            </div>
+                        ))}
+                    </div>
+                    {/* By Status */}
+                    <div className="chart-card">
+                        <h4 className="chart-title">By Status</h4>
+                        {summary.statuses.map(c => (
+                            <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border-color)' }}>
+                                <span style={{ fontSize: '0.875rem', color: '#334155' }}>{c._id}</span>
+                                <Chip label={c.count} size="small" color={statusColor[c._id] ?? 'default'} sx={{ fontWeight: 'bold', minWidth: 32 }} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Filters */}
+            <Collapse in={showFilters}>
+                <div className="chart-card" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <TextField
+                        size="small" placeholder="Search errors..." value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                        InputProps={{
+                            startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
+                        }}
+                        sx={{ minWidth: 220 }}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Category</InputLabel>
+                        <Select value={category} label="Category" onChange={e => setCategory(e.target.value)}>
+                            <MenuItem value="">All</MenuItem>
+                            {filters?.categories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>Status</InputLabel>
+                        <Select value={status} label="Status" onChange={e => setStatus(e.target.value)}>
+                            <MenuItem value="">All</MenuItem>
+                            {filters?.statuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <InputLabel>Severity</InputLabel>
+                        <Select value={severity} label="Severity" onChange={e => setSeverity(e.target.value)}>
+                            <MenuItem value="">All</MenuItem>
+                            {filters?.severities.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <InputLabel>Impact</InputLabel>
+                        <Select value={impact} label="Impact" onChange={e => setImpact(e.target.value)}>
+                            <MenuItem value="">All</MenuItem>
+                            {filters?.impactLevels.map(i => <MenuItem key={i} value={i}>{i}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+                    {hasActiveFilters && (
+                        <Chip label="Clear filters" variant="outlined" onDelete={clearFilters} onClick={clearFilters} size="small" />
+                    )}
+                </div>
+            </Collapse>
+
+            {loading && <LinearProgress sx={{ borderRadius: 2 }} />}
+
+            {/* Error List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {logs.map(log => {
+                    const isExpanded = expandedId === log._id;
+                    return (
+                        <Card key={log._id} sx={{
+                            backgroundColor: 'var(--bg-darker)', backgroundImage: 'none',
+                            border: `1px solid ${isExpanded ? '#4f46e5' : 'var(--border-color)'}`,
+                            borderLeft: `4px solid ${severityColor[log.errorSeverity] ?? '#94a3b8'}`,
+                            borderRadius: 2,
+                            boxShadow: '0 1px 3px 0 rgba(0,0,0,0.1)',
+                            transition: 'border-color 0.2s',
+                        }}>
+                            <CardContent sx={{ pb: isExpanded ? 2 : '16px !important' }}>
+                                {/* Main row — always visible */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', cursor: 'pointer' }}
+                                    onClick={() => setExpandedId(isExpanded ? null : log._id)}>
+                                    <div style={{ flex: 1 }}>
+                                        {/* Line 1: user-friendly message */}
+                                        <Typography variant="body1" sx={{ fontWeight: 600, color: '#0f172a', mb: 0.5, fontSize: '0.95rem' }}>
+                                            {log.userFriendlyMessage}
+                                        </Typography>
+                                        {/* Line 2: chips */}
+                                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <Chip label={log.category} size="small" sx={{ backgroundColor: '#f1f5f9', color: '#334155', fontWeight: 500, fontSize: '0.75rem' }} />
+                                            <Chip label={log.affectedFeature} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+                                            <Chip label={log.errorSeverity} size="small" sx={{
+                                                backgroundColor: severityBg[log.errorSeverity],
+                                                color: severityColor[log.errorSeverity],
+                                                fontWeight: 'bold', fontSize: '0.7rem',
+                                            }} />
+                                            <Chip label={log.status} size="small" color={statusColor[log.status] ?? 'default'} sx={{ fontSize: '0.7rem' }} />
+                                            <Chip label={log.impactLevel} size="small" variant="outlined"
+                                                color={log.impactLevel === 'All users' ? 'error' : log.impactLevel === 'Multiple users' ? 'warning' : 'default'}
+                                                sx={{ fontSize: '0.7rem' }} />
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: 'auto' }}>
+                                                {log.occurrences}x &middot; {new Date(log.eventDateTime).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <IconButton size="small" sx={{ ml: 1 }}>
+                                        {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                    </IconButton>
+                                </div>
+
+                                {/* Expanded details */}
+                                <Collapse in={isExpanded}>
+                                    <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid var(--border-color)' }}>
+                                        {/* Suggested action */}
+                                        <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+                                            <Typography variant="subtitle2" sx={{ color: '#166534', mb: 0.5 }}>
+                                                What you can do
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: '#15803d' }}>
+                                                {log.suggestedAction}
+                                            </Typography>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                                            <DetailRow label="Affected User" value={`${log.userName} (${log.userId})`} />
+                                            <DetailRow label="Assigned To" value={log.assignedTo ?? 'Unassigned'} />
+                                            <DetailRow label="First Seen" value={new Date(log.firstOccurrence).toLocaleString()} />
+                                            <DetailRow label="Last Seen" value={new Date(log.lastOccurrence).toLocaleString()} />
+                                            <DetailRow label="Total Occurrences" value={String(log.occurrences)} />
+                                            <DetailRow label="Resolution Time" value={log.resolutionTime ? `${log.resolutionTime} minutes` : 'Not yet resolved'} />
+                                            <DetailRow label="Environment" value={log.environment} />
+                                            <DetailRow label="Impact" value={log.impactLevel} />
+                                        </div>
+
+                                        {/* Technical details (collapsed further for non-IT) */}
+                                        <details style={{ marginTop: 16 }}>
+                                            <summary style={{ cursor: 'pointer', color: '#64748b', fontSize: '0.8rem', fontWeight: 500 }}>
+                                                Technical Details
+                                            </summary>
+                                            <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: '0.8rem', color: '#64748b' }}>
+                                                <DetailRow label="Error Code" value={log.errorCode} small />
+                                                <DetailRow label="Source" value={`${log.sourceName} (${log.sourceType})`} small />
+                                                <DetailRow label="Endpoint" value={`${log.method} ${log.endpoint}`} small />
+                                                <DetailRow label="IP Address" value={log.ip} small />
+                                                <DetailRow label="User Agent" value={log.userAgent} small />
+                                                <DetailRow label="Technical Message" value={log.resolvedMessage} small />
+                                            </div>
+                                        </details>
+
+                                        <div style={{ marginTop: 12, textAlign: 'right' }}>
+                                            <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                                                Ref: {log._id}
+                                            </Typography>
+                                        </div>
+                                    </Box>
+                                </Collapse>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
+
+                {!loading && logs.length === 0 && (
+                    <div className="empty-insights">
+                        No errors match the current filters.
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function DetailRow({ label, value, small }: { label: string; value: string; small?: boolean }) {
+    return (
+        <div>
+            <Typography variant="caption" sx={{ color: '#94a3b8', fontSize: small ? '0.7rem' : '0.75rem' }}>
+                {label}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#334155', fontWeight: 500, fontSize: small ? '0.8rem' : '0.875rem', wordBreak: 'break-all' }}>
+                {value}
+            </Typography>
+        </div>
+    );
+}
+
+```
+
+`src/pages/MasterList.tsx`
+
+```typescript
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import {
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip
+} from '@mui/material';
+
+
+export default function MasterList() {
+    const [master, setMaster] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchMaster();
+    }, []);
+
+    const fetchMaster = async () => {
+        try {
+            const res = await axios.get('http://localhost:8000/errors/master');
+            setMaster(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+        setLoading(false);
+    };
+
+    const severityColor = (sev: string) => {
+        switch (sev.toUpperCase()) {
+            case 'CRITICAL': return 'error';
+            case 'HIGH': return 'warning';
+            case 'MEDIUM': return 'info';
+            default: return 'default';
+        }
+    };
+
+    if (loading) return <div className="text-gray">Loading Master List...</div>;
+
+    return (
+        <div className="space-y-6">
+            <h2 className="page-title">Error Master Definitions</h2>
+
+            <TableContainer component={Paper} sx={{ backgroundColor: '#1e1e1e', backgroundImage: 'none' }}>
+                <Table sx={{ minWidth: 650 }}>
+                    <TableHead sx={{ backgroundColor: '#2a2a2a' }}>
+                        <TableRow>
+                            <TableCell sx={{ color: '#aaa', fontWeight: 'bold' }}>Error Code</TableCell>
+                            <TableCell sx={{ color: '#aaa', fontWeight: 'bold' }}>Type</TableCell>
+                            <TableCell sx={{ color: '#aaa', fontWeight: 'bold' }}>Severity</TableCell>
+                            <TableCell sx={{ color: '#aaa', fontWeight: 'bold' }}>Module ID</TableCell>
+                            <TableCell sx={{ color: '#aaa', fontWeight: 'bold' }}>Status</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {master.map((row: any) => (
+                            <TableRow key={row._id} sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { backgroundColor: '#2d2d2d' } }}>
+                                <TableCell sx={{ color: '#bb86fc', fontWeight: 'medium' }}>{row.errorCode}</TableCell>
+                                <TableCell sx={{ color: '#ddd' }}>{row.errorType}</TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={row.errorSeverity}
+                                        color={severityColor(row.errorSeverity)}
+                                        size="small"
+                                        sx={{ fontWeight: 'bold' }}
+                                    />
+                                </TableCell>
+                                <TableCell sx={{ color: '#ddd' }}>{row.moduleId}</TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={row.isActive ? 'Active' : 'Inactive'}
+                                        color={row.isActive ? 'success' : 'default'}
+                                        size="small"
+                                        variant="outlined"
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </div>
+    );
+}
+
+```
+
+`tailwind.config.js`
+
+```javascript
+export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+        extend: {},
+    },
+    plugins: [],
+}
+
+```
+
+`vite.config.ts`
+
+```typescript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+
+```
+
