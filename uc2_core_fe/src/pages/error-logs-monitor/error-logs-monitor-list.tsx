@@ -9,9 +9,11 @@ import { Toast } from 'primereact/toast';
 import { Skeleton } from 'primereact/skeleton';
 import { Dialog } from 'primereact/dialog';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { TabView, TabPanel } from 'primereact/tabview';
 import { Dropdown } from 'mainFe/Dropdown';
 import { Input } from 'mainFe/Input';
-import { ExportDataButton } from 'mainFe/ExportDataButton';
+import { DataTable } from 'mainFe/DataTable';
+import { Column } from 'primereact/column';
 import { useQuery } from '@tanstack/react-query';
 import { errorLogsService } from '../../services/error-logs.service';
 import { personnelLookupService } from '../../services/personnel-lookup.service';
@@ -60,12 +62,16 @@ const ErrorLogsMonitorList = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const errorGroupsRef = useRef<HTMLDivElement>(null);
 
   // Card expand state
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Filter panel visibility
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+
+  // Tab state: 0 = Overview, 1 = Records
+  const [activeTab, setActiveTab] = useState(0);
 
   // Users dialog state
   const [usersDialogOpen, setUsersDialogOpen] = useState(false);
@@ -86,6 +92,47 @@ const ErrorLogsMonitorList = () => {
   } | null>(null);
   const [showUserRecords, setShowUserRecords] = useState(false);
   const [userRecords, setUserRecords] = useState<any[]>([]);
+
+  // All records dialog state
+  const [allRecordsDialogOpen, setAllRecordsDialogOpen] = useState(false);
+  const [allRecordsDialogError, setAllRecordsDialogError] = useState<ErrorGroup | null>(null);
+  const [allRecordsDialogFilter, setAllRecordsDialogFilter] = useState<{ errorCode?: string; endpoint?: string }>({});
+  const [allRecordsLoading, setAllRecordsLoading] = useState(false);
+  const [allRecordsList, setAllRecordsList] = useState<any[]>([]);
+  const [allRecordsPage, setAllRecordsPage] = useState(1);
+  const [allRecordsPagination, setAllRecordsPagination] = useState<{
+    page: number; pageSize: number; totalItems: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean;
+  } | null>(null);
+
+  // Records tab DataTable state
+  const [recordsData, setRecordsData] = useState<any[]>([]);
+  const [recordsLoading, setRecordsLoading] = useState(false);
+  const [recordsPage, setRecordsPage] = useState(1);
+  const [recordsPageSize, setRecordsPageSize] = useState(25);
+  const [recordsPagination, setRecordsPagination] = useState<{
+    page: number; pageSize: number; totalItems: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean;
+  } | null>(null);
+  const [recordsUserNames, setRecordsUserNames] = useState<Map<string, string>>(new Map());
+
+  // Records sort
+  const [recSortField, setRecSortField] = useState<string>('eventDateTime');
+  const [recSortOrder, setRecSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Record detail dialog
+  const [recordDetailOpen, setRecordDetailOpen] = useState(false);
+  const [recordDetailData, setRecordDetailData] = useState<any>(null);
+
+  // Records tab filters (independent from overview filters)
+  const [recFilters, setRecFilters] = useState<{
+    q: string;
+    actorUserId: string;
+    errorSeverity: string;
+    sourceType: string;
+    sourceName: string;
+    endpoint: string;
+  }>({ q: '', actorUserId: '', errorSeverity: '', sourceType: '', sourceName: '', endpoint: '' });
+  const recSearchDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [recSearchInput, setRecSearchInput] = useState('');
 
   // Debounced search effect
   useEffect(() => {
@@ -108,24 +155,38 @@ const ErrorLogsMonitorList = () => {
     };
   }, [searchInput]);
 
+  // Debounced records search
+  useEffect(() => {
+    if (recSearchDebounceRef.current) clearTimeout(recSearchDebounceRef.current);
+    recSearchDebounceRef.current = setTimeout(() => {
+      setRecFilters((prev) => ({ ...prev, q: recSearchInput }));
+      setRecordsPage(1);
+    }, 500);
+    return () => { if (recSearchDebounceRef.current) clearTimeout(recSearchDebounceRef.current); };
+  }, [recSearchInput]);
+
   // Fetch dashboard data
   const {
     data: dashboardResponse,
     isLoading: dashboardLoading,
     refetch: refetchDashboard,
   } = useQuery({
-    queryKey: ['error-logs-dashboard', timeRange, filters.sourceType, filters.errorSeverity, (filters as any).module, filters.q, filters.page, (filters as any).limit, filters.includeArchive, sortField, sortOrder],
-    queryFn: () => errorLogsService.getDashboardData({
-      timeRange,
-      sourceType: filters.sourceType,
-      errorSeverity: filters.errorSeverity,
-      moduleId: (filters as any).module,
-      errorCode: filters.q,
-      includeArchive: filters.includeArchive,
-      page: filters.page,
-      limit: (filters as any).limit,
-      ...(sortField && { sort_by: sortField, sort_order: sortOrder === 1 ? 'asc' : 'desc' }),
-    }),
+    queryKey: ['error-logs-dashboard', timeRange, filters.sourceType, filters.errorSeverity, (filters as any).module, filters.q, filters.page, (filters as any).limit, filters.includeArchive, sortField, sortOrder, activeTab, recFilters.errorSeverity, recFilters.sourceType, recFilters.actorUserId, recFilters.sourceName, recFilters.endpoint, recFilters.q],
+    queryFn: () => {
+      // When on Records tab with active filters, apply recFilters to dashboard too
+      const hasRecFilters = recFilters.errorSeverity || recFilters.sourceType || recFilters.actorUserId || recFilters.sourceName || recFilters.endpoint || recFilters.q;
+      return errorLogsService.getDashboardData({
+        timeRange,
+        sourceType: hasRecFilters ? (recFilters.sourceType || undefined) : filters.sourceType,
+        errorSeverity: hasRecFilters ? (recFilters.errorSeverity || undefined) : filters.errorSeverity,
+        moduleId: hasRecFilters ? undefined : (filters as any).module,
+        errorCode: hasRecFilters ? (recFilters.q || undefined) : filters.q,
+        includeArchive: filters.includeArchive,
+        page: filters.page,
+        limit: (filters as any).limit,
+        ...(sortField && { sort_by: sortField, sort_order: sortOrder === 1 ? 'asc' : 'desc' }),
+      });
+    },
   });
 
   // Dashboard stats
@@ -143,6 +204,54 @@ const ErrorLogsMonitorList = () => {
       hasPrevPage: pagination?.hasPrevPage ?? false,
     };
   }, [dashboardResponse, filters.page, (filters as any).limit]);
+
+  // Fetch records for the Records tab DataTable
+  useEffect(() => {
+    if (activeTab !== 1) return;
+
+    let cancelled = false;
+    const fetchRecords = async () => {
+      setRecordsLoading(true);
+      try {
+        const res = await errorLogsService.searchRecords({
+          page: recordsPage,
+          pageSize: recordsPageSize,
+          q: recFilters.q || undefined,
+          actorUserId: recFilters.actorUserId || undefined,
+          errorSeverity: recFilters.errorSeverity || undefined,
+          sourceType: recFilters.sourceType || undefined,
+          sourceName: recFilters.sourceName || undefined,
+          endpoint: recFilters.endpoint || undefined,
+          sort_by: recSortField,
+          sort_order: recSortOrder,
+          includeArchive: filters.includeArchive,
+        });
+        if (cancelled) return;
+        const data = Array.isArray(res) ? res : (res?.data || []);
+        const pagination = res?.pagination || null;
+        setRecordsData(data);
+        setRecordsPagination(pagination);
+
+        // Resolve user names
+        const userIds = [...new Set(data.map((r: any) => r.actorUserId).filter(Boolean))] as string[];
+        if (userIds.length > 0) {
+          const nameMap = await personnelLookupService.getNamesByIds(userIds);
+          if (!cancelled) setRecordsUserNames(nameMap);
+        }
+      } catch (err) {
+        console.error('Failed to fetch records:', err);
+        if (!cancelled) {
+          setRecordsData([]);
+          setRecordsPagination(null);
+        }
+      } finally {
+        if (!cancelled) setRecordsLoading(false);
+      }
+    };
+
+    fetchRecords();
+    return () => { cancelled = true; };
+  }, [activeTab, recordsPage, recordsPageSize, recFilters, recSortField, recSortOrder, filters.includeArchive]);
 
   // Auto-refresh
   useEffect(() => {
@@ -211,17 +320,14 @@ const ErrorLogsMonitorList = () => {
   const errorGroups: ErrorGroup[] = dashboardStats?.errorGroups || [];
 
   // Summary stats — use impact.bySeverity (filtered) for severity counts, summary for totals
-  const summaryStats = useMemo(() => {
+  // Base summary from dashboard (unfiltered)
+  const dashboardSummary = useMemo(() => {
     const summary = dashboardStats?.summary || {} as any;
-    // impact.bySeverity is filtered (respects all filters), unlike top-level bySeverity which is global
     const impactBySeverity = (dashboardStats?.impact as any)?.bySeverity || {};
-
-    // Normalize keys to uppercase
     const normalized: Record<string, any> = {};
     Object.keys(impactBySeverity).forEach((key) => {
       normalized[key.toUpperCase()] = impactBySeverity[key];
     });
-
     return {
       total: summary?.totalErrors || 0,
       uniqueErrors: summary?.uniqueErrors || summary?.totalUniqueErrors || 0,
@@ -229,9 +335,78 @@ const ErrorLogsMonitorList = () => {
       high: normalized['HIGH']?.totalErrors || normalized['HIGH']?.count || 0,
       medium: normalized['MEDIUM']?.totalErrors || normalized['MEDIUM']?.count || 0,
       low: normalized['LOW']?.totalErrors || normalized['LOW']?.count || 0,
-      affectedUsers: summary?.affectedUsers || (dashboardStats?.impact as any)?.totalAffectedUsers || 0,
+      affectedUsers: (summary as any)?.totalAffectedUsers || summary?.affectedUsers || (dashboardStats?.impact as any)?.totalAffectedUsers || 0,
     };
   }, [dashboardStats]);
+
+  // Filtered stats — when recFilters are active, fetch counts per severity
+  const [filteredStats, setFilteredStats] = useState<{ total: number; critical: number; high: number; medium: number; low: number; uniqueErrors: number; uniqueUsers: number } | null>(null);
+  const hasRecFilters = !!(recFilters.errorSeverity || recFilters.sourceType || recFilters.actorUserId || recFilters.sourceName || recFilters.endpoint || recFilters.q);
+
+  useEffect(() => {
+    if (!hasRecFilters) {
+      setFilteredStats(null);
+      return;
+    }
+    let cancelled = false;
+    const baseParams = {
+      q: recFilters.q || undefined,
+      actorUserId: recFilters.actorUserId || undefined,
+      sourceType: recFilters.sourceType || undefined,
+      sourceName: recFilters.sourceName || undefined,
+      endpoint: recFilters.endpoint || undefined,
+      includeArchive: filters.includeArchive,
+      pageSize: 1,
+    };
+    const fetchCounts = async () => {
+      try {
+        // Fetch total count with all filters
+        const allRes = await errorLogsService.searchRecords({ ...baseParams, errorSeverity: recFilters.errorSeverity || undefined });
+        if (cancelled) return;
+        const pag = allRes?.pagination || {};
+        const total = pag.totalItems ?? 0;
+        const uniqueErrors = pag.uniqueErrorCodes ?? 0;
+        const uniqueUsers = pag.uniqueUsers ?? 0;
+
+        // If severity filter is already set, we know the breakdown
+        if (recFilters.errorSeverity) {
+          setFilteredStats({
+            total,
+            critical: recFilters.errorSeverity === 'CRITICAL' ? total : 0,
+            high: recFilters.errorSeverity === 'HIGH' ? total : 0,
+            medium: recFilters.errorSeverity === 'MEDIUM' ? total : 0,
+            low: recFilters.errorSeverity === 'LOW' ? total : 0,
+            uniqueErrors,
+            uniqueUsers,
+          });
+        } else {
+          // Fetch critical and high counts in parallel
+          const [critRes, highRes] = await Promise.all([
+            errorLogsService.searchRecords({ ...baseParams, errorSeverity: 'CRITICAL' }),
+            errorLogsService.searchRecords({ ...baseParams, errorSeverity: 'HIGH' }),
+          ]);
+          if (cancelled) return;
+          setFilteredStats({
+            total,
+            critical: critRes?.pagination?.totalItems ?? 0,
+            high: highRes?.pagination?.totalItems ?? 0,
+            medium: 0,
+            low: 0,
+            uniqueErrors,
+            uniqueUsers,
+          });
+        }
+      } catch {
+        if (!cancelled) setFilteredStats(null);
+      }
+    };
+    fetchCounts();
+    return () => { cancelled = true; };
+  }, [recFilters, hasRecFilters, filters.includeArchive]);
+
+  const summaryStats = hasRecFilters && filteredStats
+    ? { ...dashboardSummary, total: filteredStats.total, critical: filteredStats.critical, high: filteredStats.high, uniqueErrors: filteredStats.uniqueErrors, affectedUsers: filteredStats.uniqueUsers }
+    : dashboardSummary;
 
   // Source type breakdown — byType is filtered
   const sourceTypeBreakdown = useMemo(() => {
@@ -259,6 +434,72 @@ const ErrorLogsMonitorList = () => {
         };
       })
       .filter((item) => item.count > 0);
+  }, [dashboardStats]);
+
+  // Activity analysis — top 10 error codes, endpoints from error groups
+  const activityAnalysis = useMemo(() => {
+    const groups: any[] = dashboardStats?.errorGroups || [];
+
+    // Top 10 error codes by occurrences
+    const topErrorCodes = [...groups]
+      .sort((a, b) => (b.occurrences || 0) - (a.occurrences || 0))
+      .slice(0, 10)
+      .map((g) => ({ name: g.errorCode, count: g.occurrences || 0 }));
+
+    // Top 10 endpoints by occurrences
+    const endpointMap: Record<string, number> = {};
+    groups.forEach((g) => {
+      const ep = (g as any).endpoint;
+      if (ep) endpointMap[ep] = (endpointMap[ep] || 0) + (g.occurrences || 0);
+    });
+    const topEndpoints = Object.entries(endpointMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }));
+
+    return { topErrorCodes, topEndpoints };
+  }, [dashboardStats]);
+
+  // Top 10 users — from dashboard API topUsers field (server-side aggregation)
+  const [topUsersData, setTopUsersData] = useState<{ name: string; userId: string; count: number }[]>([]);
+  useEffect(() => {
+    const rawTopUsers: any[] = (dashboardStats as any)?.topUsers || [];
+    if (rawTopUsers.length === 0) {
+      setTopUsersData([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const resolveNames = async () => {
+      try {
+        const userIds = rawTopUsers.map((u: any) => u.userId);
+        const nameMap = await personnelLookupService.getNamesByIds(userIds);
+
+        if (!cancelled) {
+          setTopUsersData(
+            rawTopUsers.map((u: any) => ({
+              userId: u.userId,
+              name: nameMap.get(u.userId) || u.userId,
+              count: u.count,
+            }))
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setTopUsersData(
+            rawTopUsers.map((u: any) => ({
+              userId: u.userId,
+              name: u.userId,
+              count: u.count,
+            }))
+          );
+        }
+      }
+    };
+
+    resolveNames();
+    return () => { cancelled = true; };
   }, [dashboardStats]);
 
   // Handle filter changes
@@ -295,18 +536,7 @@ const ErrorLogsMonitorList = () => {
 
     try {
       // Fetch all logs for this error code to extract unique users
-      const { api } = await import('../../services/api');
-      const res = await api.get('/api/v1/error-logs/list', {
-        params: { errorCode: error.errorCode, pageSize: 2000 },
-      });
-
-      // Handle various response shapes
-      const responseBody = res.data;
-      const logs: any[] = Array.isArray(responseBody)
-        ? responseBody
-        : Array.isArray(responseBody?.data)
-          ? responseBody.data
-          : [];
+      const logs = await fetchLogsByPost({ errorCode: error.errorCode });
 
       // Store logs for user analytics reuse
       allFetchedLogsRef.current = logs;
@@ -340,51 +570,332 @@ const ErrorLogsMonitorList = () => {
     }
   }, []);
 
-  // Fetch user analytics — reuses the already-fetched users dialog logs
-  // We store the raw logs from the users fetch so analytics can filter by userId locally
+  // Helper: fetch logs via POST /search (works reliably unlike GET /list)
+  const fetchLogsByPost = useCallback(async (params: Record<string, any>): Promise<any[]> => {
+    const { api } = await import('../../services/api');
+    const res = await api.post('/api/v1/error-logs/search', params);
+    const body = res.data;
+    if (Array.isArray(body)) return body;
+    if (body && Array.isArray(body.data)) return body.data;
+    return [];
+  }, []);
+
   const allFetchedLogsRef = useRef<any[]>([]);
 
-  const handleUserAnalyticsClick = useCallback((userId: string, userName: string) => {
-    // Close users dialog first to prevent stacking/moving issues
+  // User Analytics — uses dedicated endpoint
+  const handleUserAnalyticsClick = useCallback(async (userId: string, userName: string) => {
+    // Close users dialog first
     setUsersDialogOpen(false);
 
     setSelectedUserId(userId);
     setSelectedUserName(userName);
     setUserAnalyticsOpen(true);
-    setUserAnalyticsLoading(false);
+    setUserAnalyticsLoading(true);
     setShowUserRecords(false);
+    setUserAnalyticsData(null);
+    setUserRecords([]);
 
-    // Filter the already-fetched logs by this userId
-    const logs = allFetchedLogsRef.current.filter(
-      (log: any) => log.actorUserId === userId
-    );
+    // Helper to compute analytics from raw logs
+    const computeFromLogs = (logs: any[]) => {
+      const severities: Record<string, number> = {};
+      const environments: Record<string, number> = {};
+      const errorCodes: Record<string, number> = {};
+      logs.forEach((log: any) => {
+        const sev = (log.errorSeverity || '').toUpperCase();
+        if (sev) severities[sev] = (severities[sev] || 0) + 1;
+        const env = log.environment || '';
+        if (env) environments[env] = (environments[env] || 0) + 1;
+        const ec = log.errorCode || '';
+        if (ec) errorCodes[ec] = (errorCodes[ec] || 0) + 1;
+      });
+      setUserAnalyticsData({ totalErrors: logs.length, severities, environments, errorCodes });
+      setUserRecords(logs);
+    };
 
-    // Store records for "Show All Records"
-    setUserRecords(logs);
+    try {
+      // Try dedicated user-analytics endpoint first
+      const res = await errorLogsService.getUserAnalytics(userId, filters.includeArchive);
+      const result = res?.data || res;
 
-    const severities: Record<string, number> = {};
-    const environments: Record<string, number> = {};
-    const errorCodes: Record<string, number> = {};
+      if (result && result.totalErrors > 0) {
+        setUserAnalyticsData({
+          totalErrors: result.totalErrors || 0,
+          severities: result.severities || {},
+          environments: result.environments || {},
+          errorCodes: result.errorCodes || {},
+        });
+        setUserRecords(result.records || []);
+      } else {
+        // Endpoint returned 0 — fallback to POST /search with large page
+        const searchRes = await errorLogsService.searchRecords({ actorUserId: userId, pageSize: 500 });
+        const logs = Array.isArray(searchRes) ? searchRes : (searchRes?.data || []);
+        computeFromLogs(logs);
+      }
+    } catch (err) {
+      console.error('User analytics endpoint failed, falling back to search:', err);
+      // Fallback: fetch via POST /search
+      try {
+        const searchRes = await errorLogsService.searchRecords({ actorUserId: userId, pageSize: 500 });
+        const logs = Array.isArray(searchRes) ? searchRes : (searchRes?.data || []);
+        computeFromLogs(logs);
+      } catch (err2) {
+        console.error('Fallback search also failed:', err2);
+        toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to load user analytics', life: 3000 });
+        setUserAnalyticsData({ totalErrors: 0, severities: {}, environments: {}, errorCodes: {} });
+      }
+    } finally {
+      setUserAnalyticsLoading(false);
+    }
+  }, [filters.includeArchive]);
 
-    logs.forEach((log: any) => {
-      const sev = (log.errorSeverity || '').toUpperCase();
-      if (sev) severities[sev] = (severities[sev] || 0) + 1;
-      const env = log.environment || '';
-      if (env) environments[env] = (environments[env] || 0) + 1;
-      const ec = log.errorCode || '';
-      if (ec) errorCodes[ec] = (errorCodes[ec] || 0) + 1;
-    });
+  // Fetch all records for an error code or endpoint — with pagination
+  const fetchAllRecordsPage = useCallback(async (params: { errorCode?: string; endpoint?: string }, page: number) => {
+    setAllRecordsLoading(true);
+    try {
+      const res = await errorLogsService.searchRecords({
+        errorCode: params.errorCode,
+        endpoint: params.endpoint,
+        page,
+        pageSize: 50,
+        includeArchive: filters.includeArchive,
+      });
+      const data = Array.isArray(res) ? res : (res?.data || []);
+      const pagination = res?.pagination || null;
+      setAllRecordsList(data);
+      setAllRecordsPagination(pagination);
+      setAllRecordsPage(page);
+    } catch (err) {
+      console.error('Failed to fetch all records:', err);
+      setAllRecordsList([]);
+      setAllRecordsPagination(null);
+    } finally {
+      setAllRecordsLoading(false);
+    }
+  }, [filters.includeArchive]);
 
-    setUserAnalyticsData({
-      totalErrors: logs.length,
-      severities,
-      environments,
-      errorCodes,
-    });
-  }, []);
+  const handleOccurrencesClick = useCallback(async (e: React.MouseEvent, error: ErrorGroup) => {
+    e.stopPropagation();
+    const filterParams = { errorCode: error.errorCode };
+    setAllRecordsDialogError(error);
+    setAllRecordsDialogFilter(filterParams);
+    setAllRecordsDialogOpen(true);
+    setAllRecordsList([]);
+    setAllRecordsPagination(null);
+    setAllRecordsPage(1);
+    await fetchAllRecordsPage(filterParams, 1);
+  }, [fetchAllRecordsPage]);
 
-  // Fetch blob for export
-  const fetchExportBlob = useCallback(() => errorLogsService.exportCSV(), []);
+  // Open all records dialog for a specific error code (from activity analysis)
+  const handleErrorCodeClick = useCallback(async (errorCode: string) => {
+    const filterParams = { errorCode };
+    setAllRecordsDialogError(null);
+    setAllRecordsDialogFilter(filterParams);
+    setAllRecordsDialogOpen(true);
+    setAllRecordsList([]);
+    setAllRecordsPagination(null);
+    setAllRecordsPage(1);
+    await fetchAllRecordsPage(filterParams, 1);
+  }, [fetchAllRecordsPage]);
+
+  // Open all records dialog for a specific endpoint (from activity analysis)
+  const handleEndpointClick = useCallback(async (endpoint: string) => {
+    const filterParams = { endpoint };
+    setAllRecordsDialogError(null);
+    setAllRecordsDialogFilter(filterParams);
+    setAllRecordsDialogOpen(true);
+    setAllRecordsList([]);
+    setAllRecordsPagination(null);
+    setAllRecordsPage(1);
+    await fetchAllRecordsPage(filterParams, 1);
+  }, [fetchAllRecordsPage]);
+
+  // Export to styled Excel with 2 sheets: Overview + Records
+  const [exporting, setExporting] = useState(false);
+  const handleExportExcel = useCallback(async () => {
+    setExporting(true);
+    try {
+      const XLSX = await import('xlsx-js-style');
+
+      // Style helpers
+      const titleStyle = { font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4F46E5' } }, alignment: { horizontal: 'center' } };
+      const sectionStyle = { font: { bold: true, sz: 12, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '6366F1' } }, alignment: { horizontal: 'left' } };
+      const headerStyle = { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '374151' } }, alignment: { horizontal: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '9CA3AF' } } } };
+      const labelStyle = { font: { bold: true, sz: 10, color: { rgb: '1F2937' } }, fill: { fgColor: { rgb: 'F3F4F6' } }, border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } } };
+      const valueStyle = { font: { sz: 10 }, alignment: { horizontal: 'right' }, border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } } };
+      const sevColors: Record<string, string> = { CRITICAL: 'DC2626', HIGH: 'EA580C', MEDIUM: 'CA8A04', LOW: '2563EB' };
+
+      // --- Sheet 1: Overview ---
+      const ov: any[][] = [];
+      let r = 0;
+
+      // Title row
+      ov.push(['Error Dashboard - Overview', '', '', '']);
+      r++;
+      ov.push([]); r++;
+
+      // Summary section
+      ov.push(['Summary', '', '', '']); r++;
+      ov.push(['Metric', 'Value']); r++;
+      ov.push(['Total Errors', summaryStats.total]); r++;
+      ov.push(['Critical', summaryStats.critical]); r++;
+      ov.push(['High', summaryStats.high]); r++;
+      ov.push(['Unique Errors', summaryStats.uniqueErrors]); r++;
+      ov.push(['Affected Users', summaryStats.affectedUsers]); r++;
+      ov.push([]); r++;
+
+      // Source Type
+      const stStart = r;
+      ov.push(['By Source Type', '', '', '']); r++;
+      ov.push(['Type', 'Count', 'Unique Codes', 'Affected Users']); r++;
+      sourceTypeBreakdown.forEach((item) => { ov.push([item._id, item.count, item.unique, item.affectedUsers]); r++; });
+      ov.push([]); r++;
+
+      // Severity
+      const sevStart = r;
+      ov.push(['By Severity', '', '', '']); r++;
+      ov.push(['Severity', 'Count', 'Affected Users']); r++;
+      severityBreakdown.forEach((item) => { ov.push([item._id, item.count, item.affectedUsers]); r++; });
+      ov.push([]); r++;
+
+      // Top Error Codes
+      const ecStart = r;
+      ov.push(['Top Error Codes', '', '']); r++;
+      ov.push(['#', 'Error Code', 'Occurrences']); r++;
+      activityAnalysis.topErrorCodes.forEach((item, i) => { ov.push([i + 1, item.name, item.count]); r++; });
+      ov.push([]); r++;
+
+      // Top Endpoints
+      const epStart = r;
+      ov.push(['Top Endpoints', '', '']); r++;
+      ov.push(['#', 'Endpoint', 'Occurrences']); r++;
+      activityAnalysis.topEndpoints.forEach((item, i) => { ov.push([i + 1, item.name, item.count]); r++; });
+      ov.push([]); r++;
+
+      // Top Users
+      const usStart = r;
+      ov.push(['Top Users', '', '', '']); r++;
+      ov.push(['#', 'User', 'User ID', 'Error Count']); r++;
+      topUsersData.slice(0, 20).forEach((u, i) => { ov.push([i + 1, u.name, u.userId, u.count]); r++; });
+
+      const wsOv = XLSX.utils.aoa_to_sheet(ov);
+      wsOv['!cols'] = [{ wch: 22 }, { wch: 48 }, { wch: 18 }, { wch: 18 }];
+      wsOv['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }]; // merge title
+
+      // Apply styles to Overview
+      const applyStyle = (ws: any, row: number, col: number, style: any) => {
+        const addr = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!ws[addr]) ws[addr] = { v: '', t: 's' };
+        ws[addr].s = style;
+      };
+
+      // Title
+      for (let c = 0; c < 4; c++) applyStyle(wsOv, 0, c, titleStyle);
+      // Section headers + table headers
+      const sectionRows = [2, stStart, sevStart, ecStart, epStart, usStart];
+      sectionRows.forEach((sr) => { for (let c = 0; c < 4; c++) applyStyle(wsOv, sr, c, sectionStyle); });
+      const headerRows = [3, stStart + 1, sevStart + 1, ecStart + 1, epStart + 1, usStart + 1];
+      headerRows.forEach((hr) => { for (let c = 0; c < 4; c++) applyStyle(wsOv, hr, c, headerStyle); });
+
+      // Summary labels + values (rows 4-8)
+      for (let i = 4; i <= 8; i++) {
+        applyStyle(wsOv, i, 0, labelStyle);
+        applyStyle(wsOv, i, 1, valueStyle);
+        // Color critical/high values
+        if (i === 5) applyStyle(wsOv, i, 1, { ...valueStyle, font: { sz: 10, bold: true, color: { rgb: 'DC2626' } } });
+        if (i === 6) applyStyle(wsOv, i, 1, { ...valueStyle, font: { sz: 10, bold: true, color: { rgb: 'EA580C' } } });
+      }
+
+      // Severity rows — color by severity name
+      for (let i = sevStart + 2; i < sevStart + 2 + severityBreakdown.length; i++) {
+        const cell = wsOv[XLSX.utils.encode_cell({ r: i, c: 0 })];
+        const sev = cell?.v?.toString()?.toUpperCase() || '';
+        if (sevColors[sev]) {
+          applyStyle(wsOv, i, 0, { font: { bold: true, sz: 10, color: { rgb: sevColors[sev] } }, fill: { fgColor: { rgb: 'F9FAFB' } }, border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } } });
+        }
+      }
+
+      // --- Sheet 2: Records ---
+      const allRecords: any[] = [];
+      let pg = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const res = await errorLogsService.searchRecords({
+          page: pg, pageSize: 200,
+          q: recFilters.q || undefined, actorUserId: recFilters.actorUserId || undefined,
+          errorSeverity: recFilters.errorSeverity || undefined, sourceType: recFilters.sourceType || undefined,
+          sourceName: recFilters.sourceName || undefined, endpoint: recFilters.endpoint || undefined,
+          sort_by: recSortField, sort_order: recSortOrder, includeArchive: filters.includeArchive,
+        });
+        const data = Array.isArray(res) ? res : (res?.data || []);
+        allRecords.push(...data);
+        hasMore = res?.pagination?.hasNextPage ?? false;
+        pg++;
+        if (pg > 100) break;
+      }
+
+      const recHeaders = ['Time', 'Error Code', 'Severity', 'Message', 'Source Name', 'Source Type', 'Endpoint', 'Method', 'Environment', 'User ID', 'User Agent', 'IP'];
+      const recRows = allRecords.map((rec: any) => [
+        rec.eventDateTime ? new Date(rec.eventDateTime).toLocaleString() : '',
+        rec.errorCode || '', rec.errorSeverity || '', rec.resolvedMessage || '',
+        rec.sourceName || '', rec.sourceType || '', rec.endpoint || '', rec.method || '',
+        rec.environment || '', rec.actorUserId || '', rec.userAgent || '', rec.ip || '',
+      ]);
+
+      const wsRec = XLSX.utils.aoa_to_sheet([recHeaders, ...recRows]);
+      wsRec['!cols'] = [
+        { wch: 20 }, { wch: 48 }, { wch: 12 }, { wch: 50 }, { wch: 20 }, { wch: 14 },
+        { wch: 38 }, { wch: 8 }, { wch: 12 }, { wch: 28 }, { wch: 25 }, { wch: 16 },
+      ];
+
+      // Style records header row
+      for (let c = 0; c < recHeaders.length; c++) {
+        applyStyle(wsRec, 0, c, headerStyle);
+      }
+
+      // Stripe rows + color severity cells
+      for (let i = 0; i < recRows.length; i++) {
+        const rowIdx = i + 1;
+        const isEven = i % 2 === 0;
+        const rowBg = isEven ? 'FFFFFF' : 'F9FAFB';
+        for (let c = 0; c < recHeaders.length; c++) {
+          const cellAddr = XLSX.utils.encode_cell({ r: rowIdx, c });
+          if (!wsRec[cellAddr]) continue;
+          wsRec[cellAddr].s = {
+            font: { sz: 9 },
+            fill: { fgColor: { rgb: rowBg } },
+            border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } },
+          };
+        }
+        // Color severity cell (col 2)
+        const sevAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 2 });
+        if (wsRec[sevAddr]) {
+          const sev = (wsRec[sevAddr].v || '').toString().toUpperCase();
+          const color = sevColors[sev];
+          if (color) {
+            wsRec[sevAddr].s = {
+              font: { bold: true, sz: 9, color: { rgb: 'FFFFFF' } },
+              fill: { fgColor: { rgb: color } },
+              alignment: { horizontal: 'center' },
+              border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } },
+            };
+          }
+        }
+      }
+
+      // Freeze header row in records
+      wsRec['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsOv, 'Overview');
+      XLSX.utils.book_append_sheet(wb, wsRec, 'Records');
+      XLSX.writeFile(wb, 'error-dashboard-export.xlsx');
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast.current?.show({ severity: 'error', summary: 'Export Failed', detail: 'Could not generate Excel file', life: 3000 });
+    } finally {
+      setExporting(false);
+    }
+  }, [summaryStats, sourceTypeBreakdown, severityBreakdown, activityAnalysis, topUsersData, recFilters, recSortField, recSortOrder, filters.includeArchive]);
 
   // Get severity tag color
   const getSeverityColor = (severity: string): 'danger' | 'warning' | 'info' | 'success' | undefined => {
@@ -408,7 +919,7 @@ const ErrorLogsMonitorList = () => {
     }
   };
 
-  // Pagination handlers
+  // Pagination handlers for Overview error group cards
   const handlePrevPage = () => {
     if (paginationData.hasPrevPage) {
       const newPage = paginationData.page - 1;
@@ -471,16 +982,15 @@ const ErrorLogsMonitorList = () => {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 border border-gray-200 dark:border-gray-600 rounded-md px-2 py-1">
-              {summaryStats.total} Total Errors
-            </span>
             <button
               onClick={() => {
                 setTimeRange('all');
                 setSearchInput('');
                 setFilters({ page: 1, limit: 10, includeArchive: false });
                 setFirst(0);
-                setShowFilters(false);
+                setRecFilters({ q: '', actorUserId: '', errorSeverity: '', sourceType: '', sourceName: '', endpoint: '' });
+                setRecSearchInput('');
+                setRecordsPage(1);
                 setTimeout(() => refetchDashboard(), 0);
               }}
               className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
@@ -489,30 +999,26 @@ const ErrorLogsMonitorList = () => {
             >
               <i className={`pi pi-refresh text-gray-500 dark:text-gray-400 ${dashboardLoading ? 'pi-spin' : ''}`} style={{ fontSize: '0.875rem' }} />
             </button>
-            <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer border-none transition-all ${
-                autoRefresh
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-              }`}
-              data-testid="ErrorLogs.Button.AutoRefresh"
-            >
-              <i className={`pi pi-refresh ${autoRefresh ? 'pi-spin' : ''}`} style={{ fontSize: '0.75rem' }} />
-              Live
-            </button>
-            <button
+            {activeTab === 1 && <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-              title="Toggle Filters"
+              className={`flex items-center justify-center w-8 h-8 rounded-md border cursor-pointer transition-all ${
+                showFilters
+                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+              }`}
+              title={showFilters ? 'Hide Filters' : 'Show Filters'}
             >
-              <i className="pi pi-filter text-gray-500 dark:text-gray-400" style={{ fontSize: '0.875rem' }} />
+              <i className={`pi ${showFilters ? 'pi-filter-slash' : 'pi-filter'}`} style={{ fontSize: '0.875rem' }} />
+            </button>}
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to Excel"
+              data-testid="ErrorLogs.Button.Export"
+            >
+              <i className={`pi ${exporting ? 'pi-spin pi-spinner' : 'pi-download'} text-green-600`} style={{ fontSize: '0.875rem' }} />
             </button>
-            <ExportDataButton
-              fetchBlob={fetchExportBlob}
-              filename="error-logs-export.xlsx"
-              testId="ErrorLogs.Button.Export"
-            />
           </div>
         </div>
 
@@ -535,57 +1041,116 @@ const ErrorLogsMonitorList = () => {
           ))}
         </div>
 
-        {/* Summary Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem', marginBottom: '0.625rem' }} data-feedback="Error Summary Cards">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+        {/* Summary Cards — always visible, above tabs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.625rem', marginBottom: '0.625rem' }} data-feedback="Error Summary Cards">
+          <div
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all"
+            onClick={() => { setRecFilters({ q: '', actorUserId: '', errorSeverity: '', sourceType: '', sourceName: '', endpoint: '' }); setRecSearchInput(''); setRecordsPage(1); setActiveTab(1); }}
+          >
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Total Errors</p>
+            <p className="text-2xl font-black" style={{ color: '#4f46e5' }}>{summaryStats.total}</p>
+          </div>
+          <div
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm cursor-pointer hover:border-red-400 hover:shadow-md transition-all"
+            onClick={() => { setRecFilters({ q: '', actorUserId: '', errorSeverity: 'CRITICAL', sourceType: '', sourceName: '', endpoint: '' }); setRecSearchInput(''); setRecordsPage(1); setActiveTab(1); }}
+          >
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Critical</p>
             <p className="text-2xl font-black" style={{ color: '#dc2626' }}>{summaryStats.critical}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+          <div
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm cursor-pointer hover:border-orange-400 hover:shadow-md transition-all"
+            onClick={() => { setRecFilters({ q: '', actorUserId: '', errorSeverity: 'HIGH', sourceType: '', sourceName: '', endpoint: '' }); setRecSearchInput(''); setRecordsPage(1); setActiveTab(1); }}
+          >
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">High Severity</p>
             <p className="text-2xl font-black" style={{ color: '#ea580c' }}>{summaryStats.high}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+          <div
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all"
+            onClick={() => { setActiveTab(0); setTimeout(() => errorGroupsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }}
+          >
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Unique Errors</p>
             <p className="text-2xl font-black" style={{ color: '#7c3aed' }}>{summaryStats.uniqueErrors}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Affected Users</p>
-            <p className="text-2xl font-black" style={{ color: '#059669' }}>{summaryStats.affectedUsers}</p>
+          <div
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm cursor-pointer hover:border-green-400 hover:shadow-md transition-all"
+            onClick={() => { setUsersDialogError(null); setUsersDialogOpen(true); setUsersDialogLoading(false); setAffectedUsersList(topUsersData.map((u) => ({ userId: u.userId, name: u.name, count: u.count }))); }}
+          >
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Unique Users</p>
+            <p className="text-2xl font-black" style={{ color: '#059669' }}>{topUsersData.length > 0 ? topUsersData.length : summaryStats.affectedUsers}</p>
           </div>
         </div>
 
+        {/* Tab View */}
+        <TabView activeIndex={activeTab} onTabChange={(e) => {
+          if (e.index === 0) {
+            setRecFilters({ q: '', actorUserId: '', errorSeverity: '', sourceType: '', sourceName: '', endpoint: '' });
+            setRecSearchInput('');
+            setRecordsPage(1);
+          }
+          setActiveTab(e.index);
+        }}>
+          {/* ===== OVERVIEW TAB ===== */}
+          <TabPanel header="Overview">
+
         {/* Breakdown Row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem', marginBottom: '0.625rem' }} data-feedback="Error Breakdown Cards">
-          {/* By Source Type */}
+          {/* Source Type Distribution */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">By Source Type</h4>
-            {sourceTypeBreakdown.length > 0 ? sourceTypeBreakdown.map((item) => (
-              <div key={item._id} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                <div className="flex items-center gap-2">
-                  <i className={`${getSourceTypeIcon(item._id)} text-gray-400`} style={{ fontSize: '0.75rem' }} />
-                  <span className="text-xs text-gray-600 dark:text-gray-300">{item._id}</span>
-                </div>
-                <Tag value={String(item.count)} className="text-xs" />
-              </div>
-            )) : (
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Source Type Distribution</h4>
+            {sourceTypeBreakdown.length > 0 ? (() => {
+              const maxCount = Math.max(...sourceTypeBreakdown.map((i) => i.count), 1);
+              const typeColors: Record<string, [string, string]> = {
+                API: ['#6366f1', '#4f46e5'], SCREEN: ['#22c55e', '#16a34a'], FUNCTION: ['#f97316', '#ea580c'],
+                THIRDPARTY: ['#ec4899', '#db2777'], UI: ['#14b8a6', '#0d9488'],
+              };
+              return sourceTypeBreakdown.map((item) => {
+                const pct = Math.max((item.count / maxCount) * 100, item.count > 0 ? 3 : 0);
+                const [barColor, labelColor] = typeColors[item._id.toUpperCase()] || ['#6366f1', '#4f46e5'];
+                return (
+                  <div
+                    key={item._id}
+                    className="flex items-center gap-3 mb-3 last:mb-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => { setRecFilters(prev => ({ ...prev, sourceType: item._id })); setRecordsPage(1); setActiveTab(1); }}
+                  >
+                    <span className="text-xs font-bold w-20 flex-shrink-0" style={{ color: labelColor }}>{item._id}</span>
+                    <div className="flex-1 h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)` }} />
+                    </div>
+                    <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300 w-14 text-right flex-shrink-0">{item.count.toLocaleString()}</span>
+                  </div>
+                );
+              });
+            })() : (
               <p className="text-xs text-gray-400">No data</p>
             )}
           </div>
 
-          {/* By Severity */}
+          {/* Severity Distribution */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">By Severity</h4>
-            {severityBreakdown.length > 0 ? severityBreakdown.map((item) => (
-              <div key={item._id} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                <span className="text-xs text-gray-600 dark:text-gray-300">{item._id}</span>
-                <Tag
-                  value={String(item.count)}
-                  severity={getSeverityColor(item._id)}
-                  className="text-xs font-bold"
-                />
-              </div>
-            )) : (
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Severity Distribution</h4>
+            {severityBreakdown.length > 0 ? (() => {
+              const maxCount = Math.max(...severityBreakdown.map((i) => i.count), 1);
+              const barColors: Record<string, string> = { LOW: '#22c55e', MEDIUM: '#6366f1', HIGH: '#f97316', CRITICAL: '#ef4444' };
+              const labelColors: Record<string, string> = { LOW: '#16a34a', MEDIUM: '#4f46e5', HIGH: '#ea580c', CRITICAL: '#dc2626' };
+              return ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((sev) => {
+                const item = severityBreakdown.find((i) => i._id === sev);
+                const count = item?.count || 0;
+                const pct = Math.max((count / maxCount) * 100, count > 0 ? 3 : 0);
+                return (
+                  <div
+                    key={sev}
+                    className="flex items-center gap-3 mb-3 last:mb-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => { setRecFilters(prev => ({ ...prev, errorSeverity: sev })); setRecordsPage(1); setActiveTab(1); }}
+                  >
+                    <span className="text-xs font-bold w-16 flex-shrink-0" style={{ color: labelColors[sev] }}>{sev}</span>
+                    <div className="flex-1 h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barColors[sev]}, ${barColors[sev]}cc)` }} />
+                    </div>
+                    <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300 w-14 text-right flex-shrink-0">{count.toLocaleString()}</span>
+                  </div>
+                );
+              });
+            })() : (
               <p className="text-xs text-gray-400">No data</p>
             )}
           </div>
@@ -593,20 +1158,134 @@ const ErrorLogsMonitorList = () => {
           {/* Impact Summary */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Impact Summary</h4>
-            {severityBreakdown.length > 0 ? severityBreakdown.map((item) => (
-              <div key={item._id} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+            {severityBreakdown.length > 0 ? (
+              <>
+                <div className="flex justify-between items-center pb-1.5 mb-1 border-b border-gray-200 dark:border-gray-600">
+                  <span className="text-xs font-semibold text-gray-400 uppercase">Severity</span>
+                  <span className="text-xs font-semibold text-gray-400 uppercase">Users</span>
+                </div>
+                {severityBreakdown.map((item) => (
+              <div
+                key={item._id}
+                className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-900/10 rounded transition-colors"
+                onClick={() => { setRecFilters(prev => ({ ...prev, errorSeverity: item._id })); setRecordsPage(1); setActiveTab(1); }}
+              >
                 <span className="text-xs text-gray-600 dark:text-gray-300">{item._id}</span>
                 <div className="flex items-center gap-1.5">
                   <i className="pi pi-users text-gray-400" style={{ fontSize: '0.625rem' }} />
                   <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    {item.affectedUsers} users
+                    {item.affectedUsers}
                   </span>
                 </div>
               </div>
-            )) : (
+                ))}
+              </>
+            ) : (
               <p className="text-xs text-gray-400">No data</p>
             )}
           </div>
+        </div>
+
+        {/* Activity Analysis */}
+        {(activityAnalysis.topErrorCodes.length > 0 || activityAnalysis.topEndpoints.length > 0 || topUsersData.length > 0) && (
+          <>
+            <div className="flex items-center gap-2 mb-2 mt-3">
+              <span className="w-1.5 h-4 bg-orange-500 rounded-full" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Activity Analysis</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', marginBottom: '0.625rem' }} data-feedback="Activity Analysis">
+              {/* Top 10 Error Codes */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                  Top 10 Error Codes
+                </h4>
+                <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto">
+                  {activityAnalysis.topErrorCodes.length > 0 ? activityAnalysis.topErrorCodes.map((item, i) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors cursor-pointer"
+                      onClick={() => { setRecSearchInput(item.name); setRecFilters(prev => ({ ...prev, q: item.name })); setRecordsPage(1); setActiveTab(1); }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs text-gray-400 font-bold w-5 flex-shrink-0">#{i + 1}</span>
+                        <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 truncate" title={item.name}>{item.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-white bg-indigo-600 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-2">{item.count.toLocaleString()}</span>
+                    </div>
+                  )) : <p className="text-xs text-gray-400">No data</p>}
+                </div>
+              </div>
+
+              {/* Top 10 Endpoints */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-500" />
+                  Top 10 Endpoints
+                </h4>
+                <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto">
+                  {activityAnalysis.topEndpoints.length > 0 ? activityAnalysis.topEndpoints.map((item, i) => (
+                    <div
+                      key={item.name}
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md bg-gray-50 dark:bg-gray-700/50 hover:bg-sky-50 dark:hover:bg-sky-900/10 transition-colors cursor-pointer"
+                      onClick={() => { setRecFilters(prev => ({ ...prev, endpoint: item.name })); setRecordsPage(1); setActiveTab(1); }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-xs text-gray-400 font-bold w-5 flex-shrink-0">#{i + 1}</span>
+                        <span className="text-xs text-sky-600 dark:text-sky-400 font-mono truncate" title={item.name}>{item.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-white bg-sky-600 px-1.5 py-0.5 rounded-md flex-shrink-0 ml-2">{item.count.toLocaleString()}</span>
+                    </div>
+                  )) : <p className="text-xs text-gray-400">No data</p>}
+                </div>
+              </div>
+            </div>
+            {/* Top 10 Users */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm" style={{ marginBottom: '0.625rem' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                  Top 10 Users
+                </h4>
+                <button
+                  onClick={() => {
+                    setUsersDialogError(null);
+                    setUsersDialogOpen(true);
+                    setUsersDialogLoading(false);
+                    // Use topUsersData which already has resolved names from dashboard API
+                    setAffectedUsersList(
+                      topUsersData.map((u) => ({ userId: u.userId, name: u.name, count: u.count }))
+                    );
+                  }}
+                  className="text-xs font-semibold text-green-600 dark:text-green-400 border border-green-300 dark:border-green-700 rounded-md px-2.5 py-1 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors bg-transparent"
+                >
+                  Show All Users ({topUsersData.length})
+                </button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                {topUsersData.length > 0 ? topUsersData.slice(0, 10).map((user, i) => (
+                  <div
+                    key={user.userId + i}
+                    className="flex items-center justify-between py-2 px-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 hover:bg-green-50 dark:hover:bg-green-900/10 hover:border-green-300 dark:hover:border-green-700 transition-all cursor-pointer"
+                    onClick={() => handleUserAnalyticsClick(user.userId, user.name)}
+                    title={`View analytics for ${user.name}`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs text-gray-400 font-bold flex-shrink-0">#{i + 1}</span>
+                      <span className="text-xs font-semibold text-green-600 dark:text-green-400 truncate" title={user.name}>{user.name}</span>
+                    </div>
+                    <span className="text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-md flex-shrink-0 ml-2">{user.count.toLocaleString()}</span>
+                  </div>
+                )) : <p className="text-xs text-gray-400">No data</p>}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Error Group Cards — moved from Records tab to Overview */}
+        <div ref={errorGroupsRef} className="flex items-center gap-2 mb-2 mt-3">
+          <span className="w-1.5 h-4 bg-indigo-500 rounded-full" />
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Error Groups</h3>
         </div>
 
         {/* Filters (Collapsible) */}
@@ -761,7 +1440,11 @@ const ErrorLogsMonitorList = () => {
                           </span>
                         )}
                         <span className="ml-auto whitespace-nowrap flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-md">{error.occurrences}x</span>
+                          <span
+                            className="text-xs font-bold text-white bg-orange-500 px-1.5 py-0.5 rounded-md cursor-pointer hover:bg-orange-600 transition-colors"
+                            onClick={(e) => handleOccurrencesClick(e, error)}
+                            title="View all records"
+                          >{error.occurrences}x</span>
                           <span className="text-xs text-gray-400">{error.lastSeen ? new Date(error.lastSeen).toLocaleString() : '-'}</span>
                         </span>
                       </div>
@@ -835,7 +1518,7 @@ const ErrorLogsMonitorList = () => {
           )}
         </div>
 
-        {/* Pagination */}
+        {/* Pagination for error group cards */}
         {paginationData.totalItems > 0 && (
           <div className="flex items-center justify-between mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 shadow-sm">
             <div className="flex items-center gap-2">
@@ -873,6 +1556,182 @@ const ErrorLogsMonitorList = () => {
             </div>
           </div>
         )}
+          </TabPanel>
+
+          {/* ===== RECORDS TAB ===== */}
+          <TabPanel header="Records">
+        {/* Filters — clean row with dropdowns + search */}
+        {showFilters && <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 shadow-sm" style={{ padding: '0.5rem 0.75rem' }} data-feedback="Records Filters">
+          <div className="flex items-end gap-2 flex-wrap">
+            <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+              <Input name="rec-search" value={recSearchInput} onChange={(e: any) => setRecSearchInput(e?.target?.value ?? e)} placeholder="Search error code or message..." icon="pi pi-search" className="w-full" testId="Rec.Filter.Search" />
+            </div>
+            <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">User</label>
+              <Dropdown
+                value={(recFilters as any).actorUserId || ''}
+                options={[{ label: 'All Users', value: '' }, ...topUsersData.map((u) => ({ label: u.name, value: u.userId }))]}
+                optionLabel="label" optionValue="value" filter filterPlaceholder="Search user..."
+                onChange={(e: { value: string }) => { setRecFilters(prev => ({ ...prev, actorUserId: e.value } as any)); setRecordsPage(1); }}
+                placeholder="All Users" className="w-full" resetFilterOnHide={true} showClear={!!(recFilters as any).actorUserId}
+              />
+            </div>
+            <div style={{ flex: '0 1 140px', minWidth: '120px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Severity</label>
+              <Dropdown
+                value={recFilters.errorSeverity} options={severityOptions} optionLabel="label" optionValue="value"
+                onChange={(e: { value: string }) => { setRecFilters(prev => ({ ...prev, errorSeverity: e.value })); setRecordsPage(1); }}
+                placeholder="All" className="w-full" resetFilterOnHide={true}
+              />
+            </div>
+            <div style={{ flex: '0 1 140px', minWidth: '120px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Source Type</label>
+              <Dropdown
+                value={recFilters.sourceType} options={errorTypeOptions} optionLabel="label" optionValue="value"
+                onChange={(e: { value: string }) => { setRecFilters(prev => ({ ...prev, sourceType: e.value })); setRecordsPage(1); }}
+                placeholder="All" className="w-full" resetFilterOnHide={true}
+              />
+            </div>
+            <div style={{ flex: '1 1 160px', minWidth: '130px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Source Name</label>
+              <Dropdown
+                value={recFilters.sourceName}
+                options={[{ label: 'All Sources', value: '' }, ...[...new Set((dashboardStats?.errorGroups || []).map((g: any) => g.sourceName).filter(Boolean))].map((s: any) => ({ label: s, value: s }))]}
+                optionLabel="label" optionValue="value" filter filterPlaceholder="Search source..."
+                onChange={(e: { value: string }) => { setRecFilters(prev => ({ ...prev, sourceName: e.value })); setRecordsPage(1); }}
+                placeholder="All Sources" className="w-full" resetFilterOnHide={true} showClear={!!recFilters.sourceName}
+              />
+            </div>
+            <div style={{ flex: '1 1 180px', minWidth: '150px' }}>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Endpoint</label>
+              <Dropdown
+                value={recFilters.endpoint}
+                options={[{ label: 'All Endpoints', value: '' }, ...[...new Set((dashboardStats?.errorGroups || []).map((g: any) => (g as any).endpoint).filter(Boolean))].map((ep: any) => ({ label: ep, value: ep }))]}
+                optionLabel="label" optionValue="value" filter filterPlaceholder="Search endpoint..."
+                onChange={(e: { value: string }) => { setRecFilters(prev => ({ ...prev, endpoint: e.value })); setRecordsPage(1); }}
+                placeholder="All Endpoints" className="w-full" resetFilterOnHide={true} showClear={!!recFilters.endpoint}
+              />
+            </div>
+            {(recFilters.q || recFilters.actorUserId || recFilters.errorSeverity || recFilters.sourceType || recFilters.sourceName || recFilters.endpoint) && (
+              <button
+                onClick={() => { setRecFilters({ q: '', actorUserId: '', errorSeverity: '', sourceType: '', sourceName: '', endpoint: '' }); setRecSearchInput(''); setRecordsPage(1); }}
+                className="text-xs text-red-500 border border-red-300 rounded-md px-2.5 py-1.5 cursor-pointer hover:bg-red-50 transition-colors bg-transparent whitespace-nowrap"
+                style={{ marginBottom: '1px' }}
+              >
+                <i className="pi pi-times" style={{ fontSize: '0.6rem', marginRight: '0.25rem' }} /> Clear
+              </button>
+            )}
+          </div>
+        </div>}
+
+        {/* Records DataTable */}
+        {recordsLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <ProgressSpinner style={{ width: '36px', height: '36px' }} />
+            <p className="text-xs text-gray-400 mt-2">Loading records...</p>
+          </div>
+        ) : (
+          <>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-x-auto">
+              <table className="w-full text-left" style={{ minWidth: '900px' }}>
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    {([
+                      ['eventDateTime', 'Time'],
+                      ['errorCode', 'Error Code'],
+                      ['errorSeverity', 'Severity'],
+                      ['resolvedMessage', 'Message'],
+                      ['sourceName', 'Source'],
+                      ['endpoint', 'Endpoint'],
+                      ['method', 'Method'],
+                      ['actorUserId', 'User'],
+                    ] as [string, string][]).map(([field, label]) => {
+                      const active = recSortField === field;
+                      const icon = active ? (recSortOrder === 'asc' ? 'pi-sort-amount-up' : 'pi-sort-amount-down') : 'pi-sort-alt';
+                      return (
+                        <th
+                          key={field}
+                          className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase cursor-pointer select-none hover:text-indigo-600 transition-colors"
+                          onClick={() => {
+                            if (recSortField === field) {
+                              setRecSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+                            } else {
+                              setRecSortField(field);
+                              setRecSortOrder('desc');
+                            }
+                            setRecordsPage(1);
+                          }}
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {label}
+                            <i className={`pi ${icon}`} style={{ fontSize: '0.6rem', color: active ? '#4f46e5' : '#9ca3af' }} />
+                          </span>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {recordsData.length === 0 ? (
+                    <tr><td colSpan={8} className="px-3 py-8 text-center text-xs text-gray-400">No records found.</td></tr>
+                  ) : recordsData.map((row: any, idx: number) => {
+                    const sev = (row.errorSeverity || '').toUpperCase();
+                    const msg = row.resolvedMessage || '';
+                    const userName = recordsUserNames.get(row.actorUserId) || row.actorUserId || '-';
+                    return (
+                      <tr
+                        key={row.id || idx}
+                        className="border-b border-gray-100 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors"
+                        onClick={() => { setRecordDetailData(row); setRecordDetailOpen(true); }}
+                      >
+                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{row.eventDateTime ? new Date(row.eventDateTime).toLocaleString() : '-'}</td>
+                        <td className="px-3 py-2 text-xs font-semibold text-gray-900 dark:text-white max-w-[200px] truncate" title={row.errorCode}>{row.errorCode || '-'}</td>
+                        <td className="px-3 py-2">{sev ? <Tag value={sev} severity={getSeverityColor(sev)} style={{ fontSize: '0.6rem', padding: '0.1rem 0.3rem' }} /> : <span className="text-xs text-gray-400">-</span>}</td>
+                        <td className="px-3 py-2 text-xs text-gray-600 dark:text-gray-300 max-w-[250px] truncate" title={msg}>{msg || '-'}</td>
+                        <td className="px-3 py-2">
+                          <span className="text-xs text-gray-700 dark:text-gray-300">{row.sourceName || '-'}</span>
+                          {row.sourceType && <span className="text-xs text-gray-400 ml-1">({row.sourceType})</span>}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-500 font-mono max-w-[160px] truncate" title={row.endpoint || ''}>{row.endpoint || '-'}</td>
+                        <td className="px-3 py-2 text-xs font-medium text-gray-600">{row.method || '-'}</td>
+                        <td className="px-3 py-2 text-xs text-gray-600 max-w-[100px] truncate" title={userName}>{userName}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Records Pagination */}
+            {recordsPagination && recordsPagination.totalItems > 0 && (
+              <div className="flex items-center justify-between mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Rows:</span>
+                  <select value={recordsPageSize} onChange={(e) => { setRecordsPageSize(Number(e.target.value)); setRecordsPage(1); }}
+                    className="text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer">
+                    {[10, 25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500">Page {recordsPagination.page} of {recordsPagination.totalPages} ({recordsPagination.totalItems})</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => setRecordsPage((p) => Math.max(1, p - 1))} disabled={!recordsPagination.hasPrevPage}
+                      className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 text-gray-500 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
+                      <i className="pi pi-chevron-left" style={{ fontSize: '0.75rem' }} />
+                    </button>
+                    <button onClick={() => setRecordsPage((p) => p + 1)} disabled={!recordsPagination.hasNextPage}
+                      className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 text-gray-500 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors">
+                      <i className="pi pi-chevron-right" style={{ fontSize: '0.75rem' }} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+          </TabPanel>
+        </TabView>
       </div>
 
       {/* Error Detail Drawer */}
@@ -892,7 +1751,7 @@ const ErrorLogsMonitorList = () => {
         header={
           <div className="flex items-center gap-2">
             <i className="pi pi-users text-blue-600" style={{ fontSize: '1rem' }} />
-            <span className="text-base font-semibold text-gray-900 dark:text-white">Affected Users</span>
+            <span className="text-base font-semibold text-gray-900 dark:text-white">{usersDialogError ? 'Affected Users' : 'All Users'}</span>
             {usersDialogError && (
               <span className="text-xs text-gray-500 font-normal ml-1">— {usersDialogError.errorCode}</span>
             )}
@@ -969,11 +1828,12 @@ const ErrorLogsMonitorList = () => {
             )}
           </div>
         }
-        style={{ width: '600px' }}
+        style={{ width: '750px', maxHeight: '90vh' }}
         modal
         dismissableMask
         draggable={false}
         resizable={false}
+        contentStyle={{ overflowX: 'auto' }}
       >
         {userAnalyticsLoading ? (
           <div className="flex flex-col items-center justify-center py-8">
@@ -1045,8 +1905,13 @@ const ErrorLogsMonitorList = () => {
                       .sort((a, b) => b[1] - a[1])
                       .slice(0, 10)
                       .map(([code, count]) => (
-                        <div key={code} className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                          <span className="text-xs text-gray-600 dark:text-gray-400 font-mono truncate mr-2" title={code}>{code}</span>
+                        <div
+                          key={code}
+                          className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-900/10 rounded transition-colors"
+                          onClick={() => { setUserAnalyticsOpen(false); setRecSearchInput(code); setRecFilters(prev => ({ ...prev, q: code })); setRecordsPage(1); setActiveTab(1); }}
+                          title={`Filter records by ${code}`}
+                        >
+                          <span className="text-xs text-gray-600 dark:text-gray-400 font-mono mr-2 break-all">{code}</span>
                           <span className="text-xs font-bold text-purple-600 flex-shrink-0">{count}</span>
                         </div>
                       ))
@@ -1080,8 +1945,9 @@ const ErrorLogsMonitorList = () => {
                     return (
                       <div
                         key={log._id || log.id || i}
-                        className="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0 hover:bg-blue-50 dark:hover:bg-blue-900/10 cursor-pointer transition-colors"
                         style={{ borderLeft: `3px solid ${severityColor[logSev] || '#94a3b8'}` }}
+                        onClick={() => { setRecordDetailData(log); setRecordDetailOpen(true); }}
                       >
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-gray-900 dark:text-white truncate">
@@ -1119,6 +1985,281 @@ const ErrorLogsMonitorList = () => {
             <p className="text-sm text-gray-400">No analytics data available.</p>
           </div>
         )}
+      </Dialog>
+
+      {/* All Records Dialog — with pagination */}
+      <Dialog
+        visible={allRecordsDialogOpen}
+        onHide={() => { setAllRecordsDialogOpen(false); setAllRecordsDialogError(null); setAllRecordsDialogFilter({}); setAllRecordsList([]); setAllRecordsPagination(null); setAllRecordsPage(1); }}
+        header={
+          <div className="flex items-center gap-2">
+            <i className="pi pi-list text-orange-500" style={{ fontSize: '1rem' }} />
+            <span className="text-base font-semibold text-gray-900 dark:text-white">All Records</span>
+            {allRecordsDialogError && (
+              <span className="text-xs font-bold text-white bg-orange-500 px-2 py-0.5 rounded-md ml-1">{allRecordsDialogError.errorCode}</span>
+            )}
+            {!allRecordsDialogError && allRecordsDialogFilter.errorCode && (
+              <span className="text-xs font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-md ml-1">{allRecordsDialogFilter.errorCode}</span>
+            )}
+            {!allRecordsDialogError && allRecordsDialogFilter.endpoint && (
+              <span className="text-xs font-bold text-white bg-sky-600 px-2 py-0.5 rounded-md ml-1 truncate max-w-[300px]" title={allRecordsDialogFilter.endpoint}>{allRecordsDialogFilter.endpoint}</span>
+            )}
+            {!allRecordsLoading && allRecordsPagination && (
+              <span className="text-xs text-gray-500 ml-1">({allRecordsPagination.totalItems})</span>
+            )}
+          </div>
+        }
+        style={{ width: '800px', maxHeight: '85vh' }}
+        modal
+        dismissableMask
+        draggable={false}
+        resizable={false}
+      >
+        {allRecordsLoading ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <ProgressSpinner style={{ width: '36px', height: '36px' }} />
+            <p className="text-xs text-gray-400 mt-2">Loading records...</p>
+          </div>
+        ) : allRecordsList.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 max-h-[55vh] overflow-y-auto">
+              {allRecordsList.map((log: any, i: number) => {
+                const logSev = (log.errorSeverity || '').toUpperCase();
+                const itemIndex = ((allRecordsPage - 1) * 50) + i + 1;
+                return (
+                  <div
+                    key={log._id || log.id || i}
+                    className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 hover:border-orange-300 dark:hover:border-orange-700 cursor-pointer transition-colors"
+                    style={{ borderLeft: `3px solid ${severityColor[logSev] || '#94a3b8'}` }}
+                    onClick={() => { setRecordDetailData(log); setRecordDetailOpen(true); }}
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-400">#{itemIndex}</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{log.errorCode}</span>
+                        <Tag
+                          value={logSev}
+                          severity={getSeverityColor(logSev)}
+                          style={{ fontSize: '0.5625rem', padding: '0.0625rem 0.3rem' }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {log.eventDateTime ? new Date(log.eventDateTime).toLocaleString() : '-'}
+                      </span>
+                    </div>
+
+                    {/* Message */}
+                    {log.resolvedMessage && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 whitespace-pre-wrap">{log.resolvedMessage}</p>
+                    )}
+
+                    {/* Details grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {log.sourceType && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">Source Type</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{log.sourceType}</p>
+                        </div>
+                      )}
+                      {log.sourceName && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">Source Name</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{log.sourceName}</p>
+                        </div>
+                      )}
+                      {log.endpoint && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">Endpoint</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 font-mono truncate" title={log.endpoint}>{log.endpoint}</p>
+                        </div>
+                      )}
+                      {log.method && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">Method</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{log.method}</p>
+                        </div>
+                      )}
+                      {log.environment && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">Environment</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{log.environment}</p>
+                        </div>
+                      )}
+                      {log.actorUserId && (
+                        <div>
+                          <p className="text-xs text-gray-400 mb-0.5">User ID</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 font-mono truncate" title={log.actorUserId}>{log.actorUserId}</p>
+                        </div>
+                      )}
+                      {log.userAgent && (
+                        <div className="col-span-2">
+                          <p className="text-xs text-gray-400 mb-0.5">User Agent</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate" title={log.userAgent}>{log.userAgent}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Parameters JSON */}
+                    {log.parametersJson && Object.keys(log.parametersJson).length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-xs text-gray-500 font-medium hover:text-gray-700 dark:hover:text-gray-300">Parameters</summary>
+                        <pre className="mt-1 text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-2 rounded overflow-x-auto">{JSON.stringify(log.parametersJson, null, 2)}</pre>
+                      </details>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination controls for All Records dialog */}
+            {allRecordsPagination && allRecordsPagination.totalPages > 1 && (
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-xs text-gray-500">
+                  Page {allRecordsPagination.page} of {allRecordsPagination.totalPages} ({allRecordsPagination.totalItems} items)
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => fetchAllRecordsPage(allRecordsDialogFilter, allRecordsPage - 1)}
+                    disabled={!allRecordsPagination.hasPrevPage || allRecordsLoading}
+                    className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <i className="pi pi-chevron-left" style={{ fontSize: '0.75rem' }} />
+                  </button>
+                  <button
+                    onClick={() => fetchAllRecordsPage(allRecordsDialogFilter, allRecordsPage + 1)}
+                    disabled={!allRecordsPagination.hasNextPage || allRecordsLoading}
+                    className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <i className="pi pi-chevron-right" style={{ fontSize: '0.75rem' }} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <i className="pi pi-info-circle text-gray-300 mb-2" style={{ fontSize: '1.5rem' }} />
+            <p className="text-sm text-gray-400">No records found.</p>
+          </div>
+        )}
+      </Dialog>
+
+      {/* Record Detail Dialog — shows ALL fields from DB */}
+      <Dialog
+        visible={recordDetailOpen}
+        onHide={() => { setRecordDetailOpen(false); setRecordDetailData(null); }}
+        header={
+          <div className="flex items-center gap-2">
+            <i className="pi pi-file text-indigo-500" style={{ fontSize: '1rem' }} />
+            <span className="text-base font-semibold text-gray-900 dark:text-white">Record Details</span>
+            {recordDetailData?.errorCode && (
+              <span className="text-xs font-mono text-white bg-indigo-600 px-2 py-0.5 rounded-md ml-1">{recordDetailData.errorCode}</span>
+            )}
+          </div>
+        }
+        style={{ width: '800px', maxHeight: '90vh' }}
+        modal
+        dismissableMask
+        draggable={false}
+        resizable={false}
+      >
+        {recordDetailData ? (
+          <div className="flex flex-col gap-3">
+            {/* Severity + Environment + Method badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {recordDetailData.errorSeverity && (
+                <Tag value={recordDetailData.errorSeverity.toUpperCase()} severity={getSeverityColor(recordDetailData.errorSeverity.toUpperCase())} />
+              )}
+              {recordDetailData.environment && (
+                <Tag value={recordDetailData.environment} className="text-xs" />
+              )}
+              {recordDetailData.method && (
+                <span className="text-xs font-bold text-white bg-blue-600 px-2 py-0.5 rounded">{recordDetailData.method}</span>
+              )}
+              {recordDetailData.sourceType && (
+                <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">{recordDetailData.sourceType}</span>
+              )}
+            </div>
+
+            {/* Message */}
+            {recordDetailData.resolvedMessage && (
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Message</p>
+                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{recordDetailData.resolvedMessage}</p>
+              </div>
+            )}
+
+            {/* All fields in a grid */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              {(() => {
+                // Fields to show in a specific order first, then the rest
+                const priorityFields = [
+                  'id', 'errorCode', 'errorSeverity', 'eventDateTime', 'createdAt',
+                  'sourceName', 'sourceType', 'endpoint', 'method',
+                  'environment', 'actorUserId', 'ip', 'userAgent',
+                  'resolvedMessage',
+                  'affectedFeature', 'category', 'assignedTo', 'status',
+                  'impactLevel', 'occurrences', 'firstOccurrence', 'lastOccurrence',
+                  'resolutionTime', 'suggestedAction', 'userFriendlyMessage',
+                  'userId', 'userName', 'sourceScreen',
+                ];
+                const skipFields = ['parameters', 'parametersJson']; // shown separately
+                const allKeys = Object.keys(recordDetailData);
+                const orderedKeys = [
+                  ...priorityFields.filter(k => allKeys.includes(k)),
+                  ...allKeys.filter(k => !priorityFields.includes(k) && !skipFields.includes(k)),
+                ];
+
+                return orderedKeys.map((key) => {
+                  let val = recordDetailData[key];
+                  if (val === null || val === undefined) val = '-';
+                  else if (typeof val === 'object' && !Array.isArray(val)) val = JSON.stringify(val);
+                  else if (Array.isArray(val)) return null; // arrays shown below
+                  else val = String(val);
+
+                  // Format datetime strings
+                  if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                    try { val = new Date(val).toLocaleString(); } catch { /* keep as-is */ }
+                  }
+
+                  const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+                  return (
+                    <div key={key} className="py-1 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                      <p className="text-xs text-gray-400 font-medium">{label}</p>
+                      <p className="text-sm text-gray-800 dark:text-gray-200 break-all">{val}</p>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Parameters */}
+            {recordDetailData.parameters && Array.isArray(recordDetailData.parameters) && recordDetailData.parameters.length > 0 && (
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Parameters ({recordDetailData.parameters.length})</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {recordDetailData.parameters.map((p: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 rounded px-2 py-1.5">
+                      <span className="text-xs font-semibold text-indigo-600">{p.name || p.key || `#${i + 1}`}</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-300 break-all">{p.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ParametersJson */}
+            {recordDetailData.parametersJson && typeof recordDetailData.parametersJson === 'object' && Object.keys(recordDetailData.parametersJson).length > 0 && (
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2">Parameters JSON</p>
+                <pre className="text-xs bg-gray-50 dark:bg-gray-900 rounded p-3 overflow-x-auto max-h-48 text-gray-700 dark:text-gray-300">
+                  {JSON.stringify(recordDetailData.parametersJson, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        ) : null}
       </Dialog>
     </>
   );

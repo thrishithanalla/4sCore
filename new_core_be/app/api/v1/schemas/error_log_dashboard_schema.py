@@ -137,7 +137,8 @@ class ErrorGroupItem(BaseModel):
     affectedUsers: int = Field(..., description="Unique users affected")
     firstSeen: Optional[datetime] = Field(None, description="First occurrence timestamp")
     lastSeen: Optional[datetime] = Field(None, description="Last occurrence timestamp")
-    sourceName: Optional[str] = Field(None, description="Primary source name/endpoint")
+    sourceName: Optional[str] = Field(None, description="Primary source name")
+    endpoint: Optional[str] = Field(None, description="API endpoint path")
     resolvedMessage: Optional[str] = Field(None, description="Sample resolved message")
 
 
@@ -194,6 +195,7 @@ class DashboardData(BaseModel):
     pagination: Optional[PaginationInfo] = Field(None, description="Pagination info for error groups")
     patterns: List[PatternItem] = Field(default_factory=list)
     impact: ImpactAnalysis
+    topUsers: List[dict] = Field(default_factory=list, description="Top users by error count [{userId, count}]")
 
 
 # =============================================================================

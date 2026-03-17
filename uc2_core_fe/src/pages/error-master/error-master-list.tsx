@@ -1,19 +1,20 @@
 /**
  * Error Master List Page
- * Card-based view for managing error definitions, severity levels, and localized messages
+ * Table view with overview cards, matching log-master style
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Toast } from 'mainFe/Toast';
 import { Tag } from 'mainFe/Tag';
 import { Tooltip } from 'mainFe/Tooltip';
+import { DataTable } from 'mainFe/DataTable';
+import type { DataTableColumn } from 'mainFe/DataTable';
 import { Input } from 'mainFe/Input';
 import { Dropdown } from 'mainFe/Dropdown';
 import { Button } from 'mainFe/Button';
-import { Skeleton } from 'primereact/skeleton';
+import { Dialog } from 'primereact/dialog';
 import { useSecureNavigation } from '../../hooks/useSecureNavigation';
-import { RefreshButton } from 'mainFe/RefreshButton';
-import { ExportDataButton } from 'mainFe/ExportDataButton';
+
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '../../hooks/useDebounce';
 import { errorMasterService } from '../../services/error-master.service';
@@ -24,600 +25,574 @@ import DeleteConfirmDialog from '../../components/dialogs/delete-confirm-dialog'
 import PermissionGuard from '../../components/guards/PermissionGuard';
 import { useCanCreate, useCanUpdate, useCanDelete } from '../../hooks/usePermissions';
 import { JOB_NAMES } from '../../constants/jobNames';
-
-// Severity color mapping
-const severityColor: Record<string, string> = {
-  CRITICAL: '#dc2626',
-  HIGH: '#ea580c',
-  MEDIUM: '#ca8a04',
-  LOW: '#2563eb',
-};
-
-const severityBg: Record<string, string> = {
-  CRITICAL: '#fef2f2',
-  HIGH: '#fff7ed',
-  MEDIUM: '#fefce8',
-  LOW: '#eff6ff',
-};
-
-// Source type icon helper
-const getSourceTypeIcon = (type: string): string => {
-  switch (type?.toUpperCase()) {
-    case 'API': return 'pi pi-server';
-    case 'SCREEN': return 'pi pi-desktop';
-    case 'FUNCTION': return 'pi pi-code';
-    default: return 'pi pi-box';
-  }
-};
+import styles from './error-master-list.module.css';
 
 const ErrorMasterList = () => {
-  const { navigateToView, navigateToEdit, navigateToCreate } = useSecureNavigation({
-    entity: 'errorMaster',
-    basePath: '/error-master',
-  });
+  const { navigateToView, navigateToEdit, navigateToCreate } = useSecureNavigation({ entity: 'errorMaster', basePath: '/error-master' });
   const toast = useRef<Toast>(null);
   const canCreate = useCanCreate(JOB_NAMES.ERROR_MASTER);
   const canUpdate = useCanUpdate(JOB_NAMES.ERROR_MASTER);
   const canDelete = useCanDelete(JOB_NAMES.ERROR_MASTER);
-  const [errorMasters, setErrorMasters] = useState<ErrorMaster[]>([]);
+
+  const [errorMasters, setErrorMasters] = useState<(ErrorMaster & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedErrorId, setSelectedErrorId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Card expand state
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Detail dialog
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailData, setDetailData] = useState<ErrorMaster | null>(null);
 
-  // Filter panel visibility
-  const [showFilters, setShowFilters] = useState(false);
+  // Filters
+  const [searchFilter, setSearchFilter] = useState('');
+  const [errorSeverityFilter, setErrorSeverityFilter] = useState('');
+  const [sourceTypeFilter, setSourceTypeFilter] = useState('');
+  const [errorTypeFilter, setErrorTypeFilter] = useState('');
+  const [businessAreaFilter, setBusinessAreaFilter] = useState('');
+  const [technicalAreaFilter, setTechnicalAreaFilter] = useState('');
+  const [partnerSystemFilter, setPartnerSystemFilter] = useState('');
+  const [thirdPartyFilter, setThirdPartyFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
-  // Filter states
-  const [errorSeverityFilter, setErrorSeverityFilter] = useState<string>('');
-  const [sourceTypeFilter, setSourceTypeFilter] = useState<string>('');
-  const [searchFilter, setSearchFilter] = useState<string>('');
-
-  // Pagination states
+  // Pagination
   const [first, setFirst] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  // Sorting states
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<1 | -1 | null>(null);
+  const debouncedSearch = useDebounce(searchFilter, 500);
 
-  // Debounce search text
-  const debouncedSearchFilter = useDebounce(searchFilter, 500);
-
-  const showError = useCallback((message: string) => {
-    toast.current?.show({
-      severity: 'error',
-      summary: 'Error',
-      detail: message,
-      life: 10000,
-    });
+  const showError = useCallback((msg: string) => {
+    toast.current?.show({ severity: 'error', summary: 'Error', detail: msg, life: 10000 });
   }, []);
 
-  // Fetch value-sets for dropdowns
-  const { data: errorSeverityItems = [] } = useQuery({
-    queryKey: ['value-sets', 'errorSeverity'],
-    queryFn: () => valueSetsService.getItems('errorSeverity', 'en'),
-    staleTime: 5 * 60 * 1000,
-  });
+  // Value-sets
+  const { data: severityItems = [] } = useQuery({ queryKey: ['value-sets', 'errorSeverity'], queryFn: () => valueSetsService.getItems('errorSeverity', 'en'), staleTime: 5 * 60 * 1000 });
+  const { data: sourceTypeItems = [] } = useQuery({ queryKey: ['value-sets', 'sourceType'], queryFn: () => valueSetsService.getItems('sourceType', 'en'), staleTime: 5 * 60 * 1000 });
+  const { data: errorTypeItems = [] } = useQuery({ queryKey: ['value-sets', 'errorType'], queryFn: () => valueSetsService.getItems('errorType', 'en'), staleTime: 5 * 60 * 1000 });
 
-  const { data: sourceTypeItems = [] } = useQuery({
-    queryKey: ['value-sets', 'sourceType'],
-    queryFn: () => valueSetsService.getItems('sourceType', 'en'),
-    staleTime: 5 * 60 * 1000,
-  });
+  const severityOptions = [{ label: 'All Severities', value: '' }, ...severityItems.map((i) => ({ label: i.label, value: i.code }))];
+  const sourceTypeOptions = [{ label: 'All Source Types', value: '' }, ...sourceTypeItems.map((i) => ({ label: i.label, value: i.code }))];
+  const errorTypeOptions = [{ label: 'All Error Types', value: '' }, ...errorTypeItems.map((i) => ({ label: i.label, value: i.code }))];
 
-  const fetchErrorMasters = useCallback(async (
-    page: number = 1,
-    size: number = pageSize,
-    sortBy: string | null = sortField,
-    order: 1 | -1 | null = sortOrder
-  ) => {
+  const fetchData = useCallback(async (page = 1, size = pageSize) => {
     try {
       setLoading(true);
-      const params: ErrorMasterSearchParams = {
-        page,
-        pageSize: size,
-      };
-
-      if (debouncedSearchFilter) params.q = debouncedSearchFilter;
+      const params: ErrorMasterSearchParams = { page, pageSize: size };
+      if (debouncedSearch) params.q = debouncedSearch;
       if (errorSeverityFilter) params.errorSeverity = errorSeverityFilter;
       if (sourceTypeFilter) (params as any).sourceType = sourceTypeFilter;
-      if (sortBy) {
-        params.sort_by = sortBy;
-        params.sort_order = order === 1 ? 'asc' : 'desc';
-      }
-
+      if (errorTypeFilter) (params as any).errorType = errorTypeFilter;
+      if (businessAreaFilter) (params as any).businessArea = businessAreaFilter;
+      if (technicalAreaFilter) (params as any).technicalArea = technicalAreaFilter;
+      if (partnerSystemFilter) (params as any).partnerSystem = partnerSystemFilter;
+      if (thirdPartyFilter) (params as any).thirdParty = thirdPartyFilter;
+      if (statusFilter) (params as any).isActive = statusFilter === 'active';
       const response = await errorMasterService.getAll(params);
-      const mappedData = (response.data || []).map((em) => ({ ...em, id: em.id || em._id }));
-      setErrorMasters(mappedData);
-      const total = response.pagination?.totalItems ?? (response.pagination as any)?.total ?? response.total ?? 0;
-      setTotalRecords(total);
+      setErrorMasters((response.data || []).map((em) => ({ ...em, id: em.id || em._id })));
+      setTotalRecords(response.pagination?.totalItems ?? (response.pagination as any)?.total ?? response.total ?? 0);
     } catch (error) {
-      console.error('Failed to fetch error masters:', error);
       showError(extractErrorMessage(error, 'Failed to load error masters'));
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearchFilter, errorSeverityFilter, sourceTypeFilter, pageSize, sortField, sortOrder, showError]);
+  }, [debouncedSearch, errorSeverityFilter, sourceTypeFilter, errorTypeFilter, businessAreaFilter, technicalAreaFilter, partnerSystemFilter, thirdPartyFilter, statusFilter, pageSize, showError]);
 
-  // Reset to first page when filters change
-  useEffect(() => {
-    setFirst(0);
-    fetchErrorMasters(1, pageSize);
-  }, [debouncedSearchFilter, errorSeverityFilter, sourceTypeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setFirst(0); fetchData(1); }, [debouncedSearch, errorSeverityFilter, sourceTypeFilter, errorTypeFilter, businessAreaFilter, technicalAreaFilter, partnerSystemFilter, thirdPartyFilter, statusFilter]); // eslint-disable-line
 
-  const handleView = (id: string | number) => navigateToView(String(id));
-  const handleEdit = (id: string | number) => navigateToEdit(String(id));
-
-  const handleDeleteClick = (id: string | number) => {
-    setSelectedErrorId(id as string);
-    setDeleteDialogOpen(true);
+  const handlePageChange = (e: any) => {
+    const newPage = Math.floor(e.first / e.rows) + 1;
+    setFirst(e.first);
+    setPageSize(e.rows);
+    fetchData(newPage, e.rows);
   };
 
+  const handleDeleteClick = (id: string) => { setSelectedErrorId(id); setDeleteDialogOpen(true); };
   const handleDeleteConfirm = async () => {
     if (!selectedErrorId) return;
     try {
       setDeleteLoading(true);
       await errorMasterService.delete(selectedErrorId);
-      setDeleteDialogOpen(false);
-      setSelectedErrorId(null);
-      fetchErrorMasters(Math.floor(first / pageSize) + 1, pageSize, sortField, sortOrder);
+      setDeleteDialogOpen(false); setSelectedErrorId(null);
+      fetchData(Math.floor(first / pageSize) + 1, pageSize);
     } catch (error: any) {
-      console.error('Failed to delete error master:', error);
-      setDeleteDialogOpen(false);
-      setSelectedErrorId(null);
-      showError(extractErrorMessage(error, 'Failed to delete error master'));
-    } finally {
-      setDeleteLoading(false);
-    }
+      setDeleteDialogOpen(false); showError(extractErrorMessage(error, 'Failed to delete'));
+    } finally { setDeleteLoading(false); }
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteDialogOpen(false);
-    setSelectedErrorId(null);
-  };
+  // Export to styled Excel
+  const [exporting, setExporting] = useState(false);
+  const handleExportExcel = useCallback(async () => {
+    setExporting(true);
+    try {
+      const XLSX = await import('xlsx-js-style');
 
-  const getSeverityColor = (severity: string): 'danger' | 'warning' | 'info' | 'success' | 'secondary' => {
-    switch (severity?.toUpperCase()) {
-      case 'CRITICAL': return 'danger';
-      case 'HIGH': return 'warning';
-      case 'MEDIUM': return 'info';
-      case 'LOW': return 'success';
-      default: return 'secondary';
-    }
-  };
-
-  const severityOptions = [
-    { label: 'All Severities', value: '' },
-    ...errorSeverityItems.map((item) => ({ label: item.label, value: item.code })),
-  ];
-
-  const sourceTypeOptions = [
-    { label: 'All Source Types', value: '' },
-    ...sourceTypeItems.map((item) => ({ label: item.label, value: item.code })),
-  ];
-
-  const fetchExportBlob = useCallback(() => errorMasterService.export(), []);
-
-  const clearFilters = () => {
-    setSearchFilter('');
-    setErrorSeverityFilter('');
-    setSourceTypeFilter('');
-  };
-
-  const hasActiveFilters = searchFilter || errorSeverityFilter || sourceTypeFilter;
-
-  // Fetch all records for summary stats — re-fetches when filters change
-  const [allRecords, setAllRecords] = useState<ErrorMaster[]>([]);
-  const [allRecordsLoaded, setAllRecordsLoaded] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    const fetchAllForStats = async () => {
-      try {
-        const params: any = { page: 1, pageSize: 5000 };
-        if (debouncedSearchFilter) params.q = debouncedSearchFilter;
+      // Fetch all records matching current filters
+      const allData: any[] = [];
+      let pg = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const params: any = { page: pg, pageSize: 200 };
+        if (debouncedSearch) params.q = debouncedSearch;
         if (errorSeverityFilter) params.errorSeverity = errorSeverityFilter;
         if (sourceTypeFilter) params.sourceType = sourceTypeFilter;
-
-        const response = await errorMasterService.getAll(params);
-        if (!cancelled) {
-          setAllRecords((response.data || []) as ErrorMaster[]);
-          setAllRecordsLoaded(true);
-        }
-      } catch {
-        if (!cancelled) setAllRecordsLoaded(true);
+        if (errorTypeFilter) params.errorType = errorTypeFilter;
+        if (businessAreaFilter) params.businessArea = businessAreaFilter;
+        if (technicalAreaFilter) params.technicalArea = technicalAreaFilter;
+        if (partnerSystemFilter) params.partnerSystem = partnerSystemFilter;
+        if (thirdPartyFilter) params.thirdParty = thirdPartyFilter;
+        if (statusFilter) params.isActive = statusFilter === 'active';
+        const res = await errorMasterService.getAll(params);
+        allData.push(...(res.data || []));
+        const total = res.pagination?.totalItems ?? res.total ?? 0;
+        hasMore = allData.length < total;
+        pg++;
+        if (pg > 100) break;
       }
+
+      // Styles
+      const titleStyle = { font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4F46E5' } }, alignment: { horizontal: 'center' } };
+      const headerStyle = { font: { bold: true, sz: 10, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '374151' } }, alignment: { horizontal: 'center' }, border: { bottom: { style: 'thin', color: { rgb: '9CA3AF' } } } };
+      const sevColors: Record<string, string> = { CRITICAL: 'DC2626', HIGH: 'EA580C', MEDIUM: 'CA8A04', LOW: '2563EB' };
+
+      // Build rows
+      const headers = ['Error Code', 'Type', 'Severity', 'Message (EN)', 'Status', 'Log', 'Source Type', 'Source Name', 'App Code', 'Business Area', 'Technical Area', 'Tool', 'Partner System', 'Third Party', 'Created'];
+      const rows = allData.map((em: any) => {
+        const enMsg = em.messages?.find((m: any) => m.language === 'en');
+        return [
+          em.errorCode || '', (em as any).errorType || '', em.errorSeverity || '',
+          enMsg?.template || em.messages?.[0]?.template || '',
+          em.isActive ? 'Active' : 'Inactive', em.log ? 'On' : 'Off',
+          (em as any).sourceType || '', (em as any).sourceName || '', (em as any).appCode || '',
+          em.businessArea || '', em.technicalArea || '', em.tool || '',
+          em.partnerSystem || '', em.thirdParty || '',
+          em.createdAt ? new Date(em.createdAt).toLocaleDateString() : '',
+        ];
+      });
+
+      // Title row
+      const sheetData = [['Error Master Export', ...Array(headers.length - 1).fill('')], headers, ...rows];
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      ws['!cols'] = [{ wch: 48 }, { wch: 12 }, { wch: 12 }, { wch: 50 }, { wch: 10 }, { wch: 6 }, { wch: 12 }, { wch: 20 }, { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 12 }];
+      ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: headers.length - 1 } }];
+
+      // Apply styles
+      const applyStyle = (row: number, col: number, style: any) => {
+        const addr = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!ws[addr]) ws[addr] = { v: '', t: 's' };
+        ws[addr].s = style;
+      };
+
+      // Title
+      for (let c = 0; c < headers.length; c++) applyStyle(0, c, titleStyle);
+      // Headers
+      for (let c = 0; c < headers.length; c++) applyStyle(1, c, headerStyle);
+
+      // Data rows — stripe + severity color
+      for (let i = 0; i < rows.length; i++) {
+        const rowIdx = i + 2;
+        const bg = i % 2 === 0 ? 'FFFFFF' : 'F9FAFB';
+        for (let c = 0; c < headers.length; c++) {
+          const addr = XLSX.utils.encode_cell({ r: rowIdx, c });
+          if (!ws[addr]) continue;
+          ws[addr].s = { font: { sz: 9 }, fill: { fgColor: { rgb: bg } }, border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } } };
+        }
+        // Color severity cell (col 2)
+        const sevAddr = XLSX.utils.encode_cell({ r: rowIdx, c: 2 });
+        if (ws[sevAddr]) {
+          const sev = (ws[sevAddr].v || '').toString().toUpperCase();
+          if (sevColors[sev]) {
+            ws[sevAddr].s = { font: { bold: true, sz: 9, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: sevColors[sev] } }, alignment: { horizontal: 'center' }, border: { bottom: { style: 'thin', color: { rgb: 'E5E7EB' } } } };
+          }
+        }
+      }
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Error Master');
+      XLSX.writeFile(wb, 'error-master-export.xlsx');
+    } catch (err) {
+      console.error('Export failed:', err);
+      toast.current?.show({ severity: 'error', summary: 'Export Failed', detail: 'Could not generate Excel file', life: 3000 });
+    } finally {
+      setExporting(false);
+    }
+  }, [debouncedSearch, errorSeverityFilter, sourceTypeFilter, errorTypeFilter, businessAreaFilter, technicalAreaFilter, partnerSystemFilter, thirdPartyFilter, statusFilter]);
+
+  // Overview stats — fetch counts for all records (not just current page)
+  const [overviewStats, setOverviewStats] = useState<{ active: number; critical: number; high: number; medium: number; low: number }>({ active: 0, critical: 0, high: 0, medium: 0, low: 0 });
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCounts = async () => {
+      try {
+        const baseParams: any = { page: 1, pageSize: 1 };
+        if (debouncedSearch) baseParams.q = debouncedSearch;
+        if (sourceTypeFilter) baseParams.sourceType = sourceTypeFilter;
+        if (errorTypeFilter) baseParams.errorType = errorTypeFilter;
+        if (businessAreaFilter) baseParams.businessArea = businessAreaFilter;
+        if (technicalAreaFilter) baseParams.technicalArea = technicalAreaFilter;
+        if (partnerSystemFilter) baseParams.partnerSystem = partnerSystemFilter;
+        if (thirdPartyFilter) baseParams.thirdParty = thirdPartyFilter;
+        if (statusFilter) baseParams.isActive = statusFilter === 'active';
+
+        const [activeRes, critRes, highRes, medRes, lowRes] = await Promise.all([
+          errorMasterService.getAll({ ...baseParams, errorSeverity: errorSeverityFilter || undefined }),
+          errorMasterService.getAll({ ...baseParams, errorSeverity: 'CRITICAL' }),
+          errorMasterService.getAll({ ...baseParams, errorSeverity: 'HIGH' }),
+          errorMasterService.getAll({ ...baseParams, errorSeverity: 'MEDIUM' }),
+          errorMasterService.getAll({ ...baseParams, errorSeverity: 'LOW' }),
+        ]);
+        if (cancelled) return;
+        setOverviewStats({
+          active: activeRes.pagination?.totalItems ?? activeRes.total ?? 0,
+          critical: critRes.pagination?.totalItems ?? critRes.total ?? 0,
+          high: highRes.pagination?.totalItems ?? highRes.total ?? 0,
+          medium: medRes.pagination?.totalItems ?? medRes.total ?? 0,
+          low: lowRes.pagination?.totalItems ?? lowRes.total ?? 0,
+        });
+      } catch { /* ignore */ }
     };
-    fetchAllForStats();
+    fetchCounts();
     return () => { cancelled = true; };
-  }, [debouncedSearchFilter, errorSeverityFilter, sourceTypeFilter]);
+  }, [debouncedSearch, errorSeverityFilter, sourceTypeFilter, errorTypeFilter, businessAreaFilter, technicalAreaFilter, partnerSystemFilter, thirdPartyFilter, statusFilter]);
 
-  // Summary stats computed from all filtered records
-  const summaryStats = useMemo(() => {
-    const source = allRecordsLoaded ? allRecords : errorMasters;
-    const severityCounts: Record<string, number> = {};
-    const typeCounts: Record<string, number> = {};
-    const sourceTypeCounts: Record<string, number> = {};
-    let activeCount = 0;
+  const getSeverityTag = (sev: string) => {
+    const s = (sev || '').toUpperCase();
+    const map: Record<string, 'danger' | 'warning' | 'info' | 'success'> = { CRITICAL: 'danger', HIGH: 'warning', MEDIUM: 'info', LOW: 'success' };
+    return s ? <Tag value={s} severity={map[s] || 'secondary' as any} className="text-xs" /> : <span style={{ fontSize: '0.75rem' }} className="text-gray-400">-</span>;
+  };
 
-    source.forEach((em) => {
-      const sev = (em.errorSeverity || '').toUpperCase();
-      if (sev) severityCounts[sev] = (severityCounts[sev] || 0) + 1;
-      const type = (em as any).errorType || 'Unknown';
-      typeCounts[type] = (typeCounts[type] || 0) + 1;
-      const st = ((em as any).sourceType || '').toUpperCase();
-      if (st) sourceTypeCounts[st] = (sourceTypeCounts[st] || 0) + 1;
-      if (!(em as any).isDelete && !em.isDeleted) activeCount++;
+  // Table columns
+  const columns: DataTableColumn<ErrorMaster & { id: string }>[] = useMemo(() => {
+    const cols: DataTableColumn<ErrorMaster & { id: string }>[] = [
+      {
+        field: 'createdAt', header: 'Created', sortable: true, style: { width: '95px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-500 whitespace-nowrap">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-'}</span>,
+      },
+      {
+        field: 'errorCode', header: 'Error Code', sortable: true, style: { minWidth: '200px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.8rem' }} className="font-semibold text-gray-900 dark:text-white break-all">{r.errorCode}</span>,
+      },
+      {
+        field: 'errorType', header: 'Type', sortable: true, style: { width: '80px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600">{(r as any).errorType || '-'}</span>,
+      },
+      {
+        field: 'errorSeverity', header: 'Severity', sortable: true, style: { width: '85px' },
+        body: (r: ErrorMaster) => getSeverityTag(r.errorSeverity),
+      },
+      {
+        field: 'messages', header: 'Message (EN)', sortable: false, style: { minWidth: '180px' },
+        body: (r: ErrorMaster) => {
+          const en = r.messages?.find((m) => m.language === 'en');
+          const msg = en?.template || r.messages?.[0]?.template || '-';
+          return <span style={{ fontSize: '0.75rem' }} className="text-gray-500 line-clamp-1" data-pr-tooltip={msg}>{msg}</span>;
+        },
+      },
+      {
+        field: 'isActive', header: 'Status', sortable: true, style: { width: '70px' },
+        body: (r: ErrorMaster) => <Tag value={r.isActive ? 'Active' : 'Inactive'} severity={r.isActive ? 'success' : 'secondary'} className="text-xs" />,
+      },
+      {
+        field: 'log', header: 'Log', sortable: true, style: { width: '55px' },
+        body: (r: ErrorMaster) => <Tag value={r.log ? 'On' : 'Off'} severity={r.log ? 'success' : 'secondary'} className="text-xs" />,
+      },
+      {
+        field: 'sourceType', header: 'Source Type', sortable: true, style: { width: '90px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600">{(r as any).sourceType || '-'}</span>,
+      },
+      {
+        field: 'sourceName', header: 'Source Name', sortable: true, style: { width: '110px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600 truncate block max-w-[120px]" title={(r as any).sourceName || ''}>{(r as any).sourceName || '-'}</span>,
+      },
+      {
+        field: 'businessArea', header: 'Business Area', sortable: true, style: { width: '110px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600 truncate block max-w-[120px]" title={r.businessArea || ''}>{r.businessArea || '-'}</span>,
+      },
+      {
+        field: 'technicalArea', header: 'Technical Area', sortable: true, style: { width: '110px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600 truncate block max-w-[120px]" title={r.technicalArea || ''}>{r.technicalArea || '-'}</span>,
+      },
+      {
+        field: 'tool', header: 'Tool', sortable: true, style: { width: '80px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600">{r.tool || '-'}</span>,
+      },
+      {
+        field: 'partnerSystem', header: 'Partner System', sortable: true, style: { width: '110px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600 truncate block max-w-[120px]" title={r.partnerSystem || ''}>{r.partnerSystem || '-'}</span>,
+      },
+      {
+        field: 'thirdParty', header: 'Third Party', sortable: true, style: { width: '90px' },
+        body: (r: ErrorMaster) => <span style={{ fontSize: '0.75rem' }} className="text-gray-600">{r.thirdParty || '-'}</span>,
+      },
+    ];
+
+    // Actions column
+    cols.push({
+      field: 'actions', header: 'Actions', sortable: false,
+      headerStyle: { textAlign: 'center' },
+      frozen: true, alignFrozen: 'right',
+      headerStyle: { textAlign: 'center', width: '110px' },
+      style: { width: '110px', textAlign: 'center' },
+      body: (r: ErrorMaster & { id: string }) => {
+        const isDeleted = (r as any).isDelete || r.isDeleted;
+        return (
+          <div className="flex gap-3 justify-center">
+            <i className="pi pi-eye" style={{ fontSize: '1rem', color: '#16a34a', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); navigateToView(r.id); }} title="View" />
+            {!isDeleted && canUpdate && (
+              <i className="pi pi-pencil" style={{ fontSize: '1rem', color: '#2563eb', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); navigateToEdit(r.id); }} title="Edit" />
+            )}
+            {!isDeleted && canDelete && (
+              <i className="pi pi-trash" style={{ fontSize: '1rem', color: '#dc2626', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleDeleteClick(r.id); }} title="Delete" />
+            )}
+          </div>
+        );
+      },
     });
 
-    return { severityCounts, typeCounts, sourceTypeCounts, activeCount };
-  }, [allRecords, allRecordsLoaded, errorMasters]);
-
-  // Pagination
-  const totalPages = Math.ceil(totalRecords / pageSize);
-  const currentPage = Math.floor(first / pageSize) + 1;
-  const hasPrevPage = currentPage > 1;
-  const hasNextPage = currentPage < totalPages;
-
-  const handlePrevPage = () => {
-    if (hasPrevPage) {
-      const newPage = currentPage - 1;
-      setFirst((newPage - 1) * pageSize);
-      fetchErrorMasters(newPage, pageSize, sortField, sortOrder);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (hasNextPage) {
-      const newPage = currentPage + 1;
-      setFirst((newPage - 1) * pageSize);
-      fetchErrorMasters(newPage, pageSize, sortField, sortOrder);
-    }
-  };
-
-  const handleRowsChange = (rows: number) => {
-    setFirst(0);
-    setPageSize(rows);
-    fetchErrorMasters(1, rows, sortField, sortOrder);
-  };
-
-  // Loading skeleton
-  if (loading && errorMasters.length === 0) {
-    return (
-      <PermissionGuard jobName={JOB_NAMES.ERROR_MASTER}>
-        <div className="py-2 px-3">
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton width="280px" height="32px" />
-            <div className="flex gap-2">
-              <Skeleton width="90px" height="32px" />
-              <Skeleton width="32px" height="32px" />
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {[1, 2, 3, 4].map((i) => (<Skeleton key={i} height="80px" />))}
-          </div>
-          {[1, 2, 3].map((i) => (<Skeleton key={i} height="70px" className="mb-3" />))}
-        </div>
-      </PermissionGuard>
-    );
-  }
+    return cols;
+  }, [canUpdate, canDelete]);
 
   return (
     <PermissionGuard jobName={JOB_NAMES.ERROR_MASTER}>
       <Toast ref={toast} position="top-right" />
-      <div className="py-2 px-3" data-testid="SCR-ErrorMaster-List">
+      <div className={styles.container} data-testid="SCR-ErrorMaster-List">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+        {/* Page Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
           <div>
-            <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-sky-500">
-              Error Master Management
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Manage error definitions, severity levels, and localized messages
-            </p>
+            <div className={styles.headerContent}>
+              <div className={styles.headerIcon}>
+                <i className="pi pi-exclamation-triangle" />
+              </div>
+              <h1 className={styles.title}>Error Master</h1>
+            </div>
+            <p className={styles.subtitle}>Manage error definitions, severity levels, and localized messages</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 border border-gray-200 dark:border-gray-600 rounded-md px-2 py-1">
-              {totalRecords} {totalRecords === 1 ? 'definition' : 'definitions'}
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <button
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => fetchData(Math.floor(first / pageSize) + 1, pageSize)}
               className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-              title="Toggle Filters"
+              title="Refresh"
+              data-testid="ErrorMasterList.Button.Refresh"
             >
-              <i className="pi pi-filter text-gray-500 dark:text-gray-400" style={{ fontSize: '0.875rem' }} />
+              <i className={`pi pi-refresh text-gray-500 dark:text-gray-400 ${loading ? 'pi-spin' : ''}`} style={{ fontSize: '0.875rem' }} />
             </button>
-            <ExportDataButton fetchBlob={fetchExportBlob} filename="error-masters-export.xlsx" testId="ErrorMasterList.Button.Export" />
-            <RefreshButton onClick={() => fetchErrorMasters(currentPage, pageSize, sortField, sortOrder)} loading={loading} testId="ErrorMasterList.Button.Refresh" />
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="flex items-center justify-center w-8 h-8 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to Excel"
+              data-testid="ErrorMasterList.Button.Export"
+            >
+              <i className={`pi ${exporting ? 'pi-spin pi-spinner' : 'pi-download'} text-green-600`} style={{ fontSize: '0.875rem' }} />
+            </button>
             {canCreate && (
-              <Button label="Create Error" icon="pi pi-plus" onClick={() => navigateToCreate()} testId="ErrorMasterList.Button.Create" size="small" />
+              <button
+                onClick={() => navigateToCreate()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-medium cursor-pointer border-none hover:bg-indigo-700 transition-colors"
+                data-testid="ErrorMasterList.Button.Create"
+              >
+                <i className="pi pi-plus" style={{ fontSize: '0.75rem' }} />
+                Create Error
+              </button>
             )}
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem', marginBottom: '0.625rem' }}>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Total Definitions</p>
-            <p className="text-2xl font-black" style={{ color: '#7c3aed' }}>{totalRecords}</p>
+        {/* Overview Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '0.625rem', marginBottom: '0.75rem' }}>
+          <div className={`${styles.overviewCard} ${styles.cardTotal}`}>
+            <p className={styles.overviewLabel}>Total Definitions</p>
+            <p className={styles.overviewValue}>{totalRecords}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Active</p>
-            <p className="text-2xl font-black" style={{ color: '#059669' }}>{summaryStats.activeCount}</p>
+          <div className={`${styles.overviewCard} ${styles.cardActive}`}>
+            <p className={styles.overviewLabel}>Active</p>
+            <p className={styles.overviewValue}>{overviewStats.active}</p>
           </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Critical</p>
-            <p className="text-2xl font-black" style={{ color: '#dc2626' }}>{summaryStats.severityCounts['CRITICAL'] || 0}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">High Severity</p>
-            <p className="text-2xl font-black" style={{ color: '#ea580c' }}>{summaryStats.severityCounts['HIGH'] || 0}</p>
+          {/* Severity Distribution */}
+          <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
+            <p style={{ fontSize: '0.85rem', fontWeight: 600, color: '#111827', marginBottom: '0.625rem' }}>Severity Distribution</p>
+            {(() => {
+              const items: [string, number, string, string][] = [
+                ['LOW', overviewStats.low, '#22c55e', '#16a34a'],
+                ['MEDIUM', overviewStats.medium, '#6366f1', '#4f46e5'],
+                ['HIGH', overviewStats.high, '#f97316', '#ea580c'],
+                ['CRITICAL', overviewStats.critical, '#ef4444', '#dc2626'],
+              ];
+              const maxCount = Math.max(...items.map(([, c]) => c), 1);
+              return items.map(([sev, count, barColor, labelColor]) => {
+                const pct = Math.max((count / maxCount) * 100, count > 0 ? 3 : 0);
+                return (
+                  <div key={sev} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, width: '60px', flexShrink: 0, color: labelColor }}>{sev}</span>
+                    <div style={{ flex: 1, height: '10px', background: '#f3f4f6', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: '999px', width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`, transition: 'width 0.5s ease' }} />
+                    </div>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#4338ca', width: '50px', textAlign: 'right', flexShrink: 0 }}>{count.toLocaleString()}</span>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
 
-        {/* Breakdown Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.625rem', marginBottom: '0.625rem' }}>
-          {/* By Severity */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">By Severity</h4>
-            {Object.keys(summaryStats.severityCounts).length > 0 ? (
-              ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].filter((sev) => summaryStats.severityCounts[sev]).map((sev) => (
-                <div key={sev} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                  <span className="text-xs text-gray-600 dark:text-gray-300">{sev}</span>
-                  <Tag value={String(summaryStats.severityCounts[sev])} severity={getSeverityColor(sev)} className="text-xs font-bold" />
-                </div>
-              ))
-            ) : (<p className="text-xs text-gray-400">No data</p>)}
-          </div>
+        {/* Main Card */}
+        <div className={styles.card}>
+          <div className={styles.cardContent}>
 
-          {/* By Error Type */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">By Error Type</h4>
-            {Object.keys(summaryStats.typeCounts).length > 0 ? (
-              Object.entries(summaryStats.typeCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
-                <div key={type} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                  <span className="text-xs text-gray-600 dark:text-gray-300">{type}</span>
-                  <Tag value={String(count)} className="text-xs" />
-                </div>
-              ))
-            ) : (<p className="text-xs text-gray-400">No data</p>)}
-          </div>
-
-          {/* By Source Type */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">By Source Type</h4>
-            {Object.keys(summaryStats.sourceTypeCounts).length > 0 ? (
-              Object.entries(summaryStats.sourceTypeCounts).sort((a, b) => b[1] - a[1]).map(([st, count]) => (
-                <div key={st} className="flex justify-between items-center py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                  <div className="flex items-center gap-1.5">
-                    <i className={`${getSourceTypeIcon(st)} text-gray-400`} style={{ fontSize: '0.625rem' }} />
-                    <span className="text-xs text-gray-600 dark:text-gray-300">{st}</span>
-                  </div>
-                  <Tag value={String(count)} className="text-xs" />
-                </div>
-              ))
-            ) : (<p className="text-xs text-gray-400">No data</p>)}
-          </div>
-        </div>
-
-        {/* Filters (Collapsible) */}
-        {showFilters && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 shadow-sm" style={{ padding: '0.625rem 0.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: '160px' }}>
-                <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>Search</label>
-                <Input name="search" placeholder="Search errors..." value={searchFilter} onChange={(value: string) => setSearchFilter(value)} testId="ErrorMasterList.Filter.Search" clearable className="w-full" />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: '150px' }}>
-                <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>Source Type</label>
-                <Dropdown value={sourceTypeFilter} options={sourceTypeOptions} onChange={(e: { value: string }) => setSourceTypeFilter(e.value || '')} placeholder="Source Type" className="w-full" data-testid="ErrorMasterList.Filter.SourceType" resetFilterOnHide={true} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', flex: 1, minWidth: '150px' }}>
-                <label style={{ fontSize: '0.6875rem', fontWeight: 500, color: '#6b7280', textTransform: 'uppercase' }}>Severity</label>
-                <Dropdown value={errorSeverityFilter} options={severityOptions} onChange={(e: { value: string }) => setErrorSeverityFilter(e.value || '')} placeholder="Severity" className="w-full" data-testid="ErrorMasterList.Filter.ErrorSeverity" resetFilterOnHide={true} />
-              </div>
-              {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-xs text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-transparent">
-                  Clear filters
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Loading indicator */}
-        {loading && (
-          <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden mb-2">
-            <div className="h-full bg-indigo-500 rounded animate-pulse" style={{ width: '60%' }} />
-          </div>
-        )}
-
-        {/* Error Master Cards */}
-        <div className="flex flex-col gap-2.5">
-          {errorMasters.map((em) => {
-            const cardId = em.id || em._id;
-            const isExpanded = expandedId === cardId;
-            const sev = (em.errorSeverity || '').toUpperCase();
-            const isDeleted = (em as any).isDelete || em.isDeleted;
-
-            return (
-              <div key={cardId} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm transition-all" style={{ border: `1px solid ${isExpanded ? '#4f46e5' : '#e5e7eb'}`, borderLeft: `4px solid ${severityColor[sev] || '#94a3b8'}`, opacity: isDeleted ? 0.6 : 1 }}>
-                <div style={{ padding: isExpanded ? '0.875rem 1rem 0.5rem' : '0.875rem 1rem' }}>
-                  {/* Main row */}
-                  <div className="flex justify-between items-start cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : cardId)}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1.5">{em.errorCode}</p>
-                      <div className="flex gap-1.5 flex-wrap items-center">
-                        {(em as any).errorType && (
-                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded" style={{ backgroundColor: '#f1f5f9', color: '#334155', fontWeight: 500 }}>{(em as any).errorType}</span>
-                        )}
-                        <Tag value={sev || 'N/A'} severity={getSeverityColor(sev)} style={{ fontSize: '0.625rem', padding: '0.125rem 0.375rem' }} />
-                        {(em as any).sourceType && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 text-gray-500">
-                            <i className={getSourceTypeIcon((em as any).sourceType)} style={{ fontSize: '0.5rem' }} />
-                            {(em as any).sourceType}
-                          </span>
-                        )}
-                        {(em as any).sourceName && (
-                          <span className="inline-flex items-center text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 text-gray-500">{(em as any).sourceName}</span>
-                        )}
-                        <Tag value={em.isActive ? 'Active' : 'Inactive'} severity={em.isActive ? 'success' : 'secondary'} style={{ fontSize: '0.625rem', padding: '0.125rem 0.375rem' }} />
-                        {(em as any).appCode && (
-                          <span className="text-xs text-gray-400 ml-auto whitespace-nowrap font-mono">{(em as any).appCode}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions + Expand */}
-                    <div className="flex items-center gap-1 ml-2">
-                      {!isDeleted && (
-                        <>
-                          <button className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors bg-transparent border-none cursor-pointer" onClick={(e) => { e.stopPropagation(); handleView(cardId); }} data-testid="ErrorMasterList.Action.View" data-pr-tooltip="View">
-                            <i className="pi pi-eye text-green-600 dark:text-green-400" style={{ fontSize: '0.875rem' }} />
-                          </button>
-                          {canUpdate && (
-                            <button className="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors bg-transparent border-none cursor-pointer" onClick={(e) => { e.stopPropagation(); handleEdit(cardId); }} data-testid="ErrorMasterList.Action.Edit" data-pr-tooltip="Edit">
-                              <i className="pi pi-pencil text-blue-600" style={{ fontSize: '0.875rem' }} />
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors bg-transparent border-none cursor-pointer" onClick={(e) => { e.stopPropagation(); handleDeleteClick(cardId); }} data-testid="ErrorMasterList.Action.Delete" data-pr-tooltip="Delete">
-                              <i className="pi pi-trash text-red-600" style={{ fontSize: '0.875rem' }} />
-                            </button>
-                          )}
-                        </>
-                      )}
-                      <button className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer">
-                        <i className={`pi ${isExpanded ? 'pi-chevron-up' : 'pi-chevron-down'}`} style={{ fontSize: '0.875rem' }} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Expanded details */}
-                  {isExpanded && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      {/* Messages block */}
-                      {em.messages && em.messages.length > 0 && (
-                        <div className="rounded-md p-3 mb-3" style={{ backgroundColor: severityBg[sev] || '#f8fafc', borderLeft: `3px solid ${severityColor[sev] || '#94a3b8'}` }}>
-                          <p className="text-xs font-semibold mb-2" style={{ color: severityColor[sev] || '#64748b' }}>Localized Messages</p>
-                          {em.messages.map((msg, i) => (
-                            <div key={i} className="mb-1.5 last:mb-0">
-                              <span className="inline-block text-xs font-bold text-gray-500 uppercase mr-2 bg-white dark:bg-gray-700 px-1.5 py-0.5 rounded">{msg.language}</span>
-                              <span className="text-sm text-gray-700 dark:text-gray-300">{msg.template}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Details grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
-                        <DetailRow label="Error Code" value={em.errorCode} />
-                        <DetailRow label="Error Type" value={(em as any).errorType || '-'} />
-                        <DetailRow label="Severity" value={em.errorSeverity || '-'} />
-                        <DetailRow label="Source Type" value={(em as any).sourceType || '-'} />
-                        <DetailRow label="Source Name" value={(em as any).sourceName || '-'} />
-                        <DetailRow label="App Code" value={(em as any).appCode || '-'} />
-                        <DetailRow label="Business Area" value={em.businessArea || '-'} />
-                        <DetailRow label="Technical Area" value={em.technicalArea || '-'} />
-                        <DetailRow label="Tool" value={em.tool || '-'} />
-                        <DetailRow label="Partner System" value={em.partnerSystem || '-'} />
-                        <DetailRow label="Third Party" value={em.thirdParty || '-'} />
-                        <DetailRow label="Logging" value={em.log ? 'Enabled' : 'Disabled'} />
-                      </div>
-
-                      {/* Developer details */}
-                      {(em.devMessage || em.helpLink || em.videoLink) && (
-                        <details className="mb-2">
-                          <summary className="cursor-pointer text-xs text-gray-500 font-medium hover:text-gray-700 dark:hover:text-gray-300">Developer Information</summary>
-                          <div className="mt-2 grid grid-cols-1 gap-2 text-sm">
-                            {em.devMessage && <DetailRow label="Developer Message" value={em.devMessage} />}
-                            {em.helpLink && (
-                              <div>
-                                <p className="text-xs text-gray-400 mb-0.5">Help Link</p>
-                                <a href={em.helpLink} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 break-all" onClick={(e) => e.stopPropagation()}>
-                                  {em.helpLink} <i className="pi pi-external-link" style={{ fontSize: '0.75rem' }} />
-                                </a>
-                              </div>
-                            )}
-                            {em.videoLink && (
-                              <div>
-                                <p className="text-xs text-gray-400 mb-0.5">Video Link</p>
-                                <a href={em.videoLink} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1 break-all" onClick={(e) => e.stopPropagation()}>
-                                  {em.videoLink} <i className="pi pi-external-link" style={{ fontSize: '0.75rem' }} />
-                                </a>
-                              </div>
-                            )}
-                          </div>
-                        </details>
-                      )}
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
-                        <button className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-transparent border-none cursor-pointer flex items-center gap-1" onClick={(e) => { e.stopPropagation(); handleView(cardId); }}>
-                          <i className="pi pi-eye" style={{ fontSize: '0.75rem' }} /> View Full Details
-                        </button>
-                        <span className="text-xs text-gray-400">
-                          {em.createdAt ? `Created: ${new Date(em.createdAt).toLocaleDateString()}` : ''}
-                        </span>
-                      </div>
-                    </div>
+            {/* Filter Bar */}
+            <div className={styles.filterBar}>
+              <div className={styles.filterBarContent}>
+                <div className={styles.filterGroup} style={{ flexWrap: 'wrap', gap: '0.375rem' }}>
+                  <Input
+                    name="search"
+                    placeholder="Search error code or message..."
+                    value={searchFilter}
+                    onChange={(e: any) => setSearchFilter(e?.target?.value ?? e)}
+                    testId="ErrorMasterList.Search"
+                    style={{ minWidth: '200px', width: '200px' }}
+                    clearable
+                  />
+                  <Dropdown value={errorSeverityFilter} options={severityOptions} onChange={(e: { value: string }) => setErrorSeverityFilter(e.value || '')} placeholder="Severity" style={{ width: '130px' }} resetFilterOnHide={true} />
+                  <Dropdown value={errorTypeFilter} options={errorTypeOptions} onChange={(e: { value: string }) => setErrorTypeFilter(e.value || '')} placeholder="Error Type" style={{ width: '130px' }} resetFilterOnHide={true} />
+                  <Dropdown value={sourceTypeFilter} options={sourceTypeOptions} onChange={(e: { value: string }) => setSourceTypeFilter(e.value || '')} placeholder="Source Type" style={{ width: '130px' }} resetFilterOnHide={true} />
+                  <Dropdown value={businessAreaFilter} options={[{ label: 'All Business Areas', value: '' }, ...[...new Set(errorMasters.map((em) => em.businessArea).filter(Boolean))].map((v) => ({ label: v as string, value: v as string }))]} onChange={(e: { value: string }) => setBusinessAreaFilter(e.value || '')} placeholder="Business Area" style={{ width: '140px' }} filter filterPlaceholder="Search..." resetFilterOnHide={true} />
+                  <Dropdown value={technicalAreaFilter} options={[{ label: 'All Technical Areas', value: '' }, ...[...new Set(errorMasters.map((em) => em.technicalArea).filter(Boolean))].map((v) => ({ label: v as string, value: v as string }))]} onChange={(e: { value: string }) => setTechnicalAreaFilter(e.value || '')} placeholder="Technical Area" style={{ width: '140px' }} filter filterPlaceholder="Search..." resetFilterOnHide={true} />
+                  <Dropdown value={partnerSystemFilter} options={[{ label: 'All Partner Systems', value: '' }, ...[...new Set(errorMasters.map((em) => em.partnerSystem).filter(Boolean))].map((v) => ({ label: v as string, value: v as string }))]} onChange={(e: { value: string }) => setPartnerSystemFilter(e.value || '')} placeholder="Partner System" style={{ width: '140px' }} filter filterPlaceholder="Search..." resetFilterOnHide={true} />
+                  <Dropdown value={thirdPartyFilter} options={[{ label: 'All Third Parties', value: '' }, ...[...new Set(errorMasters.map((em) => em.thirdParty).filter(Boolean))].map((v) => ({ label: v as string, value: v as string }))]} onChange={(e: { value: string }) => setThirdPartyFilter(e.value || '')} placeholder="Third Party" style={{ width: '130px' }} filter filterPlaceholder="Search..." resetFilterOnHide={true} />
+                  <Dropdown value={statusFilter} options={[{ label: 'All Status', value: '' }, { label: 'Active', value: 'active' }, { label: 'Inactive', value: 'inactive' }]} onChange={(e: { value: string }) => setStatusFilter(e.value || '')} placeholder="Status" style={{ width: '120px' }} resetFilterOnHide={true} />
+                  {(searchFilter || errorSeverityFilter || sourceTypeFilter || errorTypeFilter || businessAreaFilter || technicalAreaFilter || partnerSystemFilter || thirdPartyFilter || statusFilter) && (
+                    <button onClick={() => { setSearchFilter(''); setErrorSeverityFilter(''); setSourceTypeFilter(''); setErrorTypeFilter(''); setBusinessAreaFilter(''); setTechnicalAreaFilter(''); setPartnerSystemFilter(''); setThirdPartyFilter(''); setStatusFilter(''); }} className="text-red-500 hover:text-red-700 bg-transparent border-none cursor-pointer p-1" title="Clear filters">
+                      <i className="pi pi-times-circle" style={{ fontSize: '1.1rem' }} />
+                    </button>
                   )}
                 </div>
               </div>
-            );
-          })}
+            </div>
 
-          {/* Empty state */}
-          {!loading && errorMasters.length === 0 && (
-            <div className="text-center py-12 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
-              <i className="pi pi-exclamation-triangle text-gray-300 mb-2" style={{ fontSize: '2rem' }} />
-              <p className="text-sm text-gray-400">No error masters found.</p>
+            {/* DataTable */}
+            <DataTable
+              data={errorMasters}
+              columns={columns}
+              loading={loading}
+              emptyMessage="No error masters found"
+              dataKey="id"
+              scrollable
+              scrollDirection="horizontal"
+              onRowClick={(e: any) => { setDetailData(e.data); setDetailOpen(true); }}
+              rowClassName={() => 'cursor-pointer'}
+            />
+          </div>
+
+          {/* Pagination */}
+          {totalRecords > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Rows:</span>
+                <select value={pageSize} onChange={(e) => { const s = Number(e.target.value); setPageSize(s); setFirst(0); fetchData(1, s); }}
+                  style={{ fontSize: '0.8rem', border: '1px solid #d1d5db', borderRadius: '4px', padding: '2px 6px', background: 'transparent', color: '#374151', cursor: 'pointer' }}>
+                  {[10, 25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
+                  Page {Math.floor(first / pageSize) + 1} of {Math.ceil(totalRecords / pageSize)} ({totalRecords})
+                </span>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <button onClick={() => { const p = Math.floor(first / pageSize); setFirst((p - 1) * pageSize); fetchData(p, pageSize); }} disabled={first === 0}
+                    style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', border: '1px solid #d1d5db', background: 'transparent', cursor: first === 0 ? 'not-allowed' : 'pointer', opacity: first === 0 ? 0.3 : 1 }}>
+                    <i className="pi pi-chevron-left" style={{ fontSize: '0.75rem', color: '#6b7280' }} />
+                  </button>
+                  <button onClick={() => { const p = Math.floor(first / pageSize) + 2; setFirst((p - 1) * pageSize); fetchData(p, pageSize); }} disabled={Math.floor(first / pageSize) + 1 >= Math.ceil(totalRecords / pageSize)}
+                    style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', border: '1px solid #d1d5db', background: 'transparent', cursor: Math.floor(first / pageSize) + 1 >= Math.ceil(totalRecords / pageSize) ? 'not-allowed' : 'pointer', opacity: Math.floor(first / pageSize) + 1 >= Math.ceil(totalRecords / pageSize) ? 0.3 : 1 }}>
+                    <i className="pi pi-chevron-right" style={{ fontSize: '0.75rem', color: '#6b7280' }} />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Pagination */}
-        {totalRecords > 0 && (
-          <div className="flex items-center justify-between mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">Rows per page:</span>
-              <select value={pageSize} onChange={(e) => handleRowsChange(Number(e.target.value))} className="text-xs border border-gray-300 dark:border-gray-600 rounded px-1.5 py-1 bg-transparent text-gray-700 dark:text-gray-300 cursor-pointer">
-                {[5, 10, 25, 50].map((n) => (<option key={n} value={n}>{n}</option>))}
-              </select>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500">Page {currentPage} of {totalPages} ({totalRecords} items)</span>
-              <div className="flex gap-1">
-                <button onClick={handlePrevPage} disabled={!hasPrevPage} className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <i className="pi pi-chevron-left" style={{ fontSize: '0.75rem' }} />
-                </button>
-                <button onClick={handleNextPage} disabled={!hasNextPage} className="w-7 h-7 flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 bg-transparent cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <i className="pi pi-chevron-right" style={{ fontSize: '0.75rem' }} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Tooltip target="[data-pr-tooltip]" />
       </div>
 
-      <Tooltip target="[data-pr-tooltip]" />
-      <DeleteConfirmDialog visible={deleteDialogOpen} onCancel={handleDeleteCancel} onDelete={handleDeleteConfirm} message="Are you sure you want to delete this error master? This action cannot be undone if the error is not referenced in any logs." testId="ErrorMasterList.Dialog.Delete" loading={deleteLoading} />
+      {/* Detail Dialog */}
+      <Dialog
+        visible={detailOpen}
+        onHide={() => { setDetailOpen(false); setDetailData(null); }}
+        header={
+          <div className="flex items-center gap-2">
+            <i className="pi pi-file text-indigo-500" style={{ fontSize: '1.1rem' }} />
+            <span style={{ fontSize: '1rem', fontWeight: 600 }}>Error Master Details</span>
+            {detailData?.errorCode && <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', background: '#4f46e5', color: '#fff', padding: '2px 8px', borderRadius: '4px' }}>{detailData.errorCode}</span>}
+          </div>
+        }
+        style={{ width: '750px', maxHeight: '90vh' }}
+        modal dismissableMask draggable={false} resizable={false}
+        footer={
+          <div className="flex justify-end gap-2">
+            {detailData && canUpdate && <Button label="Edit" icon="pi pi-pencil" size="small" severity="info" onClick={() => { setDetailOpen(false); navigateToEdit(detailData.id || (detailData as any)._id); }} />}
+            <Button label="View Full" icon="pi pi-eye" size="small" onClick={() => { setDetailOpen(false); if (detailData) navigateToView(detailData.id || (detailData as any)._id); }} />
+            <Button label="Close" icon="pi pi-times" size="small" severity="secondary" onClick={() => setDetailOpen(false)} />
+          </div>
+        }
+      >
+        {detailData && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              {getSeverityTag(detailData.errorSeverity)}
+              {(detailData as any).errorType && <Tag value={(detailData as any).errorType} />}
+              {(detailData as any).sourceType && <span style={{ fontSize: '0.8rem', color: '#4b5563', background: '#f3f4f6', padding: '2px 8px', borderRadius: '4px' }}>{(detailData as any).sourceType}</span>}
+              <Tag value={detailData.isActive ? 'Active' : 'Inactive'} severity={detailData.isActive ? 'success' : 'secondary'} />
+              {detailData.log !== undefined && <Tag value={detailData.log ? 'Log: On' : 'Log: Off'} severity={detailData.log ? 'success' : 'secondary'} />}
+            </div>
+
+            {detailData.messages && detailData.messages.length > 0 && (
+              <div style={{ background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: '0.5rem', padding: '0.75rem' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#4f46e5', marginBottom: '0.5rem' }}>Localized Messages</p>
+                {detailData.messages.map((msg, i) => (
+                  <div key={i} style={{ marginBottom: '0.375rem' }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', marginRight: '0.5rem', background: '#fff', padding: '1px 6px', borderRadius: '3px' }}>{msg.language}</span>
+                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>{msg.template}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem 1.5rem', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1rem' }}>
+              {([
+                ['Error Code', detailData.errorCode], ['Error Type', (detailData as any).errorType],
+                ['Severity', detailData.errorSeverity], ['Source Type', (detailData as any).sourceType],
+                ['Source Name', (detailData as any).sourceName], ['App Code', (detailData as any).appCode],
+                ['Module ID', (detailData as any).moduleId], ['Business Area', detailData.businessArea],
+                ['Technical Area', detailData.technicalArea], ['Tool', detailData.tool],
+                ['Partner System', detailData.partnerSystem], ['Third Party', detailData.thirdParty],
+                ['Logging', detailData.log ? 'Enabled' : 'Disabled'], ['Active', detailData.isActive ? 'Yes' : 'No'],
+                ['Created By', detailData.createdBy], ['Created At', detailData.createdAt ? new Date(detailData.createdAt).toLocaleString() : null],
+                ['Updated By', detailData.updatedBy], ['Updated At', detailData.updatedAt ? new Date(detailData.updatedAt).toLocaleString() : null],
+              ] as [string, any][]).map(([label, val]) => (
+                <div key={label} style={{ padding: '0.25rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                  <p style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 500 }}>{label}</p>
+                  <p style={{ fontSize: '0.875rem', color: '#1f2937', wordBreak: 'break-all' }}>{val || '-'}</p>
+                </div>
+              ))}
+            </div>
+
+            {(detailData.devMessage || detailData.helpLink || detailData.videoLink) && (
+              <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '0.75rem' }}>
+                <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#6b7280', marginBottom: '0.5rem' }}>Developer Information</p>
+                {detailData.devMessage && <div style={{ marginBottom: '0.375rem' }}><p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Dev Message</p><p style={{ fontSize: '0.875rem', color: '#374151', wordBreak: 'break-all' }}>{detailData.devMessage}</p></div>}
+                {detailData.helpLink && <div style={{ marginBottom: '0.375rem' }}><p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Help Link</p><a href={detailData.helpLink} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', color: '#2563eb', wordBreak: 'break-all' }}>{detailData.helpLink}</a></div>}
+                {detailData.videoLink && <div><p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Video Link</p><a href={detailData.videoLink} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', color: '#2563eb', wordBreak: 'break-all' }}>{detailData.videoLink}</a></div>}
+              </div>
+            )}
+          </div>
+        )}
+      </Dialog>
+
+      <DeleteConfirmDialog visible={deleteDialogOpen} onCancel={() => { setDeleteDialogOpen(false); setSelectedErrorId(null); }} onDelete={handleDeleteConfirm} message="Are you sure you want to delete this error master?" testId="ErrorMasterList.Dialog.Delete" loading={deleteLoading} />
     </PermissionGuard>
   );
 };
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-      <p className="text-sm text-gray-700 dark:text-gray-300 font-medium break-all">{value}</p>
-    </div>
-  );
-}
 
 export default ErrorMasterList;

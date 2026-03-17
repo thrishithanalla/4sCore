@@ -107,6 +107,7 @@ class ErrorMasterUpdateSchema(BaseModel):
     """Patch schema; errorCode immutable. updatedBy is set automatically from authenticated user token."""
     errorType: Optional[str] = Field(None, description="Must exist in 'errorType' value-set")
     errorSeverity: Optional[str] = Field(None, description="Must exist in 'errorSeverity' value-set")
+    isActive: Optional[bool] = Field(None, description="Active status. Setting to false also sets log=false.")
     log: Optional[bool] = None
     moduleId: Optional[str] = Field(None, description="Foreign key reference to modules collection _id")
     sourceType: Optional[str] = Field(None, description="Must exist in 'sourceType' value-set")

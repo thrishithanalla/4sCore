@@ -285,6 +285,7 @@ async def get_dashboard_data(
     )
     patterns = await _get_patterns(db, base_match, collections, start_date, end_date)
     impact = await _get_impact_analysis(db, base_match, collections, summary.totalErrors)
+    top_users = await _get_top_users(db, base_match, collections)
 
     return DashboardData(
         sourceTypes=source_types_list,
@@ -297,7 +298,145 @@ async def get_dashboard_data(
         pagination=pagination,
         patterns=patterns,
         impact=impact,
+        topUsers=top_users,
     )
+
+
+async def get_user_analytics(
+    db: AsyncIOMotorDatabase,
+    actor_user_id: str,
+    include_archive: bool = False,
+    records_limit: int = 200,
+) -> Dict[str, Any]:
+    """
+    Get analytics for a specific user: total errors, breakdown by severity/environment/errorCode,
+    and recent records. Uses $facet for a single efficient aggregation.
+    """
+    from bson import ObjectId as _ObjectId
+
+    # Try ObjectId first, fall back to string
+    try:
+        uid = _ObjectId(actor_user_id)
+    except Exception:
+        uid = actor_user_id
+
+    collections = await _get_collections(db, include_archive)
+
+    # Try both ObjectId and string match for actorUserId
+    user_match: Dict[str, Any] = {"actorUserId": {"$in": [uid, actor_user_id]}} if isinstance(uid, _ObjectId) else {"actorUserId": actor_user_id}
+
+    pipeline: List[Dict[str, Any]] = [
+        {"$match": user_match},
+        {"$facet": {
+            "total": [{"$count": "count"}],
+            "bySeverity": [
+                {"$group": {"_id": "$errorSeverity", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+            ],
+            "byEnvironment": [
+                {"$group": {"_id": "$environment", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+            ],
+            "byErrorCode": [
+                {"$group": {"_id": "$errorCode", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}},
+                {"$limit": 20},
+            ],
+            "records": [
+                {"$sort": {"eventDateTime": -1}},
+                {"$limit": records_limit},
+            ],
+        }},
+    ]
+
+    # Run across collections
+    merged: Dict[str, Any] = {
+        "total": 0,
+        "severities": {},
+        "environments": {},
+        "errorCodes": {},
+        "records": [],
+    }
+
+    for col in collections:
+        cursor = db[col].aggregate(pipeline)
+        results = await cursor.to_list(length=1)
+        if not results:
+            continue
+        r = results[0]
+
+        merged["total"] += (r["total"][0]["count"] if r.get("total") else 0)
+
+        for s in r.get("bySeverity", []):
+            if s["_id"]:
+                k = s["_id"]
+                merged["severities"][k] = merged["severities"].get(k, 0) + s["count"]
+
+        for e in r.get("byEnvironment", []):
+            if e["_id"]:
+                k = e["_id"]
+                merged["environments"][k] = merged["environments"].get(k, 0) + e["count"]
+
+        for ec in r.get("byErrorCode", []):
+            if ec["_id"]:
+                k = ec["_id"]
+                merged["errorCodes"][k] = merged["errorCodes"].get(k, 0) + ec["count"]
+
+        for doc in r.get("records", []):
+            doc["_id"] = str(doc["_id"])
+            if doc.get("actorUserId"):
+                doc["actorUserId"] = str(doc["actorUserId"])
+            if doc.get("eventDateTime"):
+                doc["eventDateTime"] = doc["eventDateTime"].isoformat()
+            merged["records"].append(doc)
+
+    # Sort merged records and limit
+    merged["records"].sort(key=lambda x: x.get("eventDateTime", ""), reverse=True)
+    merged["records"] = merged["records"][:records_limit]
+
+    return {
+        "totalErrors": merged["total"],
+        "severities": merged["severities"],
+        "environments": merged["environments"],
+        "errorCodes": merged["errorCodes"],
+        "records": merged["records"],
+    }
+
+
+async def _get_top_users(
+    db: AsyncIOMotorDatabase,
+    base_match: Dict[str, Any],
+    collections: List[str],
+    limit: int = 500,
+) -> List[Dict[str, Any]]:
+    """Get all users by error count (grouped by actorUserId), sorted desc"""
+    pipeline = [
+        {"$match": base_match},
+        {"$match": {"actorUserId": {"$ne": None}}},
+        {
+            "$group": {
+                "_id": "$actorUserId",
+                "count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"count": -1}},
+        {"$limit": limit},
+    ]
+
+    results = await _aggregate_across_collections(db, pipeline, collections)
+
+    # Merge across collections
+    user_counts: Dict[str, int] = {}
+    for r in results:
+        uid = r.get("_id")
+        if uid:
+            uid_str = str(uid)
+            user_counts[uid_str] = user_counts.get(uid_str, 0) + r.get("count", 0)
+
+    # Sort and limit
+    sorted_users = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
+
+    return [{"userId": uid, "count": cnt} for uid, cnt in sorted_users]
 
 
 async def _get_summary(
@@ -611,6 +750,7 @@ async def _get_error_groups(
                 "firstSeen": {"$min": "$eventDateTime"},
                 "lastSeen": {"$max": "$eventDateTime"},
                 "sourceName": {"$first": "$sourceName"},
+                "endpoint": {"$first": "$endpoint"},
                 "resolvedMessage": {"$first": "$resolvedMessage"},
                 "uniqueUsers": {"$addToSet": "$actorUserId"},
             }
@@ -624,6 +764,7 @@ async def _get_error_groups(
                 "firstSeen": 1,
                 "lastSeen": 1,
                 "sourceName": 1,
+                "endpoint": 1,
                 "resolvedMessage": 1,
                 "affectedUsers": {
                     "$size": {
@@ -657,6 +798,7 @@ async def _get_error_groups(
                 "firstSeen": r.get("firstSeen"),
                 "lastSeen": r.get("lastSeen"),
                 "sourceName": r.get("sourceName"),
+                "endpoint": r.get("endpoint"),
                 "resolvedMessage": r.get("resolvedMessage"),
                 "affectedUsers": 0,
             }
@@ -690,6 +832,7 @@ async def _get_error_groups(
             firstSeen=g.get("firstSeen"),
             lastSeen=g.get("lastSeen"),
             sourceName=g.get("sourceName"),
+            endpoint=g.get("endpoint"),
             resolvedMessage=g.get("resolvedMessage"),
         )
         for g in sorted_groups
@@ -738,6 +881,7 @@ async def _get_error_groups_paginated(
                 "firstSeen": {"$min": "$eventDateTime"},
                 "lastSeen": {"$max": "$eventDateTime"},
                 "sourceName": {"$first": "$sourceName"},
+                "endpoint": {"$first": "$endpoint"},
                 "resolvedMessage": {"$first": "$resolvedMessage"},
                 "uniqueUsers": {"$addToSet": "$actorUserId"},
             }
@@ -751,6 +895,7 @@ async def _get_error_groups_paginated(
                 "firstSeen": 1,
                 "lastSeen": 1,
                 "sourceName": 1,
+                "endpoint": 1,
                 "resolvedMessage": 1,
                 "affectedUsers": {
                     "$size": {
@@ -785,6 +930,7 @@ async def _get_error_groups_paginated(
                 "firstSeen": r.get("firstSeen"),
                 "lastSeen": r.get("lastSeen"),
                 "sourceName": r.get("sourceName"),
+                "endpoint": r.get("endpoint"),
                 "resolvedMessage": r.get("resolvedMessage"),
                 "affectedUsers": 0,
             }
@@ -818,6 +964,7 @@ async def _get_error_groups_paginated(
             firstSeen=g.get("firstSeen"),
             lastSeen=g.get("lastSeen"),
             sourceName=g.get("sourceName"),
+            endpoint=g.get("endpoint"),
             resolvedMessage=g.get("resolvedMessage"),
         )
         for g in sorted_groups

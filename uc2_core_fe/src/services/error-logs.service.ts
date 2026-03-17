@@ -45,4 +45,30 @@ export const errorLogsService = {
     const response = await api.post<ErrorLogDashboardResponse>('/api/v1/error-logs/dashboard', params || {});
     return response.data;
   },
+
+  // Get user analytics (server-side aggregation)
+  getUserAnalytics: async (actorUserId: string, includeArchive = false): Promise<any> => {
+    const response = await api.post('/api/v1/error-logs/user-analytics', { actorUserId, includeArchive });
+    return response.data;
+  },
+
+  // Search records with pagination
+  searchRecords: async (params: {
+    errorCode?: string;
+    errorSeverity?: string;
+    sourceType?: string;
+    sourceName?: string;
+    actorUserId?: string;
+    environment?: string;
+    endpoint?: string;
+    q?: string;
+    page?: number;
+    pageSize?: number;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+    includeArchive?: boolean;
+  }): Promise<any> => {
+    const response = await api.post('/api/v1/error-logs/search', params);
+    return response.data;
+  },
 };

@@ -372,6 +372,11 @@ async def list_error_masters_endpoint(
     errorType: Optional[str] = Query(None, description="Filter by error type (e.g., Business, Technical)"),
     sourceType: Optional[str] = Query(None, description="Filter by source type (e.g., API, UI, SCREEN, FUNCTION, THIRDPARTY)"),
     appCode: Optional[str] = Query(None, description="Filter by application code"),
+    businessArea: Optional[str] = Query(None, description="Filter by business area"),
+    technicalArea: Optional[str] = Query(None, description="Filter by technical area"),
+    partnerSystem: Optional[str] = Query(None, description="Filter by partner system"),
+    thirdParty: Optional[str] = Query(None, description="Filter by third party"),
+    isActive: Optional[bool] = Query(None, description="Filter by active status (true/false)"),
     createdFrom: Optional[datetime] = Query(None, description="Filter by creation date (from)"),
     createdTo: Optional[datetime] = Query(None, description="Filter by creation date (to)"),
     page: Optional[int] = Query(None, ge=1, description="Page number (1-indexed). If not provided, returns all records."),
@@ -416,14 +421,18 @@ async def list_error_masters_endpoint(
             data, total = await search_error_masters(
                 db=db, q=q, module_id=moduleId, severity=errorSeverity, err_type=errorType,
                 created_from=createdFrom, created_to=createdTo, limit=effective_page_size, offset=offset,
-                source_type=sourceType, app_code=appCode
+                source_type=sourceType, app_code=appCode,
+                business_area=businessArea, technical_area=technicalArea,
+                partner_system=partnerSystem, third_party=thirdParty, is_active=isActive
             )
         else:
             # No pagination - return all records
             data, total = await search_error_masters(
                 db=db, q=q, module_id=moduleId, severity=errorSeverity, err_type=errorType,
                 created_from=createdFrom, created_to=createdTo, limit=None, offset=0,
-                source_type=sourceType, app_code=appCode
+                source_type=sourceType, app_code=appCode,
+                business_area=businessArea, technical_area=technicalArea,
+                partner_system=partnerSystem, third_party=thirdParty, is_active=isActive
             )
 
         # Convert to dict for response

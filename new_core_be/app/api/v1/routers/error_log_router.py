@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, Query, Request, HTTPException, status
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -58,8 +58,9 @@ from app.api.v1.services.error_log_service import (
     run_error_log_archive_job,
     search_error_logs
 )
-from app.api.v1.services.error_log_dashboard_service import get_dashboard_data
+from app.api.v1.services.error_log_dashboard_service import get_dashboard_data, get_user_analytics
 from app.api.v1.utils.standard_response import ResponseBuilder, api_success, api_paginated
+from app.constants.collections import Collections
 from app.constants.jobs import Jobs
 from app.constants.api_constants import ErrorMessages, SuccessMessages, PermissionMessages, ModulePrefixes
 from app.constants.error_codes import ErrorCodes as CoreErrorCodes
@@ -403,6 +404,200 @@ async def export_csv_endpoint(
                 message=error_message,
                 error_code=CoreErrorCodes.ERROR_LOG_SEARCH_FAILED
             )
+        )
+
+
+@router.post(
+    "/search",
+    responses={
+        200: {"description": "Search results"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def search_error_logs_post(
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """
+    Search error logs via POST with pagination. Accepts JSON body with filters:
+    errorCode, errorSeverity, sourceType, sourceName, actorUserId, environment,
+    endpoint, page, pageSize, sort_by, sort_order, q
+    """
+    try:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        logger.info(f"POST /search body keys: {list(body.keys()) if body else 'empty'}")
+
+        import re as _re
+        q: Dict[str, Any] = {}
+        if body.get("errorCode"):
+            q["errorCode"] = {"$regex": _re.escape(body["errorCode"]), "$options": "i"}
+        if body.get("errorSeverity"):
+            q["errorSeverity"] = body["errorSeverity"]
+        if body.get("sourceType"):
+            q["sourceType"] = body["sourceType"]
+        if body.get("sourceName"):
+            q["sourceName"] = {"$regex": _re.escape(body["sourceName"]), "$options": "i"}
+        if body.get("actorUserId"):
+            # Try both ObjectId and string match to handle mixed storage
+            try:
+                from bson import ObjectId
+                oid = ObjectId(body["actorUserId"])
+                q["actorUserId"] = {"$in": [oid, body["actorUserId"]]}
+            except Exception:
+                q["actorUserId"] = body["actorUserId"]
+        if body.get("environment"):
+            q["environment"] = {"$regex": _re.escape(body["environment"]), "$options": "i"}
+        if body.get("endpoint"):
+            q["endpoint"] = {"$regex": _re.escape(body["endpoint"]), "$options": "i"}
+        if body.get("q"):
+            escaped_q = _re.escape(body["q"])
+            q["$or"] = [
+                {"resolvedMessage": {"$regex": escaped_q, "$options": "i"}},
+                {"errorCode": {"$regex": escaped_q, "$options": "i"}},
+            ]
+
+        logger.info(f"POST /search query: {q}")
+
+        # Pagination
+        page = int(body.get("page", 1))
+        page_size = int(body.get("pageSize", 50))
+        page_size = min(page_size, 500)  # cap at 500
+        skip = (page - 1) * page_size
+
+        # Sorting
+        sort_by = body.get("sort_by", "eventDateTime")
+        sort_order = -1 if body.get("sort_order", "desc") == "desc" else 1
+
+        collections = [Collections.ERROR_LOGS]
+        if body.get("includeArchive"):
+            collections.append("error_logs_archive")
+
+        # Get total count + unique error codes + unique users
+        total = 0
+        unique_codes: set = set()
+        unique_users: set = set()
+        for col_name in collections:
+            total += await db[col_name].count_documents(q)
+            codes = await db[col_name].distinct("errorCode", q)
+            unique_codes.update(c for c in codes if c)
+            users = await db[col_name].distinct("actorUserId", q)
+            unique_users.update(str(u) for u in users if u)
+
+        # Get paginated results
+        all_docs = []
+        for col_name in collections:
+            cursor = db[col_name].find(q).sort(sort_by, sort_order).skip(skip).limit(page_size)
+            docs = await cursor.to_list(length=page_size)
+            all_docs.extend(docs)
+
+        logger.info(f"POST /search found: {total} total, returning {len(all_docs)} records (page {page})")
+
+        data_list = []
+        for d in all_docs:
+            def _serialize(v):
+                if v is None:
+                    return None
+                if hasattr(v, "isoformat"):
+                    return v.isoformat()
+                if type(v).__name__ == "ObjectId":
+                    return str(v)
+                if isinstance(v, dict):
+                    return {k: _serialize(vv) for k, vv in v.items()}
+                if isinstance(v, list):
+                    return [_serialize(item) for item in v]
+                return v
+
+            row: Dict[str, Any] = {"id": str(d["_id"])}
+            for key, val in d.items():
+                if key == "_id":
+                    continue
+                row[key] = _serialize(val)
+            data_list.append(row)
+
+        total_pages = max((total + page_size - 1) // page_size, 1)
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "success": True,
+                "code": 200,
+                "message": "Search completed",
+                "data": data_list,
+                "pagination": {
+                    "page": page,
+                    "pageSize": page_size,
+                    "totalItems": total,
+                    "totalPages": total_pages,
+                    "hasNextPage": page < total_pages,
+                    "hasPrevPage": page > 1,
+                    "uniqueErrorCodes": len(unique_codes),
+                    "uniqueUsers": len(unique_users),
+                },
+            }
+        )
+    except Exception as exc:
+        logger.exception("search_error_logs_post failed")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "success": False,
+                "code": 500,
+                "message": str(exc),
+                "data": [],
+            }
+        )
+
+
+@router.post(
+    "/user-analytics",
+    responses={
+        200: {"description": "User analytics data"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def get_user_analytics_endpoint(
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """
+    Get analytics for a specific user: total errors, breakdown by severity/environment/errorCode,
+    and recent records. Server-side aggregation for performance.
+    """
+    try:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        actor_user_id = body.get("actorUserId")
+        if not actor_user_id:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={"success": False, "code": 400, "message": "actorUserId is required", "data": None}
+            )
+
+        include_archive = body.get("includeArchive", False)
+
+        result = await get_user_analytics(db, actor_user_id, include_archive=include_archive)
+
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content={
+                "success": True,
+                "code": 200,
+                "message": "User analytics retrieved successfully",
+                "data": result,
+            }
+        )
+    except Exception as exc:
+        logger.exception("get_user_analytics_endpoint failed")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"success": False, "code": 500, "message": str(exc), "data": None}
         )
 
 

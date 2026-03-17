@@ -257,6 +257,9 @@ async def create_error_master(
         # Master table audit fields
         doc["isActive"] = True
         doc["isDelete"] = False
+        # Enforce: log must be True when isActive is True
+        if doc.get("isActive"):
+            doc["log"] = True
 
         res = await db[COLL].insert_one(doc)
         created = await db[COLL].find_one({"_id": res.inserted_id})
@@ -422,12 +425,9 @@ async def update_error_master(
 
         await _normalize_value_sets(db, updates)
 
-        # Validate updatedBy is provided
+        # Skip updatedBy validation if not provided (e.g., auth disabled)
         if not updated_by:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=get_validation_error("required_field", field_name="updatedBy")
-            )
+            updated_by = "system"
 
         # Validate moduleId exists if provided
         if "moduleId" in updates and updates["moduleId"]:
@@ -449,19 +449,20 @@ async def update_error_master(
         if "notificationId" in updates and updates["notificationId"]:
             updates["notificationId"] = parse_object_id(updates["notificationId"])
 
-        # Validate updatedBy personnel exists
-        try:
-            await validate_foreign_key(
-                db, Collections.PERSONNEL_MASTER, "updatedBy", updated_by, required=True
-            )
-        except HTTPException:
-            raise  # Re-raise HTTPException from validator
-        except Exception as e:
-            logger.exception("Error validating updatedBy personnel")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=get_validation_error("fk_not_found", field_name="updatedBy", collection_name=Collections.PERSONNEL_MASTER)
-            ) from e
+        # Validate updatedBy personnel exists (skip for "system")
+        if updated_by and updated_by != "system":
+            try:
+                await validate_foreign_key(
+                    db, Collections.PERSONNEL_MASTER, "updatedBy", updated_by, required=True
+                )
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.exception("Error validating updatedBy personnel")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=get_validation_error("fk_not_found", field_name="updatedBy", collection_name=Collections.PERSONNEL_MASTER)
+                ) from e
 
         # Audit fields
         updates["updatedAt"] = utc_now()
@@ -471,6 +472,13 @@ async def update_error_master(
             updates["updatedBy"] = updated_by
         if updated_ip is not None:
             updates["updatedIp"] = updated_ip
+
+        # Sync log with isActive: inactive records must have log=false
+        if "isActive" in updates:
+            if updates["isActive"] is False:
+                updates["log"] = False
+            elif updates["isActive"] is True and "log" not in updates:
+                updates["log"] = True
 
         # Validate id_str is valid ObjectId
         try:
@@ -778,6 +786,11 @@ async def search_error_masters(
     offset: int,
     source_type: Optional[str] = None,
     app_code: Optional[str] = None,
+    business_area: Optional[str] = None,
+    technical_area: Optional[str] = None,
+    partner_system: Optional[str] = None,
+    third_party: Optional[str] = None,
+    is_active: Optional[bool] = None,
 ) -> Tuple[List[ErrorMasterResponseSchema], int]:
     """
     Search error masters with filters and optional pagination.
@@ -852,6 +865,21 @@ async def search_error_masters(
 
         if app_code:
             filt["appCode"] = app_code
+
+        if business_area:
+            filt["businessArea"] = {"$regex": business_area, "$options": "i"}
+
+        if technical_area:
+            filt["technicalArea"] = {"$regex": technical_area, "$options": "i"}
+
+        if partner_system:
+            filt["partnerSystem"] = {"$regex": partner_system, "$options": "i"}
+
+        if third_party:
+            filt["thirdParty"] = {"$regex": third_party, "$options": "i"}
+
+        if is_active is not None:
+            filt["isActive"] = is_active
 
         if created_from or created_to:
             rng: Dict[str, Any] = {}

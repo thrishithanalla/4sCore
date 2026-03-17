@@ -51,6 +51,7 @@ const errorMasterSchema = z.object({
   sourceType: z.string().min(1, 'Source type is required'),
   sourceName: z.string().min(1, 'Source name is required').max(120),
   appCode: z.string().min(1, 'App code is required').max(120),
+  isActive: z.boolean(),
   log: z.boolean(),
   businessArea: z.string().max(120).optional().or(z.literal('')),
   technicalArea: z.string().max(120).optional().or(z.literal('')),
@@ -91,6 +92,7 @@ const ErrorMasterForm = () => {
     reset,
     watch,
     formState: { errors, isDirty },
+    setValue,
   } = useForm<ErrorMasterFormData>({
     resolver: zodResolver(errorMasterSchema),
     defaultValues: {
@@ -100,6 +102,7 @@ const ErrorMasterForm = () => {
       sourceType: '',
       sourceName: '',
       appCode: '',
+      isActive: true,
       log: true,
       businessArea: '',
       technicalArea: '',
@@ -173,6 +176,7 @@ const ErrorMasterForm = () => {
         sourceType: matchValueSetCode((errorMaster as any).sourceType, sourceTypeItems),
         sourceName: (errorMaster as any).sourceName || '',
         appCode: (errorMaster as any).appCode || '',
+        isActive: errorMaster.isActive ?? true,
         log: errorMaster.log ?? true,
         businessArea: errorMaster.businessArea || '',
         technicalArea: errorMaster.technicalArea || '',
@@ -244,7 +248,8 @@ const ErrorMasterForm = () => {
   const onSubmit = (data: ErrorMasterFormData) => {
     const payload: any = {
       ...data,
-      log: data.log ?? true,
+      isActive: data.isActive ?? true,
+      log: data.isActive ? (data.log ?? true) : false,
       businessArea: data.businessArea || undefined,
       technicalArea: data.technicalArea || undefined,
       tool: data.tool || undefined,
@@ -391,14 +396,28 @@ const ErrorMasterForm = () => {
                 )}
               />
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
+                <Controller
+                  name="isActive"
+                  control={control}
+                  render={({ field: { value, onChange } }) => (
+                    <div className="flex items-center gap-2">
+                      <Checkbox inputId="isActive" checked={value} onChange={(e) => {
+                        const active = e.checked ?? false;
+                        onChange(active);
+                        if (!active) setValue('log', false);
+                      }} />
+                      <label htmlFor="isActive" className="text-sm text-gray-700 dark:text-gray-300">Active</label>
+                    </div>
+                  )}
+                />
                 <Controller
                   name="log"
                   control={control}
                   render={({ field: { value, onChange } }) => (
                     <div className="flex items-center gap-2">
-                      <Checkbox inputId="log" checked={value} onChange={(e) => onChange(e.checked)} />
-                      <label htmlFor="log" className="text-sm text-gray-700 dark:text-gray-300">Enable Logging</label>
+                      <Checkbox inputId="log" checked={value} onChange={(e) => onChange(e.checked)} disabled={!watch('isActive')} />
+                      <label htmlFor="log" className={`text-sm ${watch('isActive') ? 'text-gray-700 dark:text-gray-300' : 'text-gray-400'}`}>Enable Logging</label>
                     </div>
                   )}
                 />

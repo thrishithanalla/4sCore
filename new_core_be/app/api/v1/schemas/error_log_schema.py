@@ -51,6 +51,8 @@ class ErrorLogResponseSchema(BaseModel):
     actorUserId: Optional[str] = None
     sourceType: str
     sourceName: str
+    endpoint: Optional[str] = None
+    method: Optional[str] = None
     userAgent: Optional[str] = None
     environment: Optional[str] = None
     resolvedMessage: Optional[str] = None

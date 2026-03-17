@@ -209,24 +209,32 @@ const ErrorDetailDrawer = ({ open, error, onClose }: ErrorDetailDrawerProps) => 
         </div>
 
         {/* Footer Actions */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-5 mt-5 flex gap-3">
-          <Button
-            label="Notify"
-            icon="pi pi-bell"
-            severity="warning"
-            onClick={() => {
-              // TODO: Integrate with notification service
-              console.log('Notify for:', error.errorCode);
-            }}
-            testId="ErrorDetail.Button.Notify"
-          />
-          <Button
-            label="Close"
-            severity="secondary"
-            outlined
-            onClick={onClose}
-            testId="ErrorDetail.Button.Close"
-          />
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 flex justify-between items-center">
+          <button
+            onClick={() => { navigator.clipboard.writeText(error.errorCode); }}
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors bg-transparent border-none cursor-pointer"
+            title="Copy error code"
+          >
+            <i className="pi pi-copy" style={{ fontSize: '0.875rem' }} />
+            Copy Code
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => console.log('Notify for:', error.errorCode)}
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer transition-colors"
+              data-testid="ErrorDetail.Button.Notify"
+            >
+              <i className="pi pi-bell" style={{ fontSize: '0.875rem' }} />
+              Notify
+            </button>
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200 cursor-pointer transition-colors"
+              data-testid="ErrorDetail.Button.Close"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     </Sidebar>

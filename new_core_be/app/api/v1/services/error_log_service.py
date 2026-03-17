@@ -233,6 +233,8 @@ async def search_error_logs(
             actorUserId=(str(d["actorUserId"]) if d.get("actorUserId") else None),
             sourceType=d["sourceType"],
             sourceName=d["sourceName"],
+            endpoint=d.get("endpoint"),
+            method=d.get("method"),
             userAgent=d.get("userAgent"),
             environment=d.get("environment"),
             resolvedMessage=d.get("resolvedMessage"),

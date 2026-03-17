@@ -5,7 +5,10 @@
       "Bash(xargs grep:*)",
       "Bash(npx vite:*)",
       "Bash(ls \"c:/Users/trish/OneDrive/Documents/4sight/core_fe/uc2_core_fe/\"*.env*)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(find 'c:\\\\Users\\\\trish\\\\OneDrive\\\\Documents\\\\4sight\\\\crud screens\\\\4sCore\\\\uc2_core_error_service' -type f -name *error*master*)"
     ]
   }
 }
