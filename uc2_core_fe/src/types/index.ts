@@ -1441,6 +1441,7 @@ export interface LogMaster {
   updatedAt?: string;
   updatedIp?: string;
   isDelete?: boolean;
+  canBeLogged?: boolean;
 }
 
 export interface LogMasterCreateRequest {
@@ -1459,6 +1460,7 @@ export interface LogMasterCreateRequest {
   description: string;
   logLevel?: string;
   logtype?: string;
+  canBeLogged?: boolean;
 }
 
 export interface LogMasterUpdateRequest {
@@ -1477,6 +1479,7 @@ export interface LogMasterUpdateRequest {
   description?: string;
   logLevel?: string;
   logtype?: string;
+  canBeLogged?: boolean;
 }
 
 export interface LogMasterQueryParams {
@@ -1504,6 +1507,8 @@ export interface LogMasterFormData {
   retentionPeriod: string;
   isSensitive: boolean;
   isUsageTrackable: boolean;
+  isActive: boolean;
+  canBeLogged: boolean;
 }
 
 // Level (Hierarchy Level) Types

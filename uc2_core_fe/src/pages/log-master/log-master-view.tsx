@@ -165,6 +165,10 @@ const LogMasterView = () => {
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Usage Trackable</label>
                 <Tag value={data.isUsageTrackable ? 'Yes' : 'No'} severity={data.isUsageTrackable ? 'info' : 'secondary'} className="text-xs" />
               </div>
+              <div>
+                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Can Be Logged</label>
+                <Tag value={data.canBeLogged ? 'Yes' : 'No'} severity={data.canBeLogged ? 'success' : 'secondary'} className="text-xs" />
+              </div>
               <div className="sm:col-span-3">
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Description</label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{data.description || 'No description provided'}</p>

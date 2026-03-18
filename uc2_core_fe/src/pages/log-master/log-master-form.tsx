@@ -64,6 +64,8 @@ const logMasterSchema = z.object({
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Must be a positive number'),
   isSensitive: z.boolean(),
   isUsageTrackable: z.boolean(),
+  isActive: z.boolean(),
+  canBeLogged: z.boolean(),
 });
 
 export type LogMasterFormData = z.infer<typeof logMasterSchema>;
@@ -115,6 +117,7 @@ const LogMasterForm = () => {
       description: '', messageTemplate: '', templateParameters: '{}', parameters: '',
       layer: 'API', logLevel: 'INFO', logtype: 'AUDIT',
       retentionPeriod: '365', isSensitive: false, isUsageTrackable: false,
+      isActive: true, canBeLogged: true,
     },
     mode: 'onChange',
   });
@@ -171,6 +174,8 @@ const LogMasterForm = () => {
         retentionPeriod: existing.retentionPeriod?.toString() || '365',
         isSensitive: existing.isSensitive || false,
         isUsageTrackable: existing.isUsageTrackable || false,
+        isActive: existing.isActive ?? true,
+        canBeLogged: existing.canBeLogged ?? true,
       });
     }
   }, [existing, isEditMode, reset]);
@@ -230,6 +235,8 @@ const LogMasterForm = () => {
       retentionPeriod: Number(data.retentionPeriod),
       isSensitive: data.isSensitive,
       isUsageTrackable: data.isUsageTrackable,
+      isActive: data.isActive,
+      canBeLogged: data.canBeLogged,
     };
 
     if (isEditMode) {
@@ -390,11 +397,23 @@ const LogMasterForm = () => {
                 </div>
 
                 {/* Checkboxes */}
-                <div className="flex gap-6 items-center">
+                <div className="flex flex-wrap gap-6 items-center md:col-span-3">
+                  <Controller name="isActive" control={control} render={({ field }) => (
+                    <div className="flex items-center gap-2">
+                      <Checkbox inputId="isActive" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                      <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
+                    </div>
+                  )} />
+                  <Controller name="canBeLogged" control={control} render={({ field }) => (
+                    <div className="flex items-center gap-2">
+                      <Checkbox inputId="canBeLogged" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                      <label htmlFor="canBeLogged" className="text-sm font-medium text-gray-700 dark:text-gray-300">Can Be Logged</label>
+                    </div>
+                  )} />
                   <Controller name="isSensitive" control={control} render={({ field }) => (
                     <div className="flex items-center gap-2">
                       <Checkbox inputId="isSensitive" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
-                      <label htmlFor="isSensitive" className="text-sm text-gray-700 dark:text-gray-300">Sensitive</label>
+                      <label htmlFor="isSensitive" className="text-sm font-medium text-gray-700 dark:text-gray-300">Sensitive</label>
                     </div>
                   )} />
                   <Controller name="isUsageTrackable" control={control} render={({ field }) => (

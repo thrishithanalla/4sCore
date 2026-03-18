@@ -14,6 +14,7 @@ class LogMasterBaseSchema(BaseModel):
     messageTemplate: str = Field(..., min_length=1, description="Message format used for log generation")
     templateParameters: Optional[Dict[str, Any]] = Field(None, description="Variables used inside messageTemplate")
     isActive: Optional[bool] = Field(default=True, description="Whether this log master is active")
+    canBeLogged: Optional[bool] = Field(default=True, description="Whether this log should be recorded")
     layer: str = Field(..., min_length=1, max_length=100, description="Application layer (ValueSet: layer)")
     isUsageTrackable: bool = Field(..., description="Whether this log is trackable for analytics")
     isSensitive: bool = Field(..., description="Whether this log contains sensitive data for masking")
@@ -87,6 +88,7 @@ class LogMasterUpdateSchema(BaseModel):
     messageTemplate: Optional[str] = None
     templateParameters: Optional[Dict[str, Any]] = None
     isActive: Optional[bool] = None
+    canBeLogged: Optional[bool] = None
     layer: Optional[str] = None
     isUsageTrackable: Optional[bool] = None
     isSensitive: Optional[bool] = None
