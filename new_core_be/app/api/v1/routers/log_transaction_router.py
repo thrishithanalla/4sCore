@@ -579,7 +579,16 @@ async def build_filter_query(
         query[f"parameters.{paramKey}"] = {"$regex": paramValue, "$options": "i"}
 
     if actorId:
-        query["actorId"] = actorId
+        if ObjectId.is_valid(actorId):
+            query["actorId"] = actorId
+        else:
+            import re
+            escaped_actor = re.escape(actorId)
+            query["$or"] = [
+                {"actorId": actorId},
+                {"actorName": {"$regex": escaped_actor, "$options": "i"}},
+                {"actorRole": {"$regex": escaped_actor, "$options": "i"}}
+            ]
 
     # Apply timeline-based date filter (takes priority if no explicit dates provided)
     timeline_from, timeline_to = get_timeline_date_range(timeline)
@@ -1318,6 +1327,10 @@ async def get_all_users(
         {"actorId": str(p["_id"]), "name": p.get("name", "Unknown")}
         for p in personnel_list if p.get("name")
     ]
+
+    # Add system/external user fallback if searching and no exact match found in personnel
+    if search and not any(r["name"].casefold() == search.casefold() for r in results):
+        results.append({"actorId": search, "name": f"{search} (System/External)"})
 
     return success_response(
         data=results,
