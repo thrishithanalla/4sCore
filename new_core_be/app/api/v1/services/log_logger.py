@@ -164,6 +164,13 @@ async def log_transaction(
         generated_message = generate_message_from_template(template_string, json_values)
 
         # Build log document
+        # Derive keyFields from parameters where isKeyField == True
+        param_list = template_doc.get("parameters", [])
+        derived_key_fields = ", ".join(
+            p["name"] for p in param_list
+            if isinstance(p, dict) and p.get("isKeyField") is True
+        )
+
         log_doc = {
             "layer": layer,
             "level": level,
@@ -175,7 +182,7 @@ async def log_transaction(
             "eventcode": template_doc.get("eventCode", ""),
             "EventTimeStamp": get_ist_now(),
             "entityType": template_doc.get("logObject", ""),
-            "keyFields": template_doc.get("keyFields", ""),
+            "keyFields": derived_key_fields,
             "retentionPeriod": template_doc.get("retentionPeriod", 365),
             "actorRole": "SYSTEM",
             "parameters": json_values,

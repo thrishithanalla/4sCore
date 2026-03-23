@@ -26,3 +26,14 @@ class TimelineEnum(str, Enum):
     LAST_24_HOURS = "last24Hours"
     LAST_7_DAYS = "last7Days"
     LAST_30_DAYS = "last30Days"
+
+
+class ParameterDatatypeEnum(str, Enum):
+    """Enum for parameter datatype options in audit log master parameters"""
+    STRING   = "string"
+    NUMBER   = "number"
+    BOOLEAN  = "boolean"
+    DATE     = "date"
+    DATETIME = "datetime"
+    ARRAY    = "array"
+    OBJECT   = "object"

@@ -2,16 +2,26 @@ import { Sidebar } from 'primereact/sidebar';
 import { Tag } from 'primereact/tag';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Button } from 'mainFe/Button';
-import type { LogTransaction, LogLayer } from '../../types/log-transaction.types';
+import type { LogTransaction, LogLayer, LogTemplate } from '../../types/log-transaction.types';
 
 interface LogDetailDrawerProps {
   open: boolean;
   log: LogTransaction | null;
+  templates?: LogTemplate[];
   onClose: () => void;
 }
 
-const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
+const LogDetailDrawer = ({ open, log, templates, onClose }: LogDetailDrawerProps) => {
   if (!log) return null;
+
+  const template = templates?.find((t) => t.eventCode === log.eventcode) || null;
+
+  const getParamInfo = (key: string) => {
+    if (!template || !template.parameters) return { isKeyField: false, isSensitive: false };
+    const p = template.parameters.find((param: any) => typeof param === 'object' && param !== null && param.name === key);
+    if (!p) return { isKeyField: false, isSensitive: false };
+    return { isKeyField: !!p.isKeyField, isSensitive: !!p.isSensitive };
+  };
 
   const getLayerColor = (layer: LogLayer): 'info' | 'warning' | 'success' | 'secondary' => {
     switch (layer) {
@@ -203,12 +213,21 @@ const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
                 }
               >
                 <div className="bg-green-50 dark:bg-gray-700 p-4 rounded-lg">
-                  {Object.entries(parameters).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-green-100 dark:border-gray-600 last:border-0">
-                      <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase">{key}:</span>
-                      <span className="text-sm text-gray-900 dark:text-white font-mono">{String(value)}</span>
-                    </div>
-                  ))}
+                  {Object.entries(parameters).map(([key, value]) => {
+                    const info = getParamInfo(key);
+                    return (
+                      <div key={key} className="flex justify-between items-center py-2 border-b border-green-100 dark:border-gray-600 last:border-0">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-4">
+                          {info.isKeyField && <i className="pi pi-key text-blue-500" style={{ fontSize: '0.75rem' }} title="Key Field"></i>}
+                          {info.isSensitive && <i className="pi pi-shield text-red-500" style={{ fontSize: '0.75rem' }} title="Sensitive Field"></i>}
+                          <span className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase truncate" title={key}>{key}:</span>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white font-mono whitespace-pre-wrap break-all text-right max-w-[60%]">
+                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </AccordionTab>
             </Accordion>
@@ -226,12 +245,21 @@ const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
                 }
               >
                 <div className="bg-indigo-50 dark:bg-gray-700 p-4 rounded-lg">
-                  {Object.entries(details).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-indigo-100 dark:border-gray-600 last:border-0">
-                      <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase">{key}:</span>
-                      <span className="text-sm text-gray-900 dark:text-white font-mono">{String(value)}</span>
-                    </div>
-                  ))}
+                  {Object.entries(details).map(([key, value]) => {
+                    const info = getParamInfo(key);
+                    return (
+                      <div key={key} className="flex justify-between items-center py-2 border-b border-indigo-100 dark:border-gray-600 last:border-0">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0 pr-4">
+                          {info.isKeyField && <i className="pi pi-key text-blue-500" style={{ fontSize: '0.75rem' }} title="Key Field"></i>}
+                          {info.isSensitive && <i className="pi pi-shield text-red-500" style={{ fontSize: '0.75rem' }} title="Sensitive Field"></i>}
+                          <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-400 uppercase truncate" title={key}>{key}:</span>
+                        </div>
+                        <span className="text-sm text-gray-900 dark:text-white font-mono whitespace-pre-wrap break-all text-right max-w-[60%]">
+                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </AccordionTab>
             </Accordion>
@@ -275,14 +303,14 @@ const LogDetailDrawer = ({ open, log, onClose }: LogDetailDrawerProps) => {
             label="Copy Log ID"
             icon="pi pi-copy"
             onClick={handleCopyId}
-            testId="LogDetail.Button.CopyId"
+            data-testid="LogDetail.Button.CopyId"
           />
           <Button
             label="Close"
             severity="secondary"
             outlined
             onClick={onClose}
-            testId="LogDetail.Button.Close"
+            data-testid="LogDetail.Button.Close"
           />
         </div>
       </div>

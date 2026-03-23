@@ -54,9 +54,11 @@ export const logTransactionService = {
     return response.data;
   },
 
-  // Get all distinct users for filter dropdown
-  getAllUsers: async (): Promise<{ success: boolean; data: UserOption[] }> => {
-    const response = await auditlogApi.get('/api/v1/log-transactions/all-users');
+  // Get users for filter dropdown (searchable, max 20)
+  getAllUsers: async (search?: string): Promise<{ success: boolean; data: UserOption[] }> => {
+    const response = await auditlogApi.get('/api/v1/log-transactions/all-users', {
+      params: { search },
+    });
     return response.data;
   },
 

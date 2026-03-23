@@ -186,7 +186,7 @@ class LogTransactionService:
             query["level"] = level
 
         if layer:
-            query["layer"] = layer
+            query["layer"] = {"$regex": f"^{layer}$", "$options": "i"}
 
         if actor_id:
             if not ObjectId.is_valid(actor_id):

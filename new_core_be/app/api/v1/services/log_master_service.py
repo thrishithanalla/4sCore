@@ -183,7 +183,7 @@ class LogMasterService:
             query["isDelete"] = False
 
         if layer:
-            query["layer"] = layer
+            query["layer"] = {"$regex": f"^{layer}$", "$options": "i"}
 
         if action:
             query["action"] = action

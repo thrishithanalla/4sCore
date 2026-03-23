@@ -307,7 +307,7 @@ async def get_all_log_masters(
     action: Optional[str] = Query(None, description="Filter by action"),
     logObject: Optional[str] = Query(None, description="Filter by logObject"),
     logtype: Optional[str] = Query(None, description="Filter by logtype"),
-    eventCode: Optional[str] = Query(None, description="Search by eventCode"),
+    eventCode: Optional[str] = Query(None, description="Search by eventCode (partial match)"),
     include_deleted: bool = Query(False, description="Include soft-deleted records")
 ):
     """Get all audit log masters with optional pagination and filters"""

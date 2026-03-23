@@ -154,14 +154,6 @@ const LogMasterView = () => {
                 <p className="text-sm text-gray-900 dark:text-white">{data.logtype || '-'}</p>
               </div>
               <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Key Fields</label>
-                <p className="text-sm text-gray-900 dark:text-white">{data.keyFields || '-'}</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Sensitive</label>
-                <Tag value={data.isSensitive ? 'Yes' : 'No'} severity={data.isSensitive ? 'danger' : 'success'} className="text-xs" />
-              </div>
-              <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Usage Trackable</label>
                 <Tag value={data.isUsageTrackable ? 'Yes' : 'No'} severity={data.isUsageTrackable ? 'info' : 'secondary'} className="text-xs" />
               </div>
@@ -188,15 +180,49 @@ const LogMasterView = () => {
               </code>
             </div>
 
-            {/* Parameters */}
+            {/* Parameters Table */}
             {data.parameters && data.parameters.length > 0 && (
               <div className="mt-3">
                 <label className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Parameters</label>
-                <div className="flex flex-wrap gap-1">
+                <div className="border border-gray-200 dark:border-gray-600 rounded overflow-hidden">
+                  {/* Header */}
+                  <div className="grid grid-cols-12 gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                    <div className="col-span-3">Name</div>
+                    <div className="col-span-3">Label</div>
+                    <div className="col-span-2">Datatype</div>
+                    <div className="col-span-2 text-center">Key Field</div>
+                    <div className="col-span-2 text-center">Sensitive</div>
+                  </div>
+                  {/* Rows */}
                   {data.parameters.map((param, idx) => (
-                    <span key={idx} className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-mono text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600">
-                      {param}
-                    </span>
+                    <div
+                      key={idx}
+                      className="grid grid-cols-12 gap-2 px-3 py-1.5 border-t border-gray-200 dark:border-gray-600 items-center"
+                    >
+                      <div className="col-span-3">
+                        <span className="font-mono text-xs text-gray-900 dark:text-white">{param.name}</span>
+                      </div>
+                      <div className="col-span-3">
+                        <span className="text-xs text-gray-700 dark:text-gray-300">{param.label}</span>
+                      </div>
+                      <div className="col-span-2">
+                        <Tag value={param.datatype} severity="secondary" className="text-xs" />
+                      </div>
+                      <div className="col-span-2 flex justify-center">
+                        {param.isKeyField ? (
+                          <i className="pi pi-check-circle text-blue-500" style={{ fontSize: '0.9rem' }} />
+                        ) : (
+                          <i className="pi pi-minus-circle text-gray-300 dark:text-gray-600" style={{ fontSize: '0.9rem' }} />
+                        )}
+                      </div>
+                      <div className="col-span-2 flex justify-center">
+                        {param.isSensitive ? (
+                          <i className="pi pi-shield text-red-500" style={{ fontSize: '0.9rem' }} />
+                        ) : (
+                          <i className="pi pi-minus-circle text-gray-300 dark:text-gray-600" style={{ fontSize: '0.9rem' }} />
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

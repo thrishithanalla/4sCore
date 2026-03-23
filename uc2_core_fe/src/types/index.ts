@@ -74,7 +74,7 @@ export interface Personnel {
   title?: string;
   firstName: string;
   lastName: string;
-  name:string;
+  name: string;
   unitId?: string | null;
   departmentId?: string | null;
   rankId?: string | null;
@@ -1073,11 +1073,11 @@ export type DeliveryChannel = 'inApp' | 'sms' | 'whatsapp';
 
 
 export interface NotificationMasterLite {
-id: string;
-notificationType: string;
-defaultChannels: DeliveryChannel[];
-priority: NotificationPriority;
-description?: string;
+  id: string;
+  notificationType: string;
+  defaultChannels: DeliveryChannel[];
+  priority: NotificationPriority;
+  description?: string;
 }
 
 
@@ -1417,20 +1417,35 @@ export interface PromptFormData {
 }
 
 // Log Master Types
+export type ParameterDatatypeEnum =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'date'
+  | 'datetime'
+  | 'array'
+  | 'object';
+
+export interface ParameterObject {
+  name: string;
+  label: string;
+  datatype: ParameterDatatypeEnum;
+  isKeyField: boolean;
+  isSensitive: boolean;
+}
+
 export interface LogMaster {
   _id: string;
   eventCode: string;
   logObject: string;
   action: string;
-  keyFields: string;
-  parameters?: string[];
+  parameters: ParameterObject[];
   retentionPeriod: number;
   messageTemplate: string;
   templateParameters?: Record<string, any>;
   isActive?: boolean;
   layer: string;
   isUsageTrackable: boolean;
-  isSensitive: boolean;
   description: string;
   logLevel: string;
   logtype: string;
@@ -1448,15 +1463,13 @@ export interface LogMasterCreateRequest {
   eventCode: string;
   logObject: string;
   action: string;
-  keyFields: string;
-  parameters?: string[];
+  parameters: ParameterObject[];
   retentionPeriod: number;
   messageTemplate: string;
   templateParameters?: Record<string, any>;
   isActive?: boolean;
   layer: string;
   isUsageTrackable: boolean;
-  isSensitive: boolean;
   description: string;
   logLevel?: string;
   logtype?: string;
@@ -1466,16 +1479,14 @@ export interface LogMasterCreateRequest {
 export interface LogMasterUpdateRequest {
   logObject?: string;
   action?: string;
-  keyFields?: string;
-  parameters?: string[];
+  eventCode?: string;
+  parameters?: ParameterObject[];
   retentionPeriod?: number;
   messageTemplate?: string;
   templateParameters?: Record<string, any>;
   isActive?: boolean;
   layer?: string;
   isUsageTrackable?: boolean;
-  isSensitive?: boolean;
-  eventCode?: string;
   description?: string;
   logLevel?: string;
   logtype?: string;
@@ -1494,10 +1505,9 @@ export interface LogMasterQueryParams {
 }
 
 export interface LogMasterFormData {
-  eventCode: string;
+  eventCode: string;          // read-only, auto-generated from logObject.action
   logObject: string;
   action: string;
-  keyFields: string;
   description: string;
   messageTemplate: string;
   templateParameters: string; // JSON string for form editing
@@ -1505,10 +1515,10 @@ export interface LogMasterFormData {
   logLevel: string;
   logtype: string;
   retentionPeriod: string;
-  isSensitive: boolean;
   isUsageTrackable: boolean;
   isActive: boolean;
   canBeLogged: boolean;
+  parameters: ParameterObject[];
 }
 
 // Level (Hierarchy Level) Types

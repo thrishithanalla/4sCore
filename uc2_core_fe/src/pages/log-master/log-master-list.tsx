@@ -132,14 +132,13 @@ const LogMasterList = () => {
 
   // Export columns configuration
   const exportColumns = useMemo(() => [
-    { field: 'eventCode', header: 'Event Code' },
-    { field: 'logObject', header: 'Log Object' },
-    { field: 'action', header: 'Action' },
-    { field: 'description', header: 'Description' },
+    { field: 'eventCode',      header: 'Event Code'      },
+    { field: 'logObject',      header: 'Log Object'      },
+    { field: 'action',         header: 'Action'          },
+    { field: 'description',    header: 'Description'     },
     { field: 'messageTemplate', header: 'Message Template' },
-    { field: 'layer', header: 'Layer' },
-    { field: 'logLevel', header: 'Log Level' },
-    { field: 'keyFields', header: 'Key Fields' },
+    { field: 'layer',          header: 'Layer'           },
+    { field: 'logLevel',       header: 'Log Level'       },
   ], []);
 
   const fetchExportData = useCallback(async (): Promise<LogMaster[]> => {
@@ -218,14 +217,31 @@ const LogMasterList = () => {
         ),
       },
       {
-        field: 'keyFields',
-        header: 'Key Fields',
+        field: 'parameters',
+        header: 'Parameters',
         style: { width: '120px' },
-        body: (rowData: LogMaster) => (
-          <span className="text-xs text-gray-700 dark:text-gray-300 font-mono">
-            {rowData.keyFields || '-'}
-          </span>
-        ),
+        body: (rowData: LogMaster) => {
+          const params = rowData.parameters || [];
+          const keyCount = params.filter((p) => p.isKeyField).length;
+          const sensitiveCount = params.filter((p) => p.isSensitive).length;
+          return (
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                {params.length} field{params.length !== 1 ? 's' : ''}
+              </span>
+              {keyCount > 0 && (
+                <span className="text-xs text-blue-600 dark:text-blue-400">
+                  {keyCount} key
+                </span>
+              )}
+              {sensitiveCount > 0 && (
+                <span className="text-xs text-red-500 dark:text-red-400">
+                  {sensitiveCount} sensitive
+                </span>
+              )}
+            </div>
+          );
+        },
       },
     ];
 
@@ -307,9 +323,8 @@ const LogMasterList = () => {
                     placeholder="Search by event code..."
                     value={searchText}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
-                    testId="LogMasterList.Search"
+                    data-testid="LogMasterList.Search"
                     style={{ minWidth: '200px', width: '200px' }}
-                    clearable
                   />
                   <Dropdown
                     value={selectedLayer}
@@ -342,7 +357,7 @@ const LogMasterList = () => {
                       label="Create Log Master"
                       icon="pi pi-plus"
                       onClick={() => navigate('/log-master/create')}
-                      testId="LogMasterList.Button.Create"
+                      data-testid="LogMasterList.Button.Create"
                       size="small"
                     />
                   )}

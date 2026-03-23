@@ -203,7 +203,7 @@ export interface LogTemplate {
   logObject: string;
   logLevel: string;
   isActive: boolean;
-  keyFields?: string;
+  parameters?: { name: string; isKeyField?: boolean; isSensitive?: boolean; label?: string; datatype?: string }[];
 }
 
 export interface UserOption {

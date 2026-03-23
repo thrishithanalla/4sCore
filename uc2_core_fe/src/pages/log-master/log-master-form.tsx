@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef } from 'react';
-import { Controller, useForm, type Resolver } from 'react-hook-form';
+import { Controller, useForm, useFieldArray, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -22,6 +22,41 @@ import PermissionGuard from '../../components/guards/PermissionGuard';
 import { useNavigationBlocker } from '../../hooks/useNavigationBlocker';
 import { logMasterService } from '../../services/log-master.service';
 import { JOB_NAMES } from '../../constants/jobNames';
+import type { ParameterDatatypeEnum } from '../../types';
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const DATATYPE_OPTIONS: { label: string; value: ParameterDatatypeEnum }[] = [
+  { label: 'String', value: 'string' },
+  { label: 'Number', value: 'number' },
+  { label: 'Boolean', value: 'boolean' },
+  { label: 'Date', value: 'date' },
+  { label: 'Datetime', value: 'datetime' },
+  { label: 'Array', value: 'array' },
+  { label: 'Object', value: 'object' },
+];
+
+const LAYER_OPTIONS = [
+  { label: 'API', value: 'API' },
+  { label: 'Screen', value: 'screen' },
+  { label: 'Server', value: 'Server' },
+  { label: 'DB', value: 'db' },
+  { label: 'Function', value: 'function' },
+];
+
+const LOG_LEVEL_OPTIONS = [
+  { label: 'INFO', value: 'INFO' },
+  { label: 'WARNING', value: 'WARNING' },
+  { label: 'ERROR', value: 'ERROR' },
+];
+
+const LOG_TYPE_OPTIONS = [
+  { label: 'AUDIT', value: 'AUDIT' },
+  { label: 'USAGE', value: 'USAGE' },
+  { label: 'SECURITY', value: 'SECURITY' },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const extractApiError = (error: any): string | null => {
   const detail = error?.response?.data?.detail;
@@ -42,53 +77,52 @@ const extractPlaceholders = (template: string): string[] => {
   return placeholders;
 };
 
-const generateJsonFromPlaceholders = (placeholders: string[]): Record<string, string> => {
-  const json: Record<string, string> = {};
-  placeholders.forEach((key) => { json[key] = key; });
-  return json;
-};
+// ─── Zod Schema ───────────────────────────────────────────────────────────────
+
+const parameterObjectSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(200).trim(),
+  label: z.string().min(1, 'Label is required').max(200).trim(),
+  datatype: z.enum(['string', 'number', 'boolean', 'date', 'datetime', 'array', 'object'] as const, {
+    message: 'Datatype is required',
+  }),
+  isKeyField: z.boolean().default(false),
+  isSensitive: z.boolean().default(false),
+});
 
 const logMasterSchema = z.object({
-  eventCode: z.string().min(1, 'Event Code is required').max(200, 'Must be <= 200 characters').trim(),
+  // auto-generated — read-only in UI
+  eventCode: z.string().min(1, 'Event Code is required').max(200).trim(),
   logObject: z.string().min(1, 'Log Object is required').max(200).trim(),
   action: z.string().min(1, 'Action is required').max(100).trim(),
-  keyFields: z.string().min(1, 'Key Fields is required').max(500).trim(),
   description: z.string().min(1, 'Description is required').max(1000).trim(),
   messageTemplate: z.string().min(1, 'Message Template is required').trim(),
   templateParameters: z.string().optional().or(z.literal('')),
-  parameters: z.string().optional().or(z.literal('')),
   layer: z.string().min(1, 'Layer is required'),
   logLevel: z.string().min(1, 'Log Level is required'),
   logtype: z.string().min(1, 'Log Type is required'),
   retentionPeriod: z.string().min(1, 'Retention Period is required')
     .refine((val) => !isNaN(Number(val)) && Number(val) > 0, 'Must be a positive number'),
-  isSensitive: z.boolean(),
   isUsageTrackable: z.boolean(),
   isActive: z.boolean(),
   canBeLogged: z.boolean(),
+  parameters: z.array(parameterObjectSchema)
+    .min(1, 'At least one parameter is required')
+    .refine((params) => params.some((p) => p.isKeyField), 'At least one parameter must be marked as a Key Field'),
 });
 
 export type LogMasterFormData = z.infer<typeof logMasterSchema>;
 
-const layerOptions = [
-  { label: 'API', value: 'API' },
-  { label: 'Screen', value: 'screen' },
-  { label: 'Server', value: 'Server' },
-  { label: 'DB', value: 'db' },
-  { label: 'Function', value: 'function' },
-];
+// ─── Default empty parameter row ────────────────────────────────────────────
 
-const logLevelOptions = [
-  { label: 'INFO', value: 'INFO' },
-  { label: 'WARNING', value: 'WARNING' },
-  { label: 'ERROR', value: 'ERROR' },
-];
+const DEFAULT_PARAMETER = {
+  name: '',
+  label: '',
+  datatype: 'string' as ParameterDatatypeEnum,
+  isKeyField: false,
+  isSensitive: false,
+};
 
-const logTypeOptions = [
-  { label: 'AUDIT', value: 'AUDIT' },
-  { label: 'USAGE', value: 'USAGE' },
-  { label: 'SECURITY', value: 'SECURITY' },
-];
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const LogMasterForm = () => {
   const { id, isReady, navigateToList } = useSecureNavigation({
@@ -113,28 +147,50 @@ const LogMasterForm = () => {
   } = useForm<LogMasterFormData>({
     resolver: zodResolver(logMasterSchema) as Resolver<LogMasterFormData>,
     defaultValues: {
-      eventCode: '', logObject: '', action: '', keyFields: '',
-      description: '', messageTemplate: '', templateParameters: '{}', parameters: '',
-      layer: 'API', logLevel: 'INFO', logtype: 'AUDIT',
-      retentionPeriod: '365', isSensitive: false, isUsageTrackable: false,
-      isActive: true, canBeLogged: true,
+      eventCode: '',
+      logObject: '',
+      action: '',
+      description: '',
+      messageTemplate: '',
+      templateParameters: '{}',
+      layer: 'API',
+      logLevel: 'INFO',
+      logtype: 'AUDIT',
+      retentionPeriod: '365',
+      isUsageTrackable: false,
+      isActive: true,
+      canBeLogged: true,
+      parameters: [{ ...DEFAULT_PARAMETER }],
     },
     mode: 'onChange',
   });
 
+  // Dynamic parameter array controller
+  const { fields, append, remove } = useFieldArray({ control, name: 'parameters' });
+
   const { showLeaveDialog, confirmLeave, cancelLeave, handleNavigate } = useNavigationBlocker({ when: isDirty });
   const handleCancel = () => handleNavigate('/log-master');
 
+  const logObjectValue = watch('logObject');
+  const actionValue = watch('action');
   const templateValue = watch('messageTemplate');
   const tpValue = watch('templateParameters');
-  const parametersValue = watch('parameters');
 
-  // Auto-generate templateParameters and parameters from messageTemplate placeholders
+  // Auto-generate eventCode from logObject+action
+  useEffect(() => {
+    if (logObjectValue && actionValue) {
+      const generated = `${logObjectValue.trim().toUpperCase()}.${actionValue.trim().toUpperCase()}`;
+      setValue('eventCode', generated, { shouldDirty: false });
+    }
+  }, [logObjectValue, actionValue, setValue]);
+
+  // Auto-generate templateParameters from messageTemplate placeholders
   useEffect(() => {
     if (templateValue) {
       const placeholders = extractPlaceholders(templateValue);
       if (placeholders.length > 0) {
-        const generatedJson = generateJsonFromPlaceholders(placeholders);
+        const generatedJson: Record<string, string> = {};
+        placeholders.forEach((key) => { generatedJson[key] = key; });
         try {
           const currentJson = JSON.parse(tpValue || '{}');
           const currentKeys = Object.keys(currentJson);
@@ -144,13 +200,6 @@ const LogMasterForm = () => {
           }
         } catch {
           setValue('templateParameters', JSON.stringify(generatedJson, null, 2));
-        }
-
-        // Auto-populate parameters if empty or matches previous auto-generated value
-        const autoParams = placeholders.join(', ');
-        const currentParams = parametersValue?.trim() || '';
-        if (!currentParams || currentParams === autoParams || placeholders.every((p) => currentParams.split(',').map((s: string) => s.trim()).includes(p))) {
-          setValue('parameters', autoParams);
         }
       }
     }
@@ -163,19 +212,27 @@ const LogMasterForm = () => {
         eventCode: existing.eventCode || '',
         logObject: existing.logObject || '',
         action: existing.action || '',
-        keyFields: existing.keyFields || '',
         description: existing.description || '',
         messageTemplate: existing.messageTemplate || '',
-        templateParameters: existing.templateParameters ? JSON.stringify(existing.templateParameters, null, 2) : '{}',
-        parameters: existing.parameters?.join(', ') || '',
+        templateParameters: existing.templateParameters
+          ? JSON.stringify(existing.templateParameters, null, 2)
+          : '{}',
         layer: existing.layer || 'API',
         logLevel: existing.logLevel || 'INFO',
         logtype: existing.logtype || 'AUDIT',
         retentionPeriod: existing.retentionPeriod?.toString() || '365',
-        isSensitive: existing.isSensitive || false,
         isUsageTrackable: existing.isUsageTrackable || false,
         isActive: existing.isActive ?? true,
         canBeLogged: existing.canBeLogged ?? true,
+        parameters: existing.parameters?.length
+          ? existing.parameters.map((p: any) => ({
+            name: p.name,
+            label: p.label,
+            datatype: p.datatype,
+            isKeyField: p.isKeyField,
+            isSensitive: p.isSensitive,
+          }))
+          : [{ ...DEFAULT_PARAMETER }],
       });
     }
   }, [existing, isEditMode, reset]);
@@ -222,21 +279,17 @@ const LogMasterForm = () => {
       eventCode: data.eventCode,
       logObject: data.logObject,
       action: data.action,
-      keyFields: data.keyFields,
       description: data.description,
       messageTemplate: data.messageTemplate,
       templateParameters: Object.keys(parsedTP).length > 0 ? parsedTP : null,
-      parameters: data.parameters
-        ? data.parameters.split(',').map((p: string) => p.trim()).filter(Boolean)
-        : Object.keys(parsedTP).length > 0 ? Object.keys(parsedTP) : null,
       layer: data.layer,
       logLevel: data.logLevel,
       logtype: data.logtype,
       retentionPeriod: Number(data.retentionPeriod),
-      isSensitive: data.isSensitive,
       isUsageTrackable: data.isUsageTrackable,
       isActive: data.isActive,
       canBeLogged: data.canBeLogged,
+      parameters: data.parameters,
     };
 
     if (isEditMode) {
@@ -249,7 +302,7 @@ const LogMasterForm = () => {
   if (fetchLoading) {
     return (
       <div className="py-4 px-4 lg:px-6 bg-gray-50 dark:bg-gray-900 flex justify-center items-center min-h-[300px]">
-        <LoadingSpinner size="50px" />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -276,14 +329,6 @@ const LogMasterForm = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Event Code */}
-                <Controller name="eventCode" control={control} render={({ field }) => (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Event Code <span className="text-red-500">*</span></label>
-                    <InputText value={field.value || ''} onChange={(e) => field.onChange(e.target.value)} placeholder="e.g. LOG.CORE.PERSONNEL.CREATED" className={`w-full ${errors.eventCode ? 'p-invalid' : ''}`} disabled={isEditMode} />
-                    {errors.eventCode && <small className="text-red-500">{errors.eventCode.message}</small>}
-                  </div>
-                )} />
 
                 {/* Log Object */}
                 <Controller name="logObject" control={control} render={({ field }) => (
@@ -303,21 +348,29 @@ const LogMasterForm = () => {
                   </div>
                 )} />
 
+                {/* Event Code — read-only, auto-generated */}
+                <Controller name="eventCode" control={control} render={({ field }) => (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Event Code
+                      <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">(auto-generated)</span>
+                    </label>
+                    <InputText
+                      value={field.value || ''}
+                      readOnly
+                      disabled
+                      placeholder="Auto-filled from Log Object + Action"
+                      className="w-full bg-gray-100 dark:bg-gray-700 cursor-not-allowed"
+                    />
+                  </div>
+                )} />
+
                 {/* Layer */}
                 <Controller name="layer" control={control} render={({ field }) => (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Layer <span className="text-red-500">*</span></label>
-                    <Dropdown value={field.value} options={layerOptions} onChange={(e) => field.onChange(e.value)} placeholder="Select layer" className={`w-full ${errors.layer ? 'p-invalid' : ''}`} />
+                    <Dropdown value={field.value} options={LAYER_OPTIONS} onChange={(e) => field.onChange(e.value)} placeholder="Select layer" className={`w-full ${errors.layer ? 'p-invalid' : ''}`} />
                     {errors.layer && <small className="text-red-500">{errors.layer.message}</small>}
-                  </div>
-                )} />
-
-                {/* Key Fields */}
-                <Controller name="keyFields" control={control} render={({ field }) => (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Key Fields <span className="text-red-500">*</span></label>
-                    <InputText value={field.value || ''} onChange={(e) => field.onChange(e.target.value)} placeholder="e.g. personnelId" className={`w-full ${errors.keyFields ? 'p-invalid' : ''}`} />
-                    {errors.keyFields && <small className="text-red-500">{errors.keyFields.message}</small>}
                   </div>
                 )} />
 
@@ -325,7 +378,7 @@ const LogMasterForm = () => {
                 <Controller name="logLevel" control={control} render={({ field }) => (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Log Level <span className="text-red-500">*</span></label>
-                    <Dropdown value={field.value} options={logLevelOptions} onChange={(e) => field.onChange(e.value)} placeholder="Select level" className={`w-full ${errors.logLevel ? 'p-invalid' : ''}`} />
+                    <Dropdown value={field.value} options={LOG_LEVEL_OPTIONS} onChange={(e) => field.onChange(e.value)} placeholder="Select level" className={`w-full ${errors.logLevel ? 'p-invalid' : ''}`} />
                     {errors.logLevel && <small className="text-red-500">{errors.logLevel.message}</small>}
                   </div>
                 )} />
@@ -334,7 +387,7 @@ const LogMasterForm = () => {
                 <Controller name="logtype" control={control} render={({ field }) => (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Log Type <span className="text-red-500">*</span></label>
-                    <Dropdown value={field.value} options={logTypeOptions} onChange={(e) => field.onChange(e.value)} placeholder="Select type" className={`w-full ${errors.logtype ? 'p-invalid' : ''}`} />
+                    <Dropdown value={field.value} options={LOG_TYPE_OPTIONS} onChange={(e) => field.onChange(e.value)} placeholder="Select type" className={`w-full ${errors.logtype ? 'p-invalid' : ''}`} />
                     {errors.logtype && <small className="text-red-500">{errors.logtype.message}</small>}
                   </div>
                 )} />
@@ -347,6 +400,16 @@ const LogMasterForm = () => {
                     {errors.retentionPeriod && <small className="text-red-500">{errors.retentionPeriod.message}</small>}
                   </div>
                 )} />
+
+                {/* Usage Trackable */}
+                <div className="flex items-center gap-2 pt-6">
+                  <Controller name="isUsageTrackable" control={control} render={({ field }) => (
+                    <>
+                      <Checkbox inputId="isUsageTrackable" checked={!!field.value} onChange={(e) => field.onChange(e.checked)} />
+                      <label htmlFor="isUsageTrackable" className="text-sm text-gray-700 dark:text-gray-300">Usage Trackable</label>
+                    </>
+                  )} />
+                </div>
 
                 {/* Description */}
                 <div className="md:col-span-3">
@@ -379,49 +442,179 @@ const LogMasterForm = () => {
                   <Controller name="templateParameters" control={control} render={({ field }) => (
                     <div className="flex flex-col gap-2">
                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Parameters</label>
-                      <InputTextarea value={field.value || ''} onChange={(e) => field.onChange(e.target.value)} placeholder='{"name": "name"}' rows={6} className="w-full font-mono text-sm" />
+                      <InputTextarea value={field.value || ''} onChange={(e) => field.onChange(e.target.value)} placeholder='{"name": "name"}' rows={4} className="w-full font-mono text-sm" />
                       <small className="text-gray-500">Auto-generated from template placeholders. You can edit manually.</small>
                     </div>
                   )} />
                 </div>
+              </div>
 
-                {/* Parameters */}
-                <div className="md:col-span-3">
-                  <Controller name="parameters" control={control} render={({ field }) => (
-                    <div className="flex flex-col gap-2">
-                      <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Parameters</label>
-                      <InputText value={field.value || ''} onChange={(e) => field.onChange(e.target.value)} placeholder="e.g. userId, cameraId, unitId" className="w-full font-mono text-sm" />
-                      <small className="text-gray-500">Auto-generated from template placeholders. Comma-separated. You can edit manually.</small>
-                    </div>
-                  )} />
+              {/* ── Parameters Section ────────────────────────────────── */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      Parameters <span className="text-red-500">*</span>
+                    </h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Fields captured in the audit log. Mark key fields and sensitive data accordingly.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    label="Add Parameter"
+                    icon="pi pi-plus"
+                    severity="secondary"
+                    outlined
+                    size="small"
+                    onClick={() => append({ ...DEFAULT_PARAMETER })}
+                  />
                 </div>
 
-                {/* Checkboxes */}
+                {/* Checkboxes from HEAD */}
                 <div className="flex flex-wrap gap-6 items-center md:col-span-3">
                   <Controller name="isActive" control={control} render={({ field }) => (
                     <div className="flex items-center gap-2">
-                      <Checkbox inputId="isActive" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                      <Checkbox inputId="isActive" checked={!!field.value} onChange={(e) => field.onChange(e.checked)} />
                       <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">Active</label>
                     </div>
                   )} />
                   <Controller name="canBeLogged" control={control} render={({ field }) => (
                     <div className="flex items-center gap-2">
-                      <Checkbox inputId="canBeLogged" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
+                      <Checkbox inputId="canBeLogged" checked={!!field.value} onChange={(e) => field.onChange(e.checked)} />
                       <label htmlFor="canBeLogged" className="text-sm font-medium text-gray-700 dark:text-gray-300">Can Be Logged</label>
                     </div>
                   )} />
-                  <Controller name="isSensitive" control={control} render={({ field }) => (
-                    <div className="flex items-center gap-2">
-                      <Checkbox inputId="isSensitive" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
-                      <label htmlFor="isSensitive" className="text-sm font-medium text-gray-700 dark:text-gray-300">Sensitive</label>
+                </div>
+                {errors.parameters && typeof errors.parameters === 'object' && 'message' in errors.parameters && (
+                  <small className="text-red-500 block mb-2">{(errors.parameters as any).message}</small>
+                )}
+
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  {/* Table header */}
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide">
+                    <div className="col-span-3">Name <span className="text-red-500">*</span></div>
+                    <div className="col-span-3">Label <span className="text-red-500">*</span></div>
+                    <div className="col-span-2">Datatype <span className="text-red-500">*</span></div>
+                    <div className="col-span-2 text-center">Key Field</div>
+                    <div className="col-span-1 text-center">Sensitive</div>
+                    <div className="col-span-1 text-center">Remove</div>
+                  </div>
+
+                  {/* Parameter rows */}
+                  {fields.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                      No parameters added. Click <strong>Add Parameter</strong> to begin.
                     </div>
-                  )} />
-                  <Controller name="isUsageTrackable" control={control} render={({ field }) => (
-                    <div className="flex items-center gap-2">
-                      <Checkbox inputId="isUsageTrackable" checked={field.value} onChange={(e) => field.onChange(e.checked)} />
-                      <label htmlFor="isUsageTrackable" className="text-sm text-gray-700 dark:text-gray-300">Usage Trackable</label>
-                    </div>
-                  )} />
+                  ) : (
+                    fields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="grid grid-cols-12 gap-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700 items-center"
+                      >
+                        {/* Name */}
+                        <div className="col-span-3">
+                          <Controller
+                            name={`parameters.${index}.name`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <InputText
+                                value={f.value || ''}
+                                onChange={(e) => f.onChange(e.target.value)}
+                                placeholder="e.g. personnelId"
+                                className={`w-full text-sm ${errors.parameters?.[index]?.name ? 'p-invalid' : ''}`}
+                              />
+                            )}
+                          />
+                          {errors.parameters?.[index]?.name && (
+                            <small className="text-red-500 text-xs">{errors.parameters[index]?.name?.message}</small>
+                          )}
+                        </div>
+
+                        {/* Label */}
+                        <div className="col-span-3">
+                          <Controller
+                            name={`parameters.${index}.label`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <InputText
+                                value={f.value || ''}
+                                onChange={(e) => f.onChange(e.target.value)}
+                                placeholder="e.g. Personnel ID"
+                                className={`w-full text-sm ${errors.parameters?.[index]?.label ? 'p-invalid' : ''}`}
+                              />
+                            )}
+                          />
+                          {errors.parameters?.[index]?.label && (
+                            <small className="text-red-500 text-xs">{errors.parameters[index]?.label?.message}</small>
+                          )}
+                        </div>
+
+                        {/* Datatype */}
+                        <div className="col-span-2">
+                          <Controller
+                            name={`parameters.${index}.datatype`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <Dropdown
+                                value={f.value}
+                                options={DATATYPE_OPTIONS}
+                                onChange={(e) => f.onChange(e.value)}
+                                placeholder="Type"
+                                className={`w-full text-sm ${errors.parameters?.[index]?.datatype ? 'p-invalid' : ''}`}
+                              />
+                            )}
+                          />
+                          {errors.parameters?.[index]?.datatype && (
+                            <small className="text-red-500 text-xs">{errors.parameters[index]?.datatype?.message}</small>
+                          )}
+                        </div>
+
+                        {/* isKeyField */}
+                        <div className="col-span-2 flex justify-center">
+                          <Controller
+                            name={`parameters.${index}.isKeyField`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <Checkbox
+                                inputId={`isKeyField-${index}`}
+                                checked={!!f.value}
+                                onChange={(e) => f.onChange(e.checked)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        {/* isSensitive */}
+                        <div className="col-span-1 flex justify-center">
+                          <Controller
+                            name={`parameters.${index}.isSensitive`}
+                            control={control}
+                            render={({ field: f }) => (
+                              <Checkbox
+                                inputId={`isSensitive-${index}`}
+                                checked={!!f.value}
+                                onChange={(e) => f.onChange(e.checked)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        {/* Remove */}
+                        <div className="col-span-1 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            disabled={fields.length === 1}
+                            title={fields.length === 1 ? 'At least one parameter is required' : 'Remove parameter'}
+                            className="p-1.5 rounded text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <i className="pi pi-trash text-sm" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -430,12 +623,12 @@ const LogMasterForm = () => {
               <Button type="button" label="Cancel" severity="secondary" outlined onClick={handleCancel} disabled={isSaving} />
               <Button type="button" label={isSaving ? 'Saving...' : isEditMode ? 'Update' : 'Create'} icon={isSaving ? 'pi pi-spin pi-spinner' : 'pi pi-check'} disabled={isSaving} onClick={handleSubmit(onSubmit)} />
             </div>
-          </div>
-        </form>
+          </div >
+        </form >
 
         <DiscardChangesDialog visible={showLeaveDialog} onStay={cancelLeave} onLeave={confirmLeave} testId="LogMasterForm.Dialog.Leave" />
-      </div>
-    </PermissionGuard>
+      </div >
+    </PermissionGuard >
   );
 };
 

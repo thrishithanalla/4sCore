@@ -1293,18 +1293,26 @@ async def get_dashboard_data(
     "/all-users",
     response_model=StandardResponse,
     responses={
-        200: {"description": "All distinct users retrieved successfully"}
+        200: {"description": "Users retrieved successfully"}
     }
 )
-async def get_all_users(request: Request):
-    """Get all personnel from personnel_master for user filter dropdown"""
+async def get_all_users(
+    request: Request,
+    search: Optional[str] = Query(None, description="Search by exact name or partial name"),
+):
+    """Get personnel from personnel_master for user filter dropdown (searchable, max 20)"""
     db = get_database()
 
+    query = {"isDelete": {"$ne": True}}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+
     cursor = db["personnel_master"].find(
-        {"isDelete": {"$ne": True}},
+        query,
         {"_id": 1, "name": 1}
-    ).sort("name", 1)
-    personnel_list = await cursor.to_list(length=None)
+    ).sort("name", 1).limit(20)
+    
+    personnel_list = await cursor.to_list(length=20)
 
     results = [
         {"actorId": str(p["_id"]), "name": p.get("name", "Unknown")}
@@ -1331,7 +1339,7 @@ async def get_all_templates(request: Request):
 
     cursor = db[Collections.LOG_MASTER].find(
         {"isDelete": False},
-        {"eventCode": 1, "name": 1, "logObject": 1, "logLevel": 1, "isActive": 1, "keyFields": 1}
+        {"eventCode": 1, "name": 1, "logObject": 1, "logLevel": 1, "isActive": 1, "parameters": 1}
     ).sort("eventCode", 1)
     templates = await cursor.to_list(length=None)
 
@@ -1343,7 +1351,7 @@ async def get_all_templates(request: Request):
             "logObject": t.get("logObject", ""),
             "logLevel": t.get("logLevel", ""),
             "isActive": t.get("isActive", True),
-            "keyFields": t.get("keyFields", "")
+            "parameters": t.get("parameters", [])
         })
 
     return success_response(
